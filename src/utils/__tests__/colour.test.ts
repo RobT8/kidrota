@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { contrast, initialOf, textOn } from '../colour';
-import { CHILD_COLOURS } from '../constants';
+import { carerSwatch, contrast, initialOf, textOn } from '../colour';
+import { CARER_COLOURS, CARER_TYPE_VARS, CHILD_COLOURS } from '../constants';
 
 describe('textOn', () => {
   it('picks white on dark backgrounds and near-black on light ones', () => {
@@ -50,5 +50,19 @@ describe('initialOf', () => {
   it('falls back to ? for a blank name', () => {
     expect(initialOf('')).toBe('?');
     expect(initialOf('   ')).toBe('?');
+  });
+});
+
+describe('carerSwatch', () => {
+  it('uses the type tokens when no custom colour is set', () => {
+    expect(carerSwatch({ type: 'family', colour: null })).toEqual(CARER_TYPE_VARS.family);
+  });
+
+  it('picks readable text for every custom carer colour', () => {
+    for (const colour of CARER_COLOURS) {
+      const { bg, text } = carerSwatch({ type: 'club', colour });
+      expect(bg).toBe(colour);
+      expect(contrast(bg, text)).toBeGreaterThanOrEqual(4.5);
+    }
   });
 });

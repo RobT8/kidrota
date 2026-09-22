@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { clearBackInterceptors, handleBackPress, pushBackInterceptor } from '../backButton';
+import { clearBackInterceptors, handleBackPress, isTopBackInterceptor, pushBackInterceptor } from '../backButton';
 
 afterEach(() => clearBackInterceptors());
 
@@ -60,5 +60,20 @@ describe('handleBackPress', () => {
     const remove = pushBackInterceptor(vi.fn());
     remove();
     expect(handleBackPress(false, vi.fn())).toBe('exit');
+  });
+});
+
+describe('isTopBackInterceptor', () => {
+  it('is true only for the most recently pushed handler', () => {
+    clearBackInterceptors();
+    const lower = () => {};
+    const upper = () => {};
+    const removeLower = pushBackInterceptor(lower);
+    const removeUpper = pushBackInterceptor(upper);
+    expect(isTopBackInterceptor(upper)).toBe(true);
+    expect(isTopBackInterceptor(lower)).toBe(false);
+    removeUpper();
+    expect(isTopBackInterceptor(lower)).toBe(true);
+    removeLower();
   });
 });

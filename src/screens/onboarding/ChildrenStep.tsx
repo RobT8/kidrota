@@ -3,7 +3,9 @@ import Loading from '../../components/Loading';
 import ChildAvatar from '../../components/ChildAvatar';
 import { createChild, deleteChild, listChildren, updateChild } from '../../db/children';
 import type { Child } from '../../db/types';
-import { CHILD_COLOURS } from '../../utils/constants';
+import { CHILD_COLOURS, FREE_TIER_MAX_CHILDREN } from '../../utils/constants';
+import { canAddChild } from '../../utils/freeTier';
+import { usePro } from '../../hooks/usePro';
 
 const MAX_NAME_LENGTH = 24;
 
@@ -24,6 +26,9 @@ export default function ChildrenStep({ onNext }: ChildrenStepProps) {
   const [colour, setColour] = useState(CHILD_COLOURS[0]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const { pro, openUpgrade } = usePro();
+  // Editing a child already added is always allowed; only a new one counts.
+  const atLimit = editingId === null && !canAddChild(children.length, pro);
 
   useEffect(() => {
     listChildren().then((existing) => {
@@ -43,7 +48,7 @@ export default function ChildrenStep({ onNext }: ChildrenStepProps) {
   /** Save whatever is typed in the form. Shared by the add button and Next. */
   async function commitPending() {
     const trimmed = name.trim();
-    if (!trimmed) return;
+    if (!trimmed || atLimit) return;
 
     if (editingId === null) {
       await createChild({ name: trimmed, colour });
@@ -126,46 +131,58 @@ export default function ChildrenStep({ onNext }: ChildrenStepProps) {
         </ul>
       )}
 
-      <form className="card add-form" onSubmit={handleSubmit}>
-        <label className="field">
-          <span className="field__label">Name</span>
-          <input
-            className="field__input"
-            value={name}
-            maxLength={MAX_NAME_LENGTH}
-            placeholder="e.g. Ada"
-            onChange={(event) => setName(event.target.value)}
-          />
-        </label>
-
-        <fieldset className="field">
-          <legend className="field__label">Colour</legend>
-          <div className="swatches">
-            {CHILD_COLOURS.map((option) => (
-              <button
-                key={option}
-                type="button"
-                className={option === colour ? 'swatch swatch--selected' : 'swatch'}
-                style={{ background: option }}
-                aria-label={`Colour ${option}`}
-                aria-pressed={option === colour}
-                onClick={() => setColour(option)}
-              />
-            ))}
-          </div>
-        </fieldset>
-
-        <div className="add-form__actions">
-          <button type="submit" className="button button--secondary" disabled={!name.trim()}>
-            {editingId === null ? 'Add child' : 'Save changes'}
+      {atLimit ? (
+        <div className="card add-form">
+          <p className="pro-sheet__note">
+            The free version plans for up to {FREE_TIER_MAX_CHILDREN} children. KidRota Pro
+            removes the limit.
+          </p>
+          <button type="button" className="button button--secondary" onClick={() => openUpgrade('children')}>
+            See KidRota Pro
           </button>
-          {editingId !== null && (
-            <button type="button" className="link-button" onClick={cancelEditing}>
-              Cancel
-            </button>
-          )}
         </div>
-      </form>
+      ) : (
+        <form className="card add-form" onSubmit={handleSubmit}>
+          <label className="field">
+            <span className="field__label">Name</span>
+            <input
+              className="field__input"
+              value={name}
+              maxLength={MAX_NAME_LENGTH}
+              placeholder="e.g. Ada"
+              onChange={(event) => setName(event.target.value)}
+            />
+          </label>
+
+          <fieldset className="field">
+            <legend className="field__label">Colour</legend>
+            <div className="swatches">
+              {CHILD_COLOURS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={option === colour ? 'swatch swatch--selected' : 'swatch'}
+                  style={{ background: option }}
+                  aria-label={`Colour ${option}`}
+                  aria-pressed={option === colour}
+                  onClick={() => setColour(option)}
+                />
+              ))}
+            </div>
+          </fieldset>
+
+          <div className="add-form__actions">
+            <button type="submit" className="button button--secondary" disabled={!name.trim()}>
+              {editingId === null ? 'Add child' : 'Save changes'}
+            </button>
+            {editingId !== null && (
+              <button type="button" className="link-button" onClick={cancelEditing}>
+                Cancel
+              </button>
+            )}
+          </div>
+        </form>
+      )}
 
       <button
         type="button"

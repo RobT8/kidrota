@@ -22,6 +22,14 @@ export function pushBackInterceptor(handler: Interceptor): () => void {
   };
 }
 
+/**
+ * Is this handler the one back would run? With one sheet opened over another,
+ * only the top one should answer Escape, not both at once.
+ */
+export function isTopBackInterceptor(handler: Interceptor): boolean {
+  return interceptors[interceptors.length - 1] === handler;
+}
+
 export type BackOutcome = 'intercepted' | 'navigated' | 'exit';
 
 /**

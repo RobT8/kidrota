@@ -1,3 +1,5 @@
+import { CARER_TYPE_VARS, type CarerType } from './constants';
+
 const LIGHT_TEXT = '#FFFFFF';
 const DARK_TEXT = '#1A1A1A';
 
@@ -48,4 +50,19 @@ function parseHex(hex: string): { r: number; g: number; b: number } {
 export function initialOf(name: string): string {
   const trimmed = name.trim();
   return trimmed ? trimmed[0].toUpperCase() : '?';
+}
+
+/**
+ * Background and text for a carer anywhere they appear as a coloured chip.
+ *
+ * A custom colour is a fixed hex that does not follow the theme, so its text
+ * is chosen for contrast against that exact colour rather than taken from the
+ * type's token, which is tuned for the type's own background.
+ */
+export function carerSwatch(carer: { type: CarerType; colour: string | null }): {
+  bg: string;
+  text: string;
+} {
+  if (carer.colour) return { bg: carer.colour, text: textOn(carer.colour) };
+  return CARER_TYPE_VARS[carer.type];
 }

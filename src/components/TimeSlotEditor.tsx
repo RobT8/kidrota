@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { addTimeSlot, deleteAssignment, updateAssignment } from '../db/assignments';
 import type { Assignment, Carer, Child } from '../db/types';
-import { CARER_TYPE_VARS } from '../utils/constants';
+import { carerSwatch } from '../utils/colour';
 import CarerIcon from './CarerIcon';
 
 interface TimeSlotEditorProps {
@@ -68,8 +68,8 @@ export default function TimeSlotEditor({
             <span
               className="time-slot__dot"
               style={{
-                background: carer?.colour ?? CARER_TYPE_VARS[carer?.type ?? 'other'].bg,
-                color: CARER_TYPE_VARS[carer?.type ?? 'other'].text,
+                background: carerSwatch(carer ?? { type: 'other', colour: null }).bg,
+                color: carerSwatch(carer ?? { type: 'other', colour: null }).text,
               }}
             >
               <CarerIcon type={carer?.type ?? 'other'} size={14} />

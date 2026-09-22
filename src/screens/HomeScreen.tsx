@@ -6,6 +6,8 @@ import HolidayForm from '../components/HolidayForm';
 import Modal from '../components/Modal';
 import type { Holiday, NewHoliday } from '../db/types';
 import { useHolidays } from '../hooks/useHolidays';
+import { usePro } from '../hooks/usePro';
+import { canAddHoliday } from '../utils/freeTier';
 import { todayISO } from '../utils/dates';
 import { formatGapCount, formatNextBreak, nextBreak } from '../utils/status';
 
@@ -15,6 +17,13 @@ export default function HomeScreen() {
   const [editing, setEditing] = useState<Holiday | null>(null);
   const [deleting, setDeleting] = useState<Holiday | null>(null);
   const navigate = useNavigate();
+  const { pro, openUpgrade } = usePro();
+
+  /** At the free-tier cap, offer Pro instead of an add form that cannot save. */
+  function startAdding() {
+    if (canAddHoliday(holidays.length, pro)) setAdding(true);
+    else openUpgrade('holidays');
+  }
   const upcoming = nextBreak(todayISO(), next);
 
   async function handleSave(values: NewHoliday) {
@@ -45,7 +54,7 @@ export default function HomeScreen() {
           type="button"
           className="fab"
           aria-label="Add holiday"
-          onClick={() => setAdding(true)}
+          onClick={startAdding}
         >
           +
         </button>
@@ -82,7 +91,7 @@ export default function HomeScreen() {
           <p className="empty-state__body">
             Add a school break and start filling in who’s covering each day.
           </p>
-          <button type="button" className="button button--primary" onClick={() => setAdding(true)}>
+          <button type="button" className="button button--primary" onClick={startAdding}>
             Add your first holiday
           </button>
         </div>

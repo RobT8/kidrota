@@ -48,6 +48,20 @@ export const CHILD_COLOURS = [
   '#3FA9A0',
 ];
 
+/**
+ * Pro custom colours for carers. A fixed set rather than a free picker so
+ * every one is known to carry readable text (dark text on each clears 4.5:1),
+ * and none is red, which the grid keeps for gaps.
+ */
+export const CARER_COLOURS = [
+  '#378ADD',
+  '#5FA85F',
+  '#B266C9',
+  '#E8A33D',
+  '#3FA9A0',
+  '#7A8CA3',
+];
+
 /** Key used in the app_settings table to skip onboarding on later launches. */
 export const ONBOARDING_COMPLETE_KEY = 'onboarding_complete';
 

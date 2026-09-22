@@ -7,12 +7,21 @@ import Modal from '../components/Modal';
 import { countChildAssignments } from '../db/children';
 import type { Child, NewChild } from '../db/types';
 import { useChildren } from '../hooks/useChildren';
+import { usePro } from '../hooks/usePro';
+import { canAddChild } from '../utils/freeTier';
 
 export default function ChildrenScreen() {
   const { children, loading, error, add, edit, remove, move } = useChildren();
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Child | null>(null);
   const [deleting, setDeleting] = useState<{ child: Child; assignments: number } | null>(null);
+  const { pro, openUpgrade } = usePro();
+
+  /** At the free-tier cap, offer Pro instead of an add form that cannot save. */
+  function startAdding() {
+    if (canAddChild(children.length, pro)) setAdding(true);
+    else openUpgrade('children');
+  }
 
   async function handleSave(values: Omit<NewChild, 'sort_order'>) {
     if (editing) {
@@ -43,7 +52,7 @@ export default function ChildrenScreen() {
           <p className="page-eyebrow">KidRota</p>
           <h1 className="page-title">Your children</h1>
         </div>
-        <button type="button" className="fab" aria-label="Add child" onClick={() => setAdding(true)}>
+        <button type="button" className="fab" aria-label="Add child" onClick={startAdding}>
           +
         </button>
       </header>
@@ -60,7 +69,7 @@ export default function ChildrenScreen() {
         <div className="empty-state card">
           <p className="empty-state__title">No children yet</p>
           <p className="empty-state__body">Add a child to start planning their holiday cover.</p>
-          <button type="button" className="button button--primary" onClick={() => setAdding(true)}>
+          <button type="button" className="button button--primary" onClick={startAdding}>
             Add a child
           </button>
         </div>
@@ -114,7 +123,7 @@ export default function ChildrenScreen() {
       )}
 
       {children.length > 0 && (
-        <button type="button" className="dashed-button add-below" onClick={() => setAdding(true)}>
+        <button type="button" className="dashed-button add-below" onClick={startAdding}>
           + Add child
         </button>
       )}

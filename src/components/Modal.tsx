@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useBackInterceptor } from '../hooks/useBackButton';
+import { isTopBackInterceptor } from '../utils/backButton';
 
 interface ModalProps {
   title: string;
@@ -17,7 +18,7 @@ export default function Modal({ title, onClose, children }: ModalProps) {
   useEffect(() => {
     // Android's back gesture surfaces as Escape in the WebView.
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape' && isTopBackInterceptor(onClose)) onClose();
     }
     document.addEventListener('keydown', onKeyDown);
 

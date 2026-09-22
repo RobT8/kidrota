@@ -1,3 +1,4 @@
+import { nameKey as key } from '../utils/freeTier';
 import type { SharedPlan } from '../utils/shareCode';
 import { addTimeSlot, setSlotAssignment } from './assignments';
 import { createCarer, listCarers } from './carers';
@@ -13,11 +14,6 @@ export interface ImportResult {
   carersAdded: number;
   carersMatched: number;
   assignments: number;
-}
-
-/** Names match loosely, so "Grandma" and "grandma " are the same person. */
-function key(name: string): string {
-  return name.trim().toLowerCase();
 }
 
 /**

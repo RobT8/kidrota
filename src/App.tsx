@@ -11,6 +11,7 @@ import DayAssignScreen from './screens/DayAssignScreen';
 import ChildrenScreen from './screens/ChildrenScreen';
 import CarersScreen from './screens/CarersScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import ProProvider from './components/ProProvider';
 
 /**
  * Routes that sit behind the bottom navigation bar. The weekly planner keeps
@@ -71,6 +72,7 @@ export default function App() {
     // HashRouter: the Android WebView serves the app from a file-ish origin,
     // so hash routing avoids deep-link 404s on reload.
     <HashRouter>
+      <ProProvider>
       {/* Until setup is done there is nothing else worth showing, so every
           route leads back to it — including after "Delete all data", which
           reloads on whatever screen the user was standing on. */}
@@ -98,6 +100,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       )}
+      </ProProvider>
     </HashRouter>
   );
 }

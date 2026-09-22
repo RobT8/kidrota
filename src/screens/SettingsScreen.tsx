@@ -6,6 +6,10 @@ import { ShareCodeError, decodePlan } from '../utils/shareCode';
 import { plural } from '../utils/status';
 import Modal from '../components/Modal';
 import { listHolidays } from '../db/holidays';
+import { listChildren } from '../db/children';
+import { usePro } from '../hooks/usePro';
+import { importBlockedBy } from '../utils/freeTier';
+import { restorePro } from '../utils/billing';
 import { getSetting, setSetting } from '../db/settings';
 import {
   DEFAULT_REMINDER_DAYS,
@@ -39,6 +43,7 @@ export default function SettingsScreen() {
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const { pro, openUpgrade } = usePro();
 
   useEffect(() => {
     getSetting(REMINDER_KEY).then((saved) => {
@@ -130,7 +135,20 @@ export default function SettingsScreen() {
     setBusy(true);
     setStatus(null);
     try {
-      const result = await importSharedPlan(decodePlan(code));
+      const plan = decodePlan(code);
+      // A backup restore is exempt — it brings back what was already yours —
+      // but a plan code adds, so it counts against the free-tier caps.
+      const blocked = importBlockedBy(
+        (await listChildren()).map((child) => child.name),
+        plan.children.map((child) => child.name),
+        (await listHolidays()).length,
+        pro,
+      );
+      if (blocked) {
+        openUpgrade(blocked);
+        return;
+      }
+      const result = await importSharedPlan(plan);
       const people = [
         result.childrenAdded > 0 ? `${plural(result.childrenAdded, 'child', 'children')}` : null,
         result.carersAdded > 0 ? `${plural(result.carersAdded, 'carer', 'carers')}` : null,
@@ -150,6 +168,24 @@ export default function SettingsScreen() {
       });
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleRestore() {
+    setBusy(true);
+    setStatus(null);
+    const outcome = await restorePro();
+    setBusy(false);
+    switch (outcome.kind) {
+      case 'restored':
+        setStatus({ kind: 'ok', text: 'Pro restored. Thank you!' });
+        break;
+      case 'none':
+        setStatus({ kind: 'bad', text: 'No Pro purchase found for the Google account on this phone.' });
+        break;
+      case 'failed':
+        setStatus({ kind: 'bad', text: outcome.message });
+        break;
     }
   }
 
@@ -282,12 +318,28 @@ export default function SettingsScreen() {
 
       <section className="settings-group">
         <h2 className="settings-group__title">KidRota Pro</h2>
-        <button type="button" className="setting-row setting-row--action setting-row--accent" disabled>
+        <button
+          type="button"
+          className="setting-row setting-row--action setting-row--accent"
+          onClick={() => openUpgrade()}
+        >
           <span className="setting-row__label">
-            Upgrade to Pro
-            <span className="setting-row__sub">Unlimited children and holidays, cost totals, exports — coming soon</span>
+            {pro ? 'Pro is unlocked' : 'Upgrade to Pro'}
+            <span className="setting-row__sub">
+              {pro ? 'Thank you for supporting KidRota' : 'Unlimited children and holidays, custom carer colours'}
+            </span>
           </span>
+          <span className="setting-row__chevron">›</span>
         </button>
+        {!pro && (
+          <button type="button" className="setting-row setting-row--action" disabled={busy} onClick={handleRestore}>
+            <span className="setting-row__label">
+              Restore purchases
+              <span className="setting-row__sub">Already bought Pro on this Google account?</span>
+            </span>
+            <span className="setting-row__chevron">›</span>
+          </button>
+        )}
       </section>
 
       <section className="settings-group">

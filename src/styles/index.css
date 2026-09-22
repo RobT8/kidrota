@@ -935,6 +935,12 @@ button {
   line-height: 1.1;
 }
 
+/* On a custom colour the dimmed label drops below 4.5:1 (3.35:1 on the
+   purple), so it keeps full strength there. */
+.slot--custom .slot__period {
+  opacity: 1;
+}
+
 .slot__carer {
   font-size: 10px;
   font-weight: 500;
@@ -1342,6 +1348,55 @@ button {
 }
 
 /* ============================================================
+   Pro upgrade sheet
+   ============================================================ */
+
+.pro-sheet__reason {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.pro-sheet__lead {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.pro-sheet__benefits {
+  margin: 0 0 16px;
+  padding-left: 20px;
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+.pro-sheet__options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.pro-sheet__note {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.pro-sheet__manage {
+  display: block;
+  margin-bottom: 10px;
+  text-decoration: none;
+}
+
+.pro-sheet__restore {
+  display: block;
+  margin: 4px auto 0;
+}
+
+/* ============================================================
    Settings
    ============================================================ */
 
@@ -1409,7 +1464,6 @@ button {
 
 .setting-row--accent .setting-row__sub {
   color: var(--accent);
-  opacity: 0.85;
 }
 
 .setting-row__value {

@@ -28,7 +28,7 @@ Holiday Planner` is 31 characters and would be rejected.
 | Build | Vite 8 |
 | Routing | React Router (hash routing, for the WebView) |
 | Storage | SQLite via `@capacitor-community/sqlite` |
-| Plugins | Local Notifications, Share, Filesystem, In-App Review |
+| Plugins | Local Notifications, Share, Filesystem, In-App Review, Play Billing (`capacitor-plugin-cdv-purchase`) |
 
 ## Getting started
 
@@ -131,6 +131,47 @@ A WebView wires nothing to Android's back button or back gesture, so without
 decides what a press means: anything layered over a screen (a modal, a
 confirmation) registers an interceptor and is dismissed first, otherwise it
 navigates back, and only at the first screen does the app exit.
+
+## KidRota Pro
+
+| | Free | Pro |
+|---|---|---|
+| Children | 2 | Unlimited |
+| Holidays at a time | 2 | Unlimited |
+| Custom carer colours | — | ✓ |
+
+Sold through Google Play Billing as either product below. The IDs must be
+created in the Play Console exactly as written; prices are set there too, and
+the app only ever shows the price Play reports in the buyer's own currency.
+
+| Product | Play Console type | ID | Price |
+|---|---|---|---|
+| Lifetime | In-app product (one-time) | `kidrota_pro_lifetime` | £3.99 |
+| Yearly | Subscription, one yearly auto-renewing base plan | `kidrota_pro_yearly` | £1.99 |
+
+`utils/billing.ts` wraps `capacitor-plugin-cdv-purchase`, the Capacitor edition
+of `cordova-plugin-purchase`. There is no receipt server, so an approved
+purchase is finished (acknowledged to Play) on the phone straight away — an
+unacknowledged purchase is refunded by Play after three days. The trade-off
+is that a patched APK could fake Pro; for a £3.99 app that is accepted.
+
+Whether Pro is unlocked is decided by `resolvePro` in `utils/freeTier.ts`:
+until Play has loaded the account's purchases the last known answer stands, so
+a paying user never flashes back to free on launch or offline; once loaded,
+Play is the only authority, which is how a lapsed subscription or a refund
+turns Pro off. That last answer is cached in `localStorage`, deliberately not
+in `app_settings` — settings travel inside backup files, and a backup must not
+carry Pro to another Google account.
+
+The caps only stop new things being added (`utils/freeTier.ts`). Anything
+already on the phone — from a backup restore, or from before Pro lapsed —
+stays visible and editable. A plan code counts against the caps, because it
+adds; a backup restore does not, because it brings back what was already
+yours. When a cap is hit, the screen opens the upgrade sheet
+(`components/ProSheet.tsx`) in place, with the reason.
+
+In a browser there is no Play, so Pro is whatever `localStorage['kidrota.pro']`
+says. Set it to `'1'` to work on the Pro side of the UI.
 
 ## Review prompt
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Carer, NewCarer } from '../db/types';
-import { CARER_TYPE_LABELS, type CarerType } from '../utils/constants';
+import { usePro } from '../hooks/usePro';
+import { CARER_COLOURS, CARER_TYPE_LABELS, CARER_TYPE_VARS, type CarerType } from '../utils/constants';
 import { MAX_SHORT_NAME, suggestShortName } from '../utils/status';
 
 interface CarerFormProps {
@@ -20,7 +21,19 @@ export default function CarerForm({ carer, onSave, onDelete, onCancel }: CarerFo
   const [shortTouched, setShortTouched] = useState(Boolean(carer));
   const [type, setType] = useState<CarerType>(carer?.type ?? 'other');
   const [cost, setCost] = useState(carer?.cost_per_day != null ? String(carer.cost_per_day) : '');
+  const [colour, setColour] = useState<string | null>(carer?.colour ?? null);
   const [saving, setSaving] = useState(false);
+  const { pro, openUpgrade } = usePro();
+
+  /**
+   * Custom colours are Pro. A carer who already has one keeps it on the free
+   * version — nothing already set is taken away — and can always go back to
+   * the type colour; only choosing a new custom colour asks for Pro.
+   */
+  function chooseColour(value: string | null) {
+    if (value === null || value === colour || pro) setColour(value);
+    else openUpgrade('colours');
+  }
   const [error, setError] = useState<string | null>(null);
 
   const trimmed = name.trim();
@@ -48,7 +61,7 @@ export default function CarerForm({ carer, onSave, onDelete, onCancel }: CarerFo
         short_name: (shortName.trim() || suggestShortName(trimmed)).slice(0, MAX_SHORT_NAME),
         type,
         cost_per_day: parsedCost,
-        colour: carer?.colour ?? null,
+        colour,
       });
     } catch {
       setError('Could not save. Please try again.');
@@ -98,6 +111,31 @@ export default function CarerForm({ carer, onSave, onDelete, onCancel }: CarerFo
           ))}
         </select>
       </label>
+
+      <fieldset className="field">
+        <legend className="field__label">Colour in the grid{pro ? '' : ' — Pro'}</legend>
+        <div className="swatches">
+          <button
+            type="button"
+            className={colour === null ? 'swatch swatch--selected' : 'swatch'}
+            style={{ background: CARER_TYPE_VARS[type].bg }}
+            aria-label="Type colour"
+            aria-pressed={colour === null}
+            onClick={() => chooseColour(null)}
+          />
+          {CARER_COLOURS.map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={option === colour ? 'swatch swatch--selected' : 'swatch'}
+              style={{ background: option }}
+              aria-label={pro || option === colour ? `Colour ${option}` : `Colour ${option}, needs Pro`}
+              aria-pressed={option === colour}
+              onClick={() => chooseColour(option)}
+            />
+          ))}
+        </div>
+      </fieldset>
 
       <label className="field">
         <span className="field__label">Cost per day (optional)</span>

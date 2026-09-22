@@ -1,5 +1,6 @@
 import ChildAvatar from './ChildAvatar';
 import type { Assignment, Carer, Child } from '../db/types';
+import { carerSwatch } from '../utils/colour';
 import { CARER_TYPE_VARS, type HolidayMode } from '../utils/constants';
 import { dayKey, slotIn, timeSlotsIn } from '../hooks/useAssignments';
 import { formatLongDate } from '../utils/dates';
@@ -67,10 +68,8 @@ export default function DayList({
                           entry.carer ? 'day-list__slot' : 'day-list__slot day-list__slot--gap'
                         }
                         style={{
-                          background: entry.carer?.colour ?? CARER_TYPE_VARS[entry.carer ? entry.carer.type : 'gap'].bg,
-                          color: entry.carer?.colour
-                            ? undefined
-                            : CARER_TYPE_VARS[entry.carer ? entry.carer.type : 'gap'].text,
+                          background: (entry.carer ? carerSwatch(entry.carer) : CARER_TYPE_VARS.gap).bg,
+                          color: (entry.carer ? carerSwatch(entry.carer) : CARER_TYPE_VARS.gap).text,
                         }}
                       >
                         {entry.label} {entry.carer ? entry.carer.short_name : '?'}

@@ -1,4 +1,5 @@
 import type { Carer } from '../db/types';
+import { carerSwatch } from '../utils/colour';
 import { CARER_TYPE_VARS } from '../utils/constants';
 
 interface SlotCellProps {
@@ -18,16 +19,16 @@ interface SlotCellProps {
  * than blank space.
  */
 export default function SlotCell({ label, carer, onClick, accessibleLabel }: SlotCellProps) {
-  const palette = CARER_TYPE_VARS[carer ? carer.type : 'gap'];
+  // A Pro custom colour overrides the type default when set.
+  const palette = carer ? carerSwatch(carer) : CARER_TYPE_VARS.gap;
 
   return (
     <button
       type="button"
-      className={carer ? 'slot' : 'slot slot--gap'}
+      className={carer ? (carer.colour ? 'slot slot--custom' : 'slot') : 'slot slot--gap'}
       style={{
-        // A Pro custom colour overrides the type default when set.
-        background: carer?.colour ?? palette.bg,
-        color: carer?.colour ? undefined : palette.text,
+        background: palette.bg,
+        color: palette.text,
       }}
       onClick={onClick}
       aria-label={accessibleLabel}

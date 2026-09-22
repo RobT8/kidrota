@@ -7,7 +7,8 @@ import Modal from '../components/Modal';
 import { countCarerAssignments } from '../db/carers';
 import type { Carer, NewCarer } from '../db/types';
 import { useCarers } from '../hooks/useCarers';
-import { CARER_TYPE_LABELS, CARER_TYPE_VARS } from '../utils/constants';
+import { carerSwatch } from '../utils/colour';
+import { CARER_TYPE_LABELS } from '../utils/constants';
 import { formatCost } from '../utils/status';
 
 export default function CarersScreen() {
@@ -77,8 +78,8 @@ export default function CarersScreen() {
                   <span
                     className="carer-card__icon"
                     style={{
-                      background: carer.colour ?? CARER_TYPE_VARS[carer.type].bg,
-                      color: CARER_TYPE_VARS[carer.type].text,
+                      background: carerSwatch(carer).bg,
+                      color: carerSwatch(carer).text,
                     }}
                   >
                     <CarerIcon type={carer.type} />

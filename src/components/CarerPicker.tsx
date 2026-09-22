@@ -1,5 +1,5 @@
 import type { Carer } from '../db/types';
-import { CARER_TYPE_VARS } from '../utils/constants';
+import { carerSwatch } from '../utils/colour';
 import CarerIcon from './CarerIcon';
 
 interface CarerPickerProps {
@@ -27,7 +27,7 @@ export default function CarerPicker({
     <div className="carer-picker">
       {carers.map((carer) => {
         const selected = carer.id === selectedId;
-        const palette = CARER_TYPE_VARS[carer.type];
+        const palette = carerSwatch(carer);
         return (
           <button
             key={carer.id}
@@ -38,7 +38,7 @@ export default function CarerPicker({
           >
             <span
               className="carer-card__icon"
-              style={{ background: carer.colour ?? palette.bg, color: palette.text }}
+              style={{ background: palette.bg, color: palette.text }}
             >
               <CarerIcon type={carer.type} />
             </span>
