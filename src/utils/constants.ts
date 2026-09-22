@@ -66,4 +66,11 @@ export const FREE_TIER_MAX_HOLIDAYS = 2;
 export const SUPPORT_EMAIL = 'support@kidrota.app';
 export const PRIVACY_URL = 'https://robt8.github.io/kidrota/privacy.html';
 export const TERMS_URL = 'https://robt8.github.io/kidrota/terms.html';
-export const PLAY_STORE_URL = 'market://details?id=com.kidrota.app';
+/**
+ * The Settings "Rate this app" row opens the listing rather than calling the
+ * In-App Review API: Google asks apps not to put that API behind a button, as
+ * it may silently show nothing. The https form opens the Play Store app on a
+ * phone and a web page anywhere else. It returns "not found" until the first
+ * publish.
+ */
+export const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.kidrota.app';

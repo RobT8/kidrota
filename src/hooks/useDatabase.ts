@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getDb } from '../db/database';
 import { isOnboardingComplete } from '../db/settings';
+import { noteLaunchForReview } from '../utils/review';
 
 export interface DatabaseState {
   ready: boolean;
@@ -29,6 +30,8 @@ export function useDatabase(): DatabaseState {
       try {
         await getDb();
         const onboarded = await isOnboardingComplete();
+        // Bookkeeping for the review prompt; never worth failing launch over.
+        noteLaunchForReview().catch(() => {});
         if (!cancelled) setState({ ready: true, onboarded, error: null });
       } catch (error) {
         if (!cancelled) {

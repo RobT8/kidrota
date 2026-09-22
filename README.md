@@ -28,7 +28,7 @@ Holiday Planner` is 31 characters and would be rejected.
 | Build | Vite 8 |
 | Routing | React Router (hash routing, for the WebView) |
 | Storage | SQLite via `@capacitor-community/sqlite` |
-| Plugins | Local Notifications, Share, Filesystem |
+| Plugins | Local Notifications, Share, Filesystem, In-App Review |
 
 ## Getting started
 
@@ -132,6 +132,25 @@ decides what a press means: anything layered over a screen (a modal, a
 confirmation) registers an interceptor and is dismissed first, otherwise it
 navigates back, and only at the first screen does the app exit.
 
+## Review prompt
+
+The Play In-App Review card is requested when a parent opens the weekly
+planner on a holiday with every day covered — the moment the app has just
+done its job. `utils/reviewPrompt.ts` holds the timing rule and is unit
+tested: not in the first 3 days after first launch, at least 120 days between
+asks, and at most 3 asks ever. Its state is one JSON value in `app_settings`
+under `review_prompt`.
+
+Play decides for itself whether the card actually appears. It shows nothing
+for an app not installed from Play (so never for an Android Studio build), it
+has its own quota, and it never says whether a review was left. An ask is
+therefore counted as soon as it is made, never retried.
+
+The "Rate this app" row in Settings opens the Play listing instead of calling
+the API, because Google asks apps not to put the review API behind a button:
+the button would sometimes do nothing at all. The listing returns "not found"
+until the first publish.
+
 ## Colour tokens
 
 `--text` and `--text2` carry content and meet WCAG AA in both themes.
@@ -154,4 +173,4 @@ the page background is unreadable as a button fill once the theme flips.
 - [x] 7. Children & Carers screens — full CRUD
 - [x] 8. Settings — theme, backup/restore, delete all data
 - [x] 9. Sharing — screenshot share, share code export/import
-- [ ] 10. Polish — animations, loading/empty states, error handling
+- [x] 10. Polish — animations, loading/empty states, error handling

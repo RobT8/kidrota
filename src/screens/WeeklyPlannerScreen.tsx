@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import DayList from '../components/DayList';
 import Loading from '../components/Loading';
@@ -9,6 +9,8 @@ import { listDayNotes } from '../db/dayNotes';
 import { encodePlan } from '../utils/shareCode';
 import { shareElementAsImage, sharePlanCode } from '../utils/share';
 import { todayISO } from '../utils/dates';
+import { getHolidayCoverage } from '../db/coverage';
+import { maybeAskForReview } from '../utils/review';
 
 type View = 'week' | 'list';
 
@@ -37,6 +39,19 @@ export default function WeeklyPlannerScreen() {
     const current = weeks.findIndex((week) => week.some((date) => date >= today));
     return current === -1 ? 0 : current;
   }, [weeks]);
+
+  // A holiday with every day covered is the moment the app has just done its
+  // job, so that is when to ask for a review. The planner remounts on the way
+  // back from a day, so this runs after each change; the timing rule in
+  // utils/reviewPrompt.ts keeps it from asking more than rarely.
+  useEffect(() => {
+    if (loading) return;
+    getHolidayCoverage(id)
+      .then((coverage) => {
+        if (coverage && !coverage.empty && coverage.gapDays === 0) return maybeAskForReview();
+      })
+      .catch(() => {});
+  }, [id, loading]);
 
   const weekIndex = Math.min(chosenWeek ?? defaultWeek, Math.max(0, weeks.length - 1));
 
