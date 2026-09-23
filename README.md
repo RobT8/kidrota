@@ -203,6 +203,22 @@ Colours that serve two roles need two tokens: `--red-text` is a foreground and
 `--danger-bg`/`--danger-on` the destructive button, because a red that reads on
 the page background is unreadable as a button fill once the theme flips.
 
+## Tested on hardware
+
+Native behaviour that a browser cannot show, checked on a Samsung SM-A346B
+from an Android Studio build:
+
+| Feature | Status |
+|---|---|
+| Play Billing connects (Restore purchases gets Play's answer) | ✓ |
+| Free-tier limits and the Pro sheet | ✓ |
+| "Rate this app" opens the Play Store app | ✓ |
+| Share sheet for plan codes | ✓ |
+| Backup export to the share sheet | ✓ |
+| Backup restore | Crashed with "Connection kidrota already exists"; fixed in `connect()` in `src/db/database.ts` — re-test |
+| Reminder scheduled | ✓ — delivery at 9:00 not yet seen |
+| A real purchase, the review card | Not testable until installed from a Play testing track |
+
 ## Build progress
 
 - [x] 1. Project scaffold — Vite + React + Capacitor + Android platform
