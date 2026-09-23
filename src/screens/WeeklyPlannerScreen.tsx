@@ -14,6 +14,14 @@ import { maybeAskForReview } from '../utils/review';
 
 type View = 'week' | 'list';
 
+/**
+ * List first: a day per row reads more easily on a phone than the grid, which
+ * stays one tap away. Kept outside the component so the choice survives going
+ * into a day and back — the planner remounts on the way — until the app is
+ * next launched.
+ */
+let lastView: View = 'list';
+
 export default function WeeklyPlannerScreen() {
   const { holidayId } = useParams();
   const navigate = useNavigate();
@@ -25,10 +33,15 @@ export default function WeeklyPlannerScreen() {
   // Null until the user pages somewhere, so the default below can follow the
   // data as it loads without an effect writing state back during render.
   const [chosenWeek, setChosenWeek] = useState<number | null>(null);
-  const [view, setView] = useState<View>('week');
+  const [view, setViewState] = useState<View>(() => lastView);
   const [sharing, setSharing] = useState(false);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  function setView(next: View) {
+    lastView = next;
+    setViewState(next);
+  }
+
   // The element captured for the image — the grid itself, not the whole screen.
   const shareable = useRef<HTMLDivElement>(null);
 
@@ -80,6 +93,11 @@ export default function WeeklyPlannerScreen() {
   const openDay = (date: string) => navigate(`/holiday/${id}/day/${date}`);
 
   async function shareImage() {
+    // The picture is of the week grid, which List view does not render.
+    if (view !== 'week') {
+      setView('week');
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    }
     if (!shareable.current) return;
     setBusy(true);
     setShareStatus(null);

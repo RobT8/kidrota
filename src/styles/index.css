@@ -333,60 +333,57 @@ button {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 20px;
-}
-
-.welcome__skip {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.welcome__track {
-  display: flex;
-  flex: 1;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-}
-
-.welcome__track::-webkit-scrollbar {
-  display: none;
-}
-
-.welcome__slide {
-  flex: 0 0 100%;
-  scroll-snap-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 0 8px;
+  gap: 28px;
+}
+
+.welcome__header {
   text-align: center;
 }
 
-.welcome__icon {
-  color: var(--accent);
-  margin-bottom: 8px;
-}
-
 .welcome__title {
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 600;
-  margin: 0;
+  margin: 0 0 8px;
 }
 
 .welcome__body {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text2);
-  margin: 0;
+  margin: 0 auto;
   max-width: 30ch;
 }
 
-.welcome__dots {
+.welcome__points {
   display: flex;
-  justify-content: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.welcome__point {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.welcome__icon {
+  flex: none;
+  color: var(--accent);
+}
+
+.welcome__point-title {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.welcome__point-body {
+  display: block;
+  font-size: 13px;
+  color: var(--text2);
 }
 
 .dot {
@@ -643,6 +640,17 @@ button {
 
 .holiday-card__summary--gaps {
   color: var(--red-text);
+}
+
+.holiday-card__cta {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .holiday-card__edit {

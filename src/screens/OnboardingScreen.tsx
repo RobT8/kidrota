@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { setOnboardingComplete } from '../db/settings';
-import WelcomeCarousel from './onboarding/WelcomeCarousel';
+import Welcome from './onboarding/Welcome';
 import ChildrenStep from './onboarding/ChildrenStep';
 import CarersStep from './onboarding/CarersStep';
 
@@ -56,7 +56,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
           </div>
         )}
 
-        {step === 'welcome' && <WelcomeCarousel onDone={() => setStep('children')} />}
+        {step === 'welcome' && <Welcome onDone={() => setStep('children')} />}
         {step === 'children' && <ChildrenStep onNext={() => setStep('carers')} />}
         {step === 'carers' && <CarersStep onDone={finish} busy={saving} />}
 

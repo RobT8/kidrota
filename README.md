@@ -223,7 +223,7 @@ from an Android Studio build:
 
 - [x] 1. Project scaffold — Vite + React + Capacitor + Android platform
 - [x] 2. Database layer — SQLite init, migrations, CRUD
-- [x] 3. Onboarding — welcome slides, add children, add carers
+- [x] 3. Onboarding — welcome page, add children, add carers
 - [x] 4. Home screen — holiday list, progress bars, stat cards
 - [x] 5. Weekly planner — week grid, navigation, gap detection
 - [x] 6. Day assignment — carer picker, slot assignment, repeat logic

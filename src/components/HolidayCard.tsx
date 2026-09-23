@@ -11,6 +11,12 @@ interface HolidayCardProps {
   onEdit: () => void;
 }
 
+/** What opening the holiday lets you do, given how much is planned. */
+function openLabel(coverage: HolidayCoverage | undefined): string {
+  if (!coverage || coverage.empty) return 'Start planning';
+  return coverage.gapDays > 0 ? 'Fill the gaps' : 'View plan';
+}
+
 export default function HolidayCard({ holiday, coverage, onOpen, onEdit }: HolidayCardProps) {
   const summary = coverage ? coverageSummary(coverage) : '';
 
@@ -33,6 +39,11 @@ export default function HolidayCard({ holiday, coverage, onOpen, onEdit }: Holid
           }
         >
           {summary}
+        </span>
+        {/* The whole card is the button; this makes that visible, and says
+            what opening it is for right now. */}
+        <span className="holiday-card__cta">
+          {openLabel(coverage)} <span aria-hidden="true">›</span>
         </span>
       </button>
 
