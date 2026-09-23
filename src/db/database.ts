@@ -75,19 +75,37 @@ async function initWebStore(): Promise<void> {
   }
 }
 
+/** The parts of SQLiteConnection that `connect` uses, so tests can fake it. */
+export type ConnectionManager = Pick<
+  SQLiteConnection,
+  'checkConnectionsConsistency' | 'isConnection' | 'retrieveConnection' | 'createConnection'
+>;
+
+/**
+ * Get the one connection to the app's database.
+ *
+ * The native plugin outlives the WebView: a page reload — which restoring a
+ * backup and deleting all data both do — restarts the JavaScript, but Android
+ * still holds the connection opened before it. The JavaScript side's own list
+ * of connections starts empty again, so asking it "is there a connection?"
+ * says no, and creating one fails with "Connection kidrota already exists".
+ * Checking consistency first tells the native side which connections this
+ * JavaScript still knows about, and it closes the rest.
+ */
+export async function connect(sqlite: ConnectionManager): Promise<SQLiteDBConnection> {
+  await sqlite.checkConnectionsConsistency().catch(() => {
+    // Only a best-effort tidy-up; a failure here still leaves the checks below.
+  });
+  const existing = await sqlite.isConnection(DB_NAME, false);
+  if (existing.result) return sqlite.retrieveConnection(DB_NAME, false);
+  return sqlite.createConnection(DB_NAME, false, 'no-encryption', 1, false);
+}
+
 async function open(): Promise<DbExecutor> {
   const isWeb = Capacitor.getPlatform() === 'web';
   if (isWeb) await initWebStore();
 
-  const sqlite = new SQLiteConnection(CapacitorSQLite);
-
-  // A hot reload can leave a stale connection behind; reuse it rather than
-  // failing on "connection already exists".
-  const existing = await sqlite.isConnection(DB_NAME, false);
-  const conn = existing.result
-    ? await sqlite.retrieveConnection(DB_NAME, false)
-    : await sqlite.createConnection(DB_NAME, false, 'no-encryption', 1, false);
-
+  const conn = await connect(new SQLiteConnection(CapacitorSQLite));
   await conn.open();
 
   const db = capacitorExecutor(conn, isWeb);
