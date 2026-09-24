@@ -4,6 +4,7 @@ import { carerSwatch } from '../utils/colour';
 import { CARER_TYPE_VARS, type HolidayMode } from '../utils/constants';
 import { dayKey, slotIn, timeSlotsIn } from '../hooks/useAssignments';
 import { formatLongDate } from '../utils/dates';
+import { dayTimeline } from '../utils/timeSlots';
 
 interface DayListProps {
   dates: string[];
@@ -47,11 +48,17 @@ export default function DayList({
                       carer: assignment ? (carersById.get(assignment.carer_id) ?? null) : null,
                     };
                   })
-                : timeSlotsIn(assignments).map((slot) => ({
-                    key: String(slot.id),
-                    label: `${slot.start_time}–${slot.end_time}`,
-                    carer: carersById.get(slot.carer_id) ?? null,
-                  }));
+                : timeSlotsIn(assignments).length === 0
+                  ? []
+                  : dayTimeline(timeSlotsIn(assignments)).map((entry) =>
+                      entry.kind === 'gap'
+                        ? { key: `gap-${entry.start}`, label: `${entry.start}–${entry.end}`, carer: null }
+                        : {
+                            key: String(entry.slot.id),
+                            label: `${entry.slot.start_time}–${entry.slot.end_time}`,
+                            carer: carersById.get(entry.slot.carer_id) ?? null,
+                          },
+                    );
 
             return (
               <span className="day-list__child" key={child.id}>

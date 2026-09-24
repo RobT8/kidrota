@@ -94,8 +94,13 @@ In detailed mode a child's day is a run of sessions — Dad 08:00–10:00, Gran
 times start where the day's last session ends, so a day of hand-overs only
 needs the hand-over times typed. The day runs 08:00–18:00 (`DAY_START` /
 `DAY_END` in `utils/timeSlots.ts`). Overlaps are warned about but allowed,
-since an overlap at a hand-over can be deliberate. A detailed day still counts
-as covered once it has any session; gaps within a day are not detected.
+since an overlap at a hand-over can be deliberate.
+
+A detailed day counts as covered only when a child's sessions leave no gap
+between 08:00 and 18:00 (`dayGaps` / `coversWholeDay`). Gaps show as a red "?"
+where they fall in the grid and list, the day's badge names the gap ("Gap
+15:00–15:30"), and adding a session offers "Fill gap" first. A day with
+sessions but a gap is a gap in the Home screen's totals, not "Not started".
 
 ## Theming
 

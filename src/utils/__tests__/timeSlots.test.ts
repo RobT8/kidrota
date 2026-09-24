@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   DAY_END,
   DAY_START,
+  coversWholeDay,
+  dayGaps,
+  dayTimeline,
   defaultRange,
   formatRange,
   isValidRange,
@@ -49,7 +52,8 @@ describe('timeChoices', () => {
 
   it('follows the latest end, not the last one added', () => {
     const choices = timeChoices([slot('13:00', '16:00'), slot('08:00', '10:00')]);
-    expect(choices[0].start).toBe('16:00');
+    expect(choices[0]).toMatchObject({ label: 'Fill gap', start: '10:00', end: '13:00' });
+    expect(choices[1].start).toBe('16:00');
   });
 });
 
@@ -102,5 +106,77 @@ describe('latestEnd / formatRange', () => {
 
   it('formats a range compactly', () => {
     expect(formatRange('08:00', '10:00')).toBe('08:00–10:00');
+  });
+});
+
+describe('dayGaps / coversWholeDay', () => {
+  it('is one gap, the whole day, when nothing is booked', () => {
+    expect(dayGaps([])).toEqual([{ start: DAY_START, end: DAY_END }]);
+    expect(coversWholeDay([])).toBe(false);
+  });
+
+  it('covers the day with hand-overs end to end', () => {
+    const day = [slot('08:00', '10:00'), slot('10:00', '15:00'), slot('15:00', '18:00')];
+    expect(dayGaps(day)).toEqual([]);
+    expect(coversWholeDay(day)).toBe(true);
+  });
+
+  it('finds a hole between two sessions', () => {
+    const day = [slot('08:00', '15:00'), slot('15:30', '18:00')];
+    expect(dayGaps(day)).toEqual([{ start: '15:00', end: '15:30' }]);
+  });
+
+  it('finds the start and end of the day left uncovered', () => {
+    expect(dayGaps([slot('09:00', '17:00')])).toEqual([
+      { start: '08:00', end: '09:00' },
+      { start: '17:00', end: '18:00' },
+    ]);
+  });
+
+  it('merges overlapping sessions, in any order', () => {
+    expect(dayGaps([slot('12:00', '18:00'), slot('08:00', '13:00')])).toEqual([]);
+  });
+
+  it('lets sessions run past either end of the day', () => {
+    expect(coversWholeDay([slot('07:30', '19:00')])).toBe(true);
+  });
+
+  it('ignores a broken session rather than counting it as cover', () => {
+    expect(coversWholeDay([{ start_time: '08:00', end_time: null }])).toBe(false);
+  });
+});
+
+describe('gap choices', () => {
+  it('offers to fill a hole left earlier in the day first', () => {
+    const choices = timeChoices([slot('08:00', '15:00'), slot('15:30', '17:00')]);
+    expect(choices[0]).toEqual({ key: 'gap-15:00', label: 'Fill gap', start: '15:00', end: '15:30' });
+    expect(choices.map((c) => c.label)).toEqual(['Fill gap', 'Rest of day']);
+  });
+
+  it('offers the morning before a late first session', () => {
+    expect(timeChoices([slot('09:00', '12:00')])[0]).toMatchObject({ start: '08:00', end: '09:00' });
+  });
+
+  it('points typed times at the first gap', () => {
+    expect(defaultRange([slot('08:00', '15:00'), slot('15:30', '18:00')])).toEqual({
+      start: '15:00',
+      end: '15:30',
+    });
+  });
+});
+
+describe('dayTimeline', () => {
+  it('slots gaps in where they fall', () => {
+    const timeline = dayTimeline([slot('15:30', '18:00'), slot('09:00', '15:00')]);
+    expect(timeline.map((e) => (e.kind === 'gap' ? `gap ${e.start}–${e.end}` : e.start))).toEqual([
+      'gap 08:00–09:00',
+      '09:00',
+      'gap 15:00–15:30',
+      '15:30',
+    ]);
+  });
+
+  it('has no gaps on a covered day', () => {
+    expect(dayTimeline([slot('08:00', '18:00')]).every((e) => e.kind === 'session')).toBe(true);
   });
 });

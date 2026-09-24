@@ -2,6 +2,7 @@ import type { Assignment, Carer, Child } from '../db/types';
 import type { HolidayMode } from '../utils/constants';
 import { formatColumnHeader } from '../utils/dates';
 import { slotIn, timeSlotsIn } from '../hooks/useAssignments';
+import { dayTimeline } from '../utils/timeSlots';
 import SlotCell from './SlotCell';
 
 interface DayColumnProps {
@@ -63,7 +64,20 @@ export default function DayColumn({
           accessibleLabel={`${child.name}, ${heading}: no cover`}
         />
       ) : (
-        slots.map((slot) => {
+        dayTimeline(slots).map((entry) => {
+          // A hole in the day shows as a red "?" where it falls.
+          if (entry.kind === 'gap') {
+            return (
+              <SlotCell
+                key={`gap-${entry.start}`}
+                label={entry.start}
+                carer={null}
+                onClick={() => onSelect(date)}
+                accessibleLabel={`${child.name}, ${heading} ${entry.start}–${entry.end}: no cover`}
+              />
+            );
+          }
+          const slot = entry.slot;
           const carer = carersById.get(slot.carer_id) ?? null;
           return (
             <SlotCell

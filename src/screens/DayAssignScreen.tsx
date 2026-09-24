@@ -22,6 +22,7 @@ import {
   type Period,
 } from '../utils/constants';
 import { formatLongDate } from '../utils/dates';
+import { dayGaps, formatRange } from '../utils/timeSlots';
 
 /** Which slot's picker is open, e.g. "3:am". Only one is expanded at a time. */
 type OpenSlot = string | null;
@@ -269,9 +270,13 @@ function StatusBadge({
     return <span className="badge badge--gap">{am ? 'PM gap' : 'AM gap'}</span>;
   }
 
-  return timeSlotsIn(assignments).length > 0 ? (
-    <span className="badge badge--ok">Covered</span>
-  ) : (
-    <span className="badge badge--gap">Needs cover</span>
+  const slots = timeSlotsIn(assignments);
+  if (slots.length === 0) return <span className="badge badge--gap">Needs cover</span>;
+  const gaps = dayGaps(slots);
+  if (gaps.length === 0) return <span className="badge badge--ok">Covered</span>;
+  return (
+    <span className="badge badge--gap">
+      {gaps.length === 1 ? `Gap ${formatRange(gaps[0].start, gaps[0].end)}` : `${gaps.length} gaps`}
+    </span>
   );
 }

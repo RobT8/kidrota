@@ -1,4 +1,5 @@
 import { getHolidayDates } from '../utils/dates';
+import { coversWholeDay } from '../utils/timeSlots';
 import { getDb } from './database';
 import { listChildren } from './children';
 import { getHoliday, listHolidays } from './holidays';
@@ -14,6 +15,8 @@ export interface DayCoverage {
   filledSlots: number;
   /** True only when every child is covered for the whole day. */
   covered: boolean;
+  /** Anything booked at all, even a partial day. */
+  booked: boolean;
 }
 
 export interface HolidayCoverage {
@@ -37,7 +40,7 @@ export async function getHolidayCoverage(holidayId: number): Promise<HolidayCove
   const holiday = await getHoliday(holidayId);
   if (!holiday) return null;
   const children = await listChildren();
-  return computeCoverage(holiday, children.length, await countFilledSlots(holidayId));
+  return computeCoverage(holiday, children.length, await loadCover(holiday));
 }
 
 /** Coverage for every holiday, for the home screen list and stat cards. */
@@ -46,7 +49,7 @@ export async function getAllHolidayCoverage(): Promise<HolidayCoverage[]> {
   const children = await listChildren();
   const coverage: HolidayCoverage[] = [];
   for (const holiday of holidays) {
-    coverage.push(computeCoverage(holiday, children.length, await countFilledSlots(holiday.id)));
+    coverage.push(computeCoverage(holiday, children.length, await loadCover(holiday)));
   }
   return coverage;
 }
@@ -61,43 +64,76 @@ export async function countAllGaps(): Promise<number> {
   );
 }
 
-/**
- * How many slots each child has booked, grouped by date.
- *
- * Counted in SQL so a long holiday is one query rather than one per cell.
- * DISTINCT collapses detailed mode's several time slots into "this child has
- * cover that day", matching the gap rule for that mode.
- */
-async function countFilledSlots(holidayId: number): Promise<Map<string, number[]>> {
-  const db = await getDb();
-  const rows = await db.query<{ date: string; child_id: number; n: number }>(
-    `SELECT date, child_id, COUNT(DISTINCT COALESCE(period, 'slot')) AS n
-     FROM assignments
-     WHERE holiday_id = ?
-     GROUP BY date, child_id`,
-    [holidayId],
-  );
+interface Cover {
+  /** Per date, how many of its needed slots each child has filled. */
+  filled: Map<string, number[]>;
+  /** Dates with anything booked at all. */
+  booked: Set<string>;
+}
 
-  const byDate = new Map<string, number[]>();
-  for (const row of rows) {
-    const counts = byDate.get(row.date) ?? [];
-    counts.push(row.n);
-    byDate.set(row.date, counts);
+/**
+ * What each child has booked, grouped by date.
+ *
+ * Simple mode is counted in SQL, one filled slot per booked AM or PM. Detailed
+ * mode needs the times: a child counts as covered only when their sessions
+ * leave no gap between DAY_START and DAY_END (utils/timeSlots.ts), so the day
+ * is one slot, filled or not.
+ */
+async function loadCover(holiday: Holiday): Promise<Cover> {
+  const db = await getDb();
+  const filled = new Map<string, number[]>();
+  const booked = new Set<string>();
+  const add = (date: string, count: number) => {
+    const counts = filled.get(date) ?? [];
+    counts.push(count);
+    filled.set(date, counts);
+    booked.add(date);
+  };
+
+  if (holiday.mode === 'simple') {
+    const rows = await db.query<{ date: string; n: number }>(
+      `SELECT date, COUNT(DISTINCT period) AS n
+       FROM assignments
+       WHERE holiday_id = ? AND period IS NOT NULL
+       GROUP BY date, child_id`,
+      [holiday.id],
+    );
+    for (const row of rows) add(row.date, row.n);
+    return { filled, booked };
   }
-  return byDate;
+
+  const rows = await db.query<{
+    date: string;
+    child_id: number;
+    start_time: string | null;
+    end_time: string | null;
+  }>(
+    `SELECT date, child_id, start_time, end_time
+     FROM assignments
+     WHERE holiday_id = ? AND period IS NULL`,
+    [holiday.id],
+  );
+  const byChildDay = new Map<string, { date: string; slots: typeof rows }>();
+  for (const row of rows) {
+    const key = `${row.date}:${row.child_id}`;
+    const entry = byChildDay.get(key) ?? { date: row.date, slots: [] };
+    entry.slots.push(row);
+    byChildDay.set(key, entry);
+  }
+  for (const { date, slots } of byChildDay.values()) add(date, coversWholeDay(slots) ? 1 : 0);
+  return { filled, booked };
 }
 
 function computeCoverage(
   holiday: Holiday,
   childCount: number,
-  filled: Map<string, number[]>,
+  { filled, booked }: Cover,
 ): HolidayCoverage {
   const slotsPerChild = holiday.mode === 'simple' ? SIMPLE_SLOTS_PER_DAY : 1;
   const days: DayCoverage[] = [];
 
   for (const date of getHolidayDates(holiday)) {
-    // Cap each child's count at the slots they actually need: in detailed mode
-    // three time slots still only satisfy one day's requirement.
+    // Cap each child's count at the slots they actually need.
     const filledSlots = (filled.get(date) ?? []).reduce(
       (sum, count) => sum + Math.min(count, slotsPerChild),
       0,
@@ -108,6 +144,7 @@ function computeCoverage(
       totalSlots,
       filledSlots,
       covered: totalSlots > 0 && filledSlots >= totalSlots,
+      booked: booked.has(date),
     });
   }
 
@@ -117,6 +154,7 @@ function computeCoverage(
     days,
     coveredDays,
     gapDays: days.length - coveredDays,
-    empty: days.every((day) => day.filledSlots === 0),
+    // A detailed day with a gap has no filled slots but is not untouched.
+    empty: days.every((day) => !day.booked),
   };
 }

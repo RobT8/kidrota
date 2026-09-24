@@ -59,19 +59,64 @@ export function timeChoices(slots: TimeRange[]): TimeChoice[] {
     ];
   }
 
-  const choices: TimeChoice[] = ['12:00', '15:00']
-    .filter((until) => until > from)
-    .map((until) => ({ key: `until-${until}`, label: `Until ${until}`, start: from, end: until }));
+  // A hole left earlier in the day, e.g. between Gran ending at 15:00 and Mum
+  // starting at 15:30, is the likeliest thing still to fill.
+  const choices: TimeChoice[] = dayGaps(slots)
+    .filter((gap) => gap.end <= from)
+    .map((gap) => ({ key: `gap-${gap.start}`, label: 'Fill gap', start: gap.start, end: gap.end }));
+
+  for (const until of ['12:00', '15:00']) {
+    if (until > from) choices.push({ key: `until-${until}`, label: `Until ${until}`, start: from, end: until });
+  }
   if (from < DAY_END) {
     choices.push({ key: 'rest-of-day', label: 'Rest of day', start: from, end: DAY_END });
   }
   return choices;
 }
 
-/** Where a typed-in session should start by default: after the last one. */
+/**
+ * The stretches of the day (DAY_START–DAY_END) that no session covers.
+ *
+ * Sessions are merged first, so overlapping ones and hand-overs (one ending
+ * as the next begins) leave no gap; anything before DAY_START or after
+ * DAY_END is ignored.
+ */
+export function dayGaps(slots: TimeRange[]): { start: string; end: string }[] {
+  const ranges = slots
+    .filter((slot): slot is { start_time: string; end_time: string } =>
+      isValidRange(slot.start_time ?? '', slot.end_time ?? ''),
+    )
+    .map((slot) => ({
+      start: slot.start_time < DAY_START ? DAY_START : slot.start_time,
+      end: slot.end_time > DAY_END ? DAY_END : slot.end_time,
+    }))
+    .filter((range) => range.end > range.start)
+    .sort((a, b) => a.start.localeCompare(b.start));
+
+  const gaps: { start: string; end: string }[] = [];
+  let cursor = DAY_START;
+  for (const range of ranges) {
+    if (range.start > cursor) gaps.push({ start: cursor, end: range.start });
+    if (range.end > cursor) cursor = range.end;
+  }
+  if (cursor < DAY_END) gaps.push({ start: cursor, end: DAY_END });
+  return gaps;
+}
+
+/** Is every minute of the day, DAY_START to DAY_END, looked after? */
+export function coversWholeDay(slots: TimeRange[]): boolean {
+  return dayGaps(slots).length === 0;
+}
+
+/**
+ * Where a typed-in session should start by default: the day's first gap, which
+ * on a day of hand-overs is simply after the last session.
+ */
 export function defaultRange(slots: TimeRange[]): { start: string; end: string } {
+  const [first] = dayGaps(slots);
+  if (first) return first;
   const from = latestEnd(slots) ?? DAY_START;
-  return { start: from, end: from < DAY_END ? DAY_END : '' };
+  return { start: from, end: '' };
 }
 
 /**
@@ -92,4 +137,20 @@ export function overlapping<T extends TimeRange>(slots: T[], start: string, end:
 /** "08:00–10:00" */
 export function formatRange(start: string | null, end: string | null): string {
   return `${start ?? '?'}–${end ?? '?'}`;
+}
+
+export type TimelineEntry<T> =
+  | { kind: 'session'; slot: T; start: string }
+  | { kind: 'gap'; start: string; end: string };
+
+/**
+ * A day's sessions with its gaps slotted in between, in time order — what the
+ * week grid and list show, so a hole reads as a red "?" where it falls.
+ */
+export function dayTimeline<T extends TimeRange>(slots: T[]): TimelineEntry<T>[] {
+  const entries: TimelineEntry<T>[] = [
+    ...slots.map((slot) => ({ kind: 'session' as const, slot, start: slot.start_time ?? '' })),
+    ...dayGaps(slots).map((gap) => ({ kind: 'gap' as const, ...gap })),
+  ];
+  return entries.sort((a, b) => a.start.localeCompare(b.start) || (a.kind === 'gap' ? -1 : 1));
 }

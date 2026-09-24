@@ -100,31 +100,59 @@ describe('simple mode', () => {
 });
 
 describe('detailed mode', () => {
-  it('treats at least one time slot as covering the day', async () => {
+  async function session(holiday: number, child: number, start: string, end: string) {
+    await addTimeSlot({
+      holiday_id: holiday, child_id: child, carer_id: gran, date: '2026-10-19',
+      start_time: start, end_time: end,
+    });
+  }
+
+  it('covers a day only when 08:00–18:00 has no gap', async () => {
     const detailed = await createHoliday({ ...ONE_WEEK, name: 'Detailed', mode: 'detailed' });
-    for (const child of [ada, bo]) {
-      await addTimeSlot({
-        holiday_id: detailed, child_id: child, carer_id: gran, date: '2026-10-19',
-        start_time: '09:00', end_time: '17:00',
-      });
-    }
+    for (const child of [ada, bo]) await session(detailed, child, '08:00', '18:00');
     const day = (await getHolidayCoverage(detailed))!.days[0];
-    expect(day.totalSlots).toBe(2); // 2 children x 1 slot needed
+    expect(day.totalSlots).toBe(2); // 2 children x 1 whole day each
     expect(day.covered).toBe(true);
   });
 
-  it('does not let one child’s extra slots cover for another child', async () => {
+  it('covers a day of hand-overs: Dad, then Gran, then Mum', async () => {
     const detailed = await createHoliday({ ...ONE_WEEK, name: 'Detailed', mode: 'detailed' });
-    // Ada has three slots; Bo has none.
-    for (const [start, end] of [['09:00', '11:00'], ['11:00', '14:00'], ['14:00', '17:00']]) {
-      await addTimeSlot({
-        holiday_id: detailed, child_id: ada, carer_id: gran, date: '2026-10-19',
-        start_time: start, end_time: end,
-      });
+    for (const child of [ada, bo]) {
+      await session(detailed, child, '08:00', '10:00');
+      await session(detailed, child, '10:00', '15:00');
+      await session(detailed, child, '15:00', '18:00');
     }
-    const day = (await getHolidayCoverage(detailed))!.days[0];
-    expect(day.filledSlots).toBe(1); // capped at what Ada needs
+    expect((await getHolidayCoverage(detailed))!.days[0].covered).toBe(true);
+  });
+
+  it('leaves a day with a gap uncovered, but not "not started"', async () => {
+    const detailed = await createHoliday({ ...ONE_WEEK, name: 'Detailed', mode: 'detailed' });
+    for (const child of [ada, bo]) await session(detailed, child, '09:00', '17:00');
+    const coverage = (await getHolidayCoverage(detailed))!;
+    const day = coverage.days[0];
     expect(day.covered).toBe(false);
+    expect(day.filledSlots).toBe(0);
+    expect(day.booked).toBe(true);
+    expect(coverage.empty).toBe(false);
+    expect(coverage.gapDays).toBe(5);
+  });
+
+  it('does not let one child’s sessions cover for another child', async () => {
+    const detailed = await createHoliday({ ...ONE_WEEK, name: 'Detailed', mode: 'detailed' });
+    // Ada's day is fully covered; Bo has nothing.
+    await session(detailed, ada, '08:00', '12:00');
+    await session(detailed, ada, '12:00', '18:00');
+    const day = (await getHolidayCoverage(detailed))!.days[0];
+    expect(day.filledSlots).toBe(1);
+    expect(day.covered).toBe(false);
+  });
+
+  it('counts a partly covered child as a gap in the totals', async () => {
+    const detailed = await createHoliday({ ...ONE_WEEK, name: 'Detailed', mode: 'detailed' });
+    await session(detailed, ada, '08:00', '15:00');
+    await session(detailed, bo, '08:00', '18:00');
+    const day = (await getHolidayCoverage(detailed))!.days[0];
+    expect(day.totalSlots - day.filledSlots).toBe(1);
   });
 });
 
