@@ -89,6 +89,14 @@ set `start_time`/`end_time` and leave `period` null. A partial unique index
 enforces one carer per simple-mode slot without restricting how many time
 slots a detailed day can hold.
 
+In detailed mode a child's day is a run of sessions — Dad 08:00–10:00, Gran
+10:00–15:00, Mum 15:00–18:00. Adding one is "who, then when": the one-tap
+times start where the day's last session ends, so a day of hand-overs only
+needs the hand-over times typed. The day runs 08:00–18:00 (`DAY_START` /
+`DAY_END` in `utils/timeSlots.ts`). Overlaps are warned about but allowed,
+since an overlap at a hand-over can be deliberate. A detailed day still counts
+as covered once it has any session; gaps within a day are not detected.
+
 ## Theming
 
 All colours are CSS custom properties in `src/styles/index.css`. The user's
@@ -214,6 +222,7 @@ from an Android Studio build:
 | Free-tier limits and the Pro sheet | ✓ |
 | "Rate this app" opens the Play Store app | ✓ |
 | Share sheet for plan codes | ✓ |
+| Android navigation buttons follow the app's theme (`SystemBars` in `utils/theme.ts`) | Fixed — re-test |
 | Backup export to the share sheet | ✓ |
 | Backup restore | Crashed with "Connection kidrota already exists"; fixed in `connect()` in `src/db/database.ts` — re-test |
 | Reminder scheduled | ✓ — delivery at 9:00 not yet seen |

@@ -5,6 +5,7 @@ import ChildAvatar from '../components/ChildAvatar';
 import Loading from '../components/Loading';
 import RepeatChips from '../components/RepeatChips';
 import TimeSlotEditor from '../components/TimeSlotEditor';
+import QuickAddCarer from '../components/QuickAddCarer';
 import {
   clearSlotAssignment,
   repeatAssignments,
@@ -16,7 +17,6 @@ import { getDayNote, setDayNote } from '../db/dayNotes';
 import type { Assignment, Child } from '../db/types';
 import { dayKey, slotIn, timeSlotsIn, useAssignments } from '../hooks/useAssignments';
 import {
-  CARER_TYPE_LABELS,
   type CarerType,
   type HolidayMode,
   type Period,
@@ -223,6 +223,12 @@ export default function DayAssignScreen() {
                 slots={timeSlotsIn(assignments)}
                 carers={carers}
                 carersById={carersById}
+                siblings={children
+                  .filter((other) => other.id !== child.id)
+                  .map((other) => ({
+                    child: other,
+                    slots: timeSlotsIn(byDayAndChild.get(dayKey(date, other.id))),
+                  }))}
                 onChanged={reload}
               />
             )}
@@ -267,53 +273,5 @@ function StatusBadge({
     <span className="badge badge--ok">Covered</span>
   ) : (
     <span className="badge badge--gap">Needs cover</span>
-  );
-}
-
-function QuickAddCarer({
-  name,
-  type,
-  onName,
-  onType,
-  onCancel,
-  onAdd,
-}: {
-  name: string;
-  type: CarerType;
-  onName: (value: string) => void;
-  onType: (value: CarerType) => void;
-  onCancel: () => void;
-  onAdd: () => void;
-}) {
-  return (
-    <div className="quick-add">
-      <input
-        className="field__input"
-        value={name}
-        placeholder="Name"
-        maxLength={24}
-        autoFocus
-        onChange={(event) => onName(event.target.value)}
-      />
-      <select
-        className="field__input"
-        value={type}
-        onChange={(event) => onType(event.target.value as CarerType)}
-      >
-        {(Object.keys(CARER_TYPE_LABELS) as CarerType[]).map((option) => (
-          <option key={option} value={option}>
-            {CARER_TYPE_LABELS[option]}
-          </option>
-        ))}
-      </select>
-      <div className="add-form__actions">
-        <button type="button" className="button button--secondary" disabled={!name.trim()} onClick={onAdd}>
-          Add & assign
-        </button>
-        <button type="button" className="link-button" onClick={onCancel}>
-          Cancel
-        </button>
-      </div>
-    </div>
   );
 }

@@ -1,3 +1,5 @@
+import { Capacitor, SystemBars, SystemBarsStyle } from '@capacitor/core';
+
 export type ThemePreference = 'light' | 'dark' | 'system';
 
 const STORAGE_KEY = 'kidrota.theme';
@@ -25,7 +27,26 @@ function resolve(preference: ThemePreference): 'light' | 'dark' {
 }
 
 function apply(preference: ThemePreference): void {
-  document.documentElement.dataset.theme = resolve(preference);
+  const theme = resolve(preference);
+  document.documentElement.dataset.theme = theme;
+  matchSystemBars(theme);
+}
+
+/**
+ * Colour Android's status bar and navigation buttons for the app's theme.
+ *
+ * Left alone, Capacitor follows the phone's dark-mode setting instead. With
+ * the phone dark and KidRota light, that drew white back/home/recents buttons
+ * over the white bottom sheets, where they vanished. "Light" here means the
+ * light background style — dark icons.
+ */
+function matchSystemBars(theme: 'light' | 'dark'): void {
+  if (!Capacitor.isNativePlatform()) return;
+  SystemBars.setStyle({
+    style: theme === 'dark' ? SystemBarsStyle.Dark : SystemBarsStyle.Light,
+  }).catch(() => {
+    // Cosmetic only; the app works the same without it.
+  });
 }
 
 export function setThemePreference(preference: ThemePreference): void {
