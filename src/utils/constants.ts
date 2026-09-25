@@ -73,13 +73,13 @@ export const FREE_TIER_MAX_HOLIDAYS = 2;
  * Outward-facing links and addresses, kept together so there is one place to
  * change them.
  *
- * The legal pages are served by GitHub Pages from the docs/ folder at the
- * repository root. Google Play requires the privacy policy URL to be publicly
+ * The legal pages live on t80.dev; docs/ in this repository holds their
+ * source. Google Play requires the privacy policy URL to be publicly
  * reachable before the app can be published.
  */
 export const SUPPORT_EMAIL = 'support@kidrota.app';
-export const PRIVACY_URL = 'https://robt8.github.io/kidrota/privacy.html';
-export const TERMS_URL = 'https://robt8.github.io/kidrota/terms.html';
+export const PRIVACY_URL = 'https://t80.dev/kidrota/privacy.html';
+export const TERMS_URL = 'https://t80.dev/kidrota/terms.html';
 /**
  * The Settings "Rate this app" row opens the listing rather than calling the
  * In-App Review API: Google asks apps not to put that API behind a button, as
