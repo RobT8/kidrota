@@ -193,3 +193,11 @@ describe('pasting a whole message', () => {
     expect(message.endsWith('KIDROTA1:abc')).toBe(true);
   });
 });
+
+describe('planMessage wording', () => {
+  it('points at the code below rather than the whole message', () => {
+    const message = planMessage('Summer', 'KIDROTA1:abc');
+    expect(message).toContain('then paste the text below.');
+    expect(message).not.toContain('whole message');
+  });
+});

@@ -145,7 +145,7 @@ export function planMessage(holidayName: string, code: string): string {
   return [
     `KidRota plan: ${holidayName}`,
     '',
-    'To add it to your KidRota: open Settings → “Add a plan someone sent you”, then paste this whole message.',
+    'To add it to your KidRota: open Settings → “Add a plan someone sent you”, then paste the text below.',
     '',
     code,
   ].join('\n');
