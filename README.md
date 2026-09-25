@@ -143,6 +143,17 @@ On Android the file goes to app storage and then the system share sheet, so it
 can be saved to Drive, Files or email. Writing straight to the public Downloads
 folder would need storage permissions the app otherwise never asks for.
 
+## Feedback
+
+Settings → Send feedback is a short form (kind + message) that opens the
+user's own email app with a message to `kidrota@t80.dev` filled in, including
+the app version (`utils/feedback.ts`). The app sends nothing itself; the
+privacy policy's "Sending feedback" section says what happens to the email.
+
+The legal pages' source is `docs/`; they are served from
+`https://t80.dev/kidrota/`. Google Play needs the privacy policy as a web
+page, not a PDF.
+
 ## Android back button
 
 A WebView wires nothing to Android's back button or back gesture, so without

@@ -13,6 +13,7 @@ import { restorePro } from '../utils/billing';
 import { buildPlanCode } from '../db/exportPlan';
 import { formatDateRange } from '../utils/dates';
 import type { Holiday } from '../db/types';
+import { FEEDBACK_KINDS, FEEDBACK_MAX_LENGTH, feedbackMailto, type FeedbackKind } from '../utils/feedback';
 import { getSetting, setSetting } from '../db/settings';
 import {
   DEFAULT_REMINDER_DAYS,
@@ -49,6 +50,10 @@ export default function SettingsScreen() {
   const { pro, openUpgrade } = usePro();
   // The holidays offered by "Send a plan", or null while that sheet is shut.
   const [sendHolidays, setSendHolidays] = useState<Holiday[] | null>(null);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackKind, setFeedbackKind] = useState<FeedbackKind>('idea');
+  // Kept when the sheet closes by accident, so a half-written message survives.
+  const [feedbackText, setFeedbackText] = useState('');
 
   useEffect(() => {
     getSetting(REMINDER_KEY).then((saved) => {
@@ -389,6 +394,20 @@ export default function SettingsScreen() {
           <span className="setting-row__label">Rate this app</span>
           <span className="setting-row__chevron">›</span>
         </button>
+        <button
+          type="button"
+          className="setting-row setting-row--action"
+          onClick={() => {
+            setStatus(null);
+            setFeedbackOpen(true);
+          }}
+        >
+          <span className="setting-row__label">
+            Send feedback
+            <span className="setting-row__sub">Ideas for improvements, or something not working</span>
+          </span>
+          <span className="setting-row__chevron">›</span>
+        </button>
         <button type="button" className="setting-row setting-row--action" onClick={() => openUrl(`mailto:${SUPPORT_EMAIL}`)}>
           <span className="setting-row__label">Contact support</span>
           <span className="setting-row__chevron">›</span>
@@ -454,6 +473,63 @@ export default function SettingsScreen() {
               onClick={handlePasteCode}
             >
               {busy ? 'Adding…' : 'Add plan'}
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {feedbackOpen && (
+        <Modal title="Send feedback" onClose={() => setFeedbackOpen(false)}>
+          <fieldset className="field">
+            <legend className="field__label">What is it about?</legend>
+            <div className="chips">
+              {FEEDBACK_KINDS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={feedbackKind === option.value ? 'chip chip--choice chip--choice-selected' : 'chip chip--choice'}
+                  aria-pressed={feedbackKind === option.value}
+                  onClick={() => setFeedbackKind(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+          <label className="field">
+            <span className="field__label">Your message</span>
+            <textarea
+              className="field__input feedback-input"
+              value={feedbackText}
+              rows={6}
+              maxLength={FEEDBACK_MAX_LENGTH}
+              placeholder={
+                feedbackKind === 'problem'
+                  ? 'What happened, and what did you expect?'
+                  : 'What would make KidRota better for you?'
+              }
+              onChange={(event) => setFeedbackText(event.target.value)}
+            />
+          </label>
+          <p className="paste-hint">
+            This opens your email app with your message ready to send to {SUPPORT_EMAIL}. Nothing is
+            sent until you press send there.
+          </p>
+          <div className="holiday-form__actions">
+            <button type="button" className="button button--secondary" onClick={() => setFeedbackOpen(false)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="button button--primary"
+              disabled={!feedbackText.trim()}
+              onClick={() => {
+                openUrl(feedbackMailto(SUPPORT_EMAIL, feedbackKind, feedbackText, __APP_VERSION__));
+                setFeedbackOpen(false);
+                setFeedbackText('');
+              }}
+            >
+              Open email
             </button>
           </div>
         </Modal>

@@ -77,7 +77,7 @@ export const FREE_TIER_MAX_HOLIDAYS = 2;
  * source. Google Play requires the privacy policy URL to be publicly
  * reachable before the app can be published.
  */
-export const SUPPORT_EMAIL = 'support@kidrota.app';
+export const SUPPORT_EMAIL = 'kidrota@t80.dev';
 export const PRIVACY_URL = 'https://t80.dev/kidrota/privacy.html';
 export const TERMS_URL = 'https://t80.dev/kidrota/terms.html';
 /**

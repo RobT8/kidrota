@@ -531,6 +531,18 @@ button {
   font-weight: 500;
 }
 
+.chip--choice-selected {
+  border: 1.5px solid var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.feedback-input {
+  resize: vertical;
+  font-family: inherit;
+}
+
 .chip__tick {
   font-size: 12px;
   opacity: 0.8;
