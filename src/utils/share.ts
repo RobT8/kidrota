@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import type { BackupFile } from '../db/backup';
+import { planMessage } from './shareCode';
 
 export interface SaveResult {
   filename: string;
@@ -133,12 +134,12 @@ export async function sharePlanCode(code: string, holidayName: string): Promise<
     const { Share } = await import('@capacitor/share');
     await Share.share({
       title: holidayName,
-      text: `${holidayName} — open this in KidRota to load the plan:\n\n${code}`,
+      text: planMessage(holidayName, code),
       dialogTitle: 'Send the plan',
     });
     return 'shared';
   }
 
-  await navigator.clipboard.writeText(code);
+  await navigator.clipboard.writeText(planMessage(holidayName, code));
   return 'copied';
 }

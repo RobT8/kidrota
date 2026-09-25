@@ -128,9 +128,37 @@ export function encodePlan(input: {
   return SHARE_PREFIX + toBase64(JSON.stringify(compact));
 }
 
+/**
+ * Pull the code out of whatever was pasted.
+ *
+ * People copy the whole message from WhatsApp or email, instructions and all,
+ * so the code is found wherever it sits rather than the text having to be
+ * trimmed down to it by hand. The code is the prefix followed by base64,
+ * which has no spaces, so it ends at the first character base64 cannot hold.
+ */
+/**
+ * The message a plan code travels in. The instructions come first and the
+ * code last, on its own line, so the recipient knows where to paste it and
+ * nothing after the code can run into it.
+ */
+export function planMessage(holidayName: string, code: string): string {
+  return [
+    `KidRota plan: ${holidayName}`,
+    '',
+    'To add it to your KidRota: open Settings → “Add a plan someone sent you”, then paste this whole message.',
+    '',
+    code,
+  ].join('\n');
+}
+
+export function extractShareCode(text: string): string | null {
+  const match = text.match(new RegExp(`${SHARE_PREFIX}[A-Za-z0-9+/=]*`));
+  return match ? match[0] : null;
+}
+
 export function decodePlan(code: string): SharedPlan {
-  const trimmed = code.trim();
-  if (!trimmed.startsWith(SHARE_PREFIX)) {
+  const trimmed = extractShareCode(code);
+  if (!trimmed) {
     throw new ShareCodeError('That does not look like a KidRota plan code.');
   }
 

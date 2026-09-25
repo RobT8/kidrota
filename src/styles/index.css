@@ -859,6 +859,27 @@ button {
   margin: 0;
 }
 
+.paste-hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--text2);
+}
+
+.paste-hint__clear {
+  padding: 0 4px;
+}
+
+.share-button {
+  flex: none;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .planner-header__week {
   font-size: 12px;
   color: var(--text2);

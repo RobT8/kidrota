@@ -3,6 +3,7 @@ import { setDbExecutor } from '../database';
 import { createTestDb } from '../testExecutor';
 import type { DbExecutor } from '../executor';
 import { importSharedPlan } from '../importPlan';
+import { buildPlanCode } from '../exportPlan';
 import { decodePlan, encodePlan } from '../../utils/shareCode';
 import { createChild, listChildren } from '../children';
 import { createCarer, listCarers } from '../carers';
@@ -156,5 +157,19 @@ describe('detailed mode', () => {
     expect(slots).toHaveLength(1);
     expect(slots[0]).toMatchObject({ start_time: '09:00', end_time: '12:30', period: null });
     fresh.close();
+  });
+});
+
+describe('buildPlanCode', () => {
+  it('packs a holiday that decodes back to the same plan', async () => {
+    const code = await makeCode();
+    const holidayId = (await listHolidays())[0].id;
+    const built = await buildPlanCode(holidayId);
+    expect(built?.name).toBe('October half term');
+    expect(decodePlan(built!.code)).toEqual(decodePlan(code));
+  });
+
+  it('returns null for a holiday that no longer exists', async () => {
+    expect(await buildPlanCode(999)).toBeNull();
   });
 });

@@ -118,6 +118,12 @@ assignment — together that takes a planned fortnight for two children from
 about 6KB of plain JSON to roughly 1KB, which is the difference between a code
 that pastes into a message and one that does not.
 
+A plan is sent from the holiday's Share button or Settings → "Send a plan to
+someone". It travels as a message: instructions first (where to paste it),
+then the code on its own line (`planMessage`). The recipient pastes the whole
+message; `extractShareCode` finds the `KIDROTA1:` code inside it, so nothing
+needs trimming by hand.
+
 Importing a code *adds* to the device rather than replacing it, unlike a backup
 restore: the code arrives while the recipient already has their own children
 and carers set up. People are matched by name, case and spacing ignored, so an

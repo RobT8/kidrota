@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useBackInterceptor } from '../hooks/useBackButton';
 import { isTopBackInterceptor } from '../utils/backButton';
 
@@ -12,13 +12,23 @@ interface ModalProps {
 export default function Modal({ title, onClose, children }: ModalProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
 
+  // Callers usually pass a fresh arrow function on every render. Keeping the
+  // latest one in a ref lets the effects below run once, on open. Re-running
+  // them per render is what broke typing in a sheet: each keystroke moved
+  // focus back to the sheet, closing the keyboard after every character.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+  const close = useCallback(() => onCloseRef.current(), []);
+
   // Android back closes the sheet rather than navigating out from under it.
-  useBackInterceptor(onClose);
+  useBackInterceptor(close);
 
   useEffect(() => {
     // Android's back gesture surfaces as Escape in the WebView.
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape' && isTopBackInterceptor(onClose)) onClose();
+      if (event.key === 'Escape' && isTopBackInterceptor(close)) close();
     }
     document.addEventListener('keydown', onKeyDown);
 
@@ -26,16 +36,18 @@ export default function Modal({ title, onClose, children }: ModalProps) {
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    sheetRef.current?.focus();
+    // Focus the sheet itself unless something inside already took focus (an
+    // autoFocus field), which would otherwise lose it here.
+    if (!sheetRef.current?.contains(document.activeElement)) sheetRef.current?.focus();
 
     return () => {
       document.removeEventListener('keydown', onKeyDown);
       document.body.style.overflow = previous;
     };
-  }, [onClose]);
+  }, [close]);
 
   return (
-    <div className="modal" onClick={onClose}>
+    <div className="modal" onClick={close}>
       <div
         className="modal__sheet"
         role="dialog"
@@ -47,7 +59,7 @@ export default function Modal({ title, onClose, children }: ModalProps) {
       >
         <header className="modal__header">
           <h2 className="modal__title">{title}</h2>
-          <button type="button" className="icon-button" onClick={onClose}>
+          <button type="button" className="icon-button" onClick={close}>
             Close
           </button>
         </header>

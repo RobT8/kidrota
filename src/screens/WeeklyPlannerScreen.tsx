@@ -5,8 +5,7 @@ import Loading from '../components/Loading';
 import WeekGrid from '../components/WeekGrid';
 import { useAssignments } from '../hooks/useAssignments';
 import Modal from '../components/Modal';
-import { listDayNotes } from '../db/dayNotes';
-import { encodePlan } from '../utils/shareCode';
+import { buildPlanCode } from '../db/exportPlan';
 import { shareElementAsImage, sharePlanCode } from '../utils/share';
 import { todayISO } from '../utils/dates';
 import { getHolidayCoverage } from '../db/coverage';
@@ -27,7 +26,7 @@ export default function WeeklyPlannerScreen() {
   const navigate = useNavigate();
   const id = Number(holidayId);
 
-  const { holiday, children, carers, carersById, dates, weeks, byDayAndChild, loading, error } =
+  const { holiday, children, carersById, dates, weeks, byDayAndChild, loading, error } =
     useAssignments(id);
 
   // Null until the user pages somewhere, so the default below can follow the
@@ -116,16 +115,10 @@ export default function WeeklyPlannerScreen() {
     setBusy(true);
     setShareStatus(null);
     try {
-      const { listAssignments } = await import('../db/assignments');
-      const code = encodePlan({
-        holiday: holiday!,
-        children,
-        carers,
-        assignments: await listAssignments(id),
-        dayNotes: [...(await listDayNotes(id))].map(([date, note]) => ({ date, note })),
-      });
-      const how = await sharePlanCode(code, holiday!.name);
-      setShareStatus(how === 'copied' ? 'Plan code copied to the clipboard.' : null);
+      const built = await buildPlanCode(id);
+      if (!built) throw new Error('that holiday could not be found');
+      const how = await sharePlanCode(built.code, built.name);
+      setShareStatus(how === 'copied' ? 'Plan copied to the clipboard.' : null);
       if (how === 'shared') setSharing(false);
     } catch (error) {
       setShareStatus(`Could not share the plan: ${(error as Error).message}`);
@@ -155,14 +148,13 @@ export default function WeeklyPlannerScreen() {
         </div>
         <button
           type="button"
-          className="icon-button"
-          aria-label="Share this plan"
+          className="share-button"
           onClick={() => {
             setShareStatus(null);
             setSharing(true);
           }}
         >
-          Share
+          Share <span aria-hidden="true">↗</span>
         </button>
       </header>
 

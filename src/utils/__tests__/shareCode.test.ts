@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SHARE_PREFIX, ShareCodeError, decodePlan, encodePlan } from '../shareCode';
+import { SHARE_PREFIX, ShareCodeError, decodePlan, encodePlan, extractShareCode, planMessage } from '../shareCode';
 import type { Assignment, Carer, Child, Holiday } from '../../db/types';
 
 const holiday: Holiday = {
@@ -160,5 +160,36 @@ describe('rejecting bad codes', () => {
       encodePlan({ ...plan, assignments: [assignment({ child_id: 999 }), assignment({ carer_id: 999 })] }),
     );
     expect(decoded.assignments).toEqual([]);
+  });
+});
+
+describe('pasting a whole message', () => {
+  it('finds the code inside the message it was sent in', () => {
+    const code = encodePlan(plan);
+    const pasted = `[25/09, 10:14] Rob: ${planMessage('October half term', code)}`;
+    expect(extractShareCode(pasted)).toBe(code);
+    expect(decodePlan(pasted).holiday.name).toBe(decodePlan(code).holiday.name);
+  });
+
+  it('stops at the end of the code when text follows it', () => {
+    const code = encodePlan(plan);
+    expect(extractShareCode(`${code} see you Monday!`)).toBe(code);
+  });
+
+  it('still takes a bare code', () => {
+    const code = encodePlan(plan);
+    expect(extractShareCode(`  ${code}\n`)).toBe(code);
+  });
+
+  it('says so when there is no code at all', () => {
+    expect(extractShareCode('open this in KidRota to load the plan')).toBeNull();
+    expect(() => decodePlan('open this in KidRota')).toThrow('does not look like a KidRota plan code');
+  });
+
+  it('puts the instructions before the code, which comes last', () => {
+    const message = planMessage('Summer', 'KIDROTA1:abc');
+    expect(message).toContain('Settings');
+    expect(message).toContain('Add a plan someone sent you');
+    expect(message.endsWith('KIDROTA1:abc')).toBe(true);
   });
 });
