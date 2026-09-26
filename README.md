@@ -143,6 +143,16 @@ On Android the file goes to app storage and then the system share sheet, so it
 can be saved to Drive, Files or email. Writing straight to the public Downloads
 folder would need storage permissions the app otherwise never asks for.
 
+## App icon
+
+The icon is design "AB1": a week-grid calendar page with a row of cover slots
+(one a red gap) and a grown-up and child, on the brand blue `#185FA5`. The
+artwork lives in `design/icon/artwork.cjs`; `node design/icon/generate.cjs`
+(needs Playwright) regenerates every launcher icon, the adaptive-icon
+foreground, the splash images, `public/favicon.svg` and
+`design/icon/play-store-icon-512.png` for the Play listing. Android 12+ draws
+its own splash from `windowSplashScreen*` in `values/styles.xml`.
+
 ## Feedback
 
 Settings → Send feedback is a short form (kind + message) that opens the
