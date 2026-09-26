@@ -66,13 +66,9 @@ export function limitMessage(feature: ProFeature): string {
  * on this phone stands — otherwise a paying user would flash back to the free
  * version on every launch, and lose Pro entirely whenever Play is unreachable.
  * Once purchases have loaded, Play is the only authority, which is also how a
- * lapsed yearly plan, or a refunded purchase, turns Pro back off.
+ * lapsed or cancelled subscription, or a refund, turns Pro back off.
  */
-export function resolvePro(
-  cached: boolean,
-  purchasesLoaded: boolean,
-  owned: { lifetime: boolean; yearly: boolean },
-): boolean {
+export function resolvePro(cached: boolean, purchasesLoaded: boolean, subscribed: boolean): boolean {
   if (!purchasesLoaded) return cached;
-  return owned.lifetime || owned.yearly;
+  return subscribed;
 }

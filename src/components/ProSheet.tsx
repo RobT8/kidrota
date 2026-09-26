@@ -5,7 +5,6 @@ import {
   buyPro,
   restorePro,
   type BillingState,
-  type ProPlan,
 } from '../utils/billing';
 import { limitMessage, type ProFeature } from '../utils/freeTier';
 
@@ -28,10 +27,10 @@ export default function ProSheet({ billing, feature, onClose }: ProSheetProps) {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<Status>(null);
 
-  async function buy(plan: ProPlan) {
+  async function buy() {
     setBusy(true);
     setStatus(null);
-    const outcome = await buyPro(plan);
+    const outcome = await buyPro();
     setBusy(false);
     if (outcome.kind === 'failed') setStatus({ kind: 'bad', text: outcome.message });
     // A finished purchase shows itself: the sheet switches to the unlocked
@@ -65,11 +64,9 @@ export default function ProSheet({ billing, feature, onClose }: ProSheetProps) {
             <li key={benefit}>{benefit}</li>
           ))}
         </ul>
-        {billing.plan === 'yearly' && (
-          <a className="button button--secondary pro-sheet__manage" href={MANAGE_SUBSCRIPTION_URL} target="_blank" rel="noopener">
-            Manage subscription in Google Play
-          </a>
-        )}
+        <a className="button button--secondary pro-sheet__manage" href={MANAGE_SUBSCRIPTION_URL} target="_blank" rel="noopener">
+          Manage subscription in Google Play
+        </a>
         {status && (
           <p className={status.kind === 'bad' ? 'form-error' : 'form-success'} role="status">
             {status.text}
@@ -82,8 +79,7 @@ export default function ProSheet({ billing, feature, onClose }: ProSheetProps) {
     );
   }
 
-  const lifetime = billing.prices.lifetime;
-  const yearly = billing.prices.yearly;
+  const price = billing.price;
 
   return (
     <Modal title="KidRota Pro" onClose={onClose}>
@@ -95,21 +91,8 @@ export default function ProSheet({ billing, feature, onClose }: ProSheetProps) {
       </ul>
 
       <div className="pro-sheet__options">
-        <button
-          type="button"
-          className="button button--primary"
-          disabled={busy || !lifetime}
-          onClick={() => buy('lifetime')}
-        >
-          {lifetime ? `Buy once — ${lifetime}` : 'Buy once'}
-        </button>
-        <button
-          type="button"
-          className="button button--secondary"
-          disabled={busy || !yearly}
-          onClick={() => buy('yearly')}
-        >
-          {yearly ? `Yearly — ${yearly} a year` : 'Yearly'}
+        <button type="button" className="button button--primary" disabled={busy || !price} onClick={buy}>
+          {price ? `Subscribe — ${price} a year` : 'Subscribe'}
         </button>
       </div>
 
@@ -127,7 +110,7 @@ export default function ProSheet({ billing, feature, onClose }: ProSheetProps) {
       )}
 
       <p className="pro-sheet__note">
-        The yearly plan renews automatically until you cancel it in Google Play. If Pro ends,
+        Renews automatically each year until you cancel it in Google Play. If Pro ends,
         everything you have already planned stays on your phone and stays usable.
       </p>
 

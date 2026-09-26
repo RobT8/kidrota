@@ -170,20 +170,20 @@ navigates back, and only at the first screen does the app exit.
 | Holidays at a time | 2 | Unlimited |
 | Custom carer colours | — | ✓ |
 
-Sold through Google Play Billing as either product below. The IDs must be
-created in the Play Console exactly as written; prices are set there too, and
-the app only ever shows the price Play reports in the buyer's own currency.
+Sold through Google Play Billing as one yearly subscription that Play renews
+automatically until the user cancels it. The ID must be created in the Play
+Console exactly as written; the price is set there too, and the app only ever
+shows the price Play reports in the buyer's own currency.
 
 | Product | Play Console type | ID | Price |
 |---|---|---|---|
-| Lifetime | In-app product (one-time) | `kidrota_pro_lifetime` | £3.99 |
-| Yearly | Subscription, one yearly auto-renewing base plan | `kidrota_pro_yearly` | £1.99 |
+| Pro | Subscription, one yearly auto-renewing base plan | `kidrota_pro_yearly` | £1.99 a year |
 
 `utils/billing.ts` wraps `capacitor-plugin-cdv-purchase`, the Capacitor edition
 of `cordova-plugin-purchase`. There is no receipt server, so an approved
 purchase is finished (acknowledged to Play) on the phone straight away — an
 unacknowledged purchase is refunded by Play after three days. The trade-off
-is that a patched APK could fake Pro; for a £3.99 app that is accepted.
+is that a patched APK could fake Pro; for £1.99 a year that is accepted.
 
 Whether Pro is unlocked is decided by `resolvePro` in `utils/freeTier.ts`:
 until Play has loaded the account's purchases the last known answer stands, so

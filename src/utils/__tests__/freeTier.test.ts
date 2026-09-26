@@ -67,19 +67,16 @@ describe('limitMessage', () => {
 });
 
 describe('resolvePro', () => {
-  const none = { lifetime: false, yearly: false };
-
   it('keeps the last known answer until Play has loaded purchases', () => {
-    expect(resolvePro(true, false, none)).toBe(true);
-    expect(resolvePro(false, false, { lifetime: true, yearly: false })).toBe(false);
+    expect(resolvePro(true, false, false)).toBe(true);
+    expect(resolvePro(false, false, true)).toBe(false);
   });
 
   it('follows Play once purchases are loaded', () => {
-    expect(resolvePro(false, true, { lifetime: true, yearly: false })).toBe(true);
-    expect(resolvePro(false, true, { lifetime: false, yearly: true })).toBe(true);
+    expect(resolvePro(false, true, true)).toBe(true);
   });
 
-  it('turns Pro off when a subscription has lapsed', () => {
-    expect(resolvePro(true, true, none)).toBe(false);
+  it('turns Pro off when the subscription has lapsed or been cancelled', () => {
+    expect(resolvePro(true, true, false)).toBe(false);
   });
 });

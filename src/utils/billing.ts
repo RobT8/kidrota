@@ -7,25 +7,22 @@ import { resolvePro } from './freeTier';
  * Purchases are checked on the phone against what Play reports, with no
  * receipt server: KidRota has no backend, and adding one only for this would
  * break the promise that nothing leaves the device. The trade-off is that a
- * determined user could patch the check out of the APK; for a £3.99 planner
- * that is an acceptable cost.
+ * determined user could patch the check out of the APK; for a £1.99 a year
+ * planner that is an acceptable cost.
  *
- * The product IDs must match the ones created in the Play Console exactly.
- * Prices come from Play, in the buyer's own currency, never from this file.
+ * Pro is one product: a yearly subscription that Google Play renews
+ * automatically until the user cancels it in Play. Its ID must match the one
+ * created in the Play Console exactly. The price comes from Play, in the
+ * buyer's own currency, never from this file.
  */
-export const PRO_LIFETIME_ID = 'kidrota_pro_lifetime';
 export const PRO_YEARLY_ID = 'kidrota_pro_yearly';
-
-export type ProPlan = 'lifetime' | 'yearly';
 
 export interface BillingState {
   pro: boolean;
-  /** Which purchase unlocked Pro, once Play has said. */
-  plan: ProPlan | null;
   /** Play is connected and can take a purchase. */
   available: boolean;
-  /** Localised prices from Play, e.g. "£3.99". Null until loaded. */
-  prices: Record<ProPlan, string | null>;
+  /** Localised yearly price from Play, e.g. "£1.99". Null until loaded. */
+  price: string | null;
 }
 
 export type PurchaseOutcome =
@@ -37,8 +34,6 @@ export type RestoreOutcome =
   | { kind: 'restored' }
   | { kind: 'none' }
   | { kind: 'failed'; message: string };
-
-const IDS: Record<ProPlan, string> = { lifetime: PRO_LIFETIME_ID, yearly: PRO_YEARLY_ID };
 
 // Deliberately browser storage, not the app_settings table: settings travel
 // inside backup files, and a backup must not be able to carry Pro to a phone
@@ -64,9 +59,8 @@ function writeCache(pro: boolean): void {
 
 let state: BillingState = {
   pro: readCache(),
-  plan: null,
   available: false,
-  prices: { lifetime: null, yearly: null },
+  price: null,
 };
 
 const listeners = new Set<() => void>();
@@ -115,7 +109,6 @@ async function connect(): Promise<void> {
   store.verbosity = LogLevel.WARNING;
 
   store.register([
-    { id: PRO_LIFETIME_ID, type: ProductType.NON_CONSUMABLE, platform: Platform.GOOGLE_PLAY },
     { id: PRO_YEARLY_ID, type: ProductType.PAID_SUBSCRIPTION, platform: Platform.GOOGLE_PLAY },
   ]);
 
@@ -141,20 +134,13 @@ async function connect(): Promise<void> {
 function refresh(): void {
   if (!cdv) return;
   const { store, Platform } = cdv;
-  const owned = {
-    lifetime: store.owned({ id: PRO_LIFETIME_ID, platform: Platform.GOOGLE_PLAY }),
-    yearly: store.owned({ id: PRO_YEARLY_ID, platform: Platform.GOOGLE_PLAY }),
-  };
-  const pro = resolvePro(state.pro, purchasesLoaded, owned);
+  const subscribed = store.owned({ id: PRO_YEARLY_ID, platform: Platform.GOOGLE_PLAY });
+  const pro = resolvePro(state.pro, purchasesLoaded, subscribed);
   if (purchasesLoaded) writeCache(pro);
-
-  const price = (plan: ProPlan) =>
-    store.get(IDS[plan], Platform.GOOGLE_PLAY)?.pricing?.price ?? null;
 
   update({
     pro,
-    plan: owned.lifetime ? 'lifetime' : owned.yearly ? 'yearly' : null,
-    prices: { lifetime: price('lifetime'), yearly: price('yearly') },
+    price: store.get(PRO_YEARLY_ID, Platform.GOOGLE_PLAY)?.pricing?.price ?? null,
   });
 }
 
@@ -163,10 +149,10 @@ function refresh(): void {
  * Play approves, not from this return value — a payment can also complete
  * later, for instance a cash payment at a shop.
  */
-export async function buyPro(plan: ProPlan): Promise<PurchaseOutcome> {
+export async function buyPro(): Promise<PurchaseOutcome> {
   if (!cdv) return { kind: 'failed', message: 'Purchases only work in the app installed from Google Play.' };
   const { store, Platform, ErrorCode } = cdv;
-  const offer = store.get(IDS[plan], Platform.GOOGLE_PLAY)?.getOffer();
+  const offer = store.get(PRO_YEARLY_ID, Platform.GOOGLE_PLAY)?.getOffer();
   if (!offer) {
     return { kind: 'failed', message: 'Google Play has not loaded this option yet. Check your connection and try again.' };
   }
@@ -186,5 +172,5 @@ export async function restorePro(): Promise<RestoreOutcome> {
   return state.pro ? { kind: 'restored' } : { kind: 'none' };
 }
 
-/** Play's own page for managing or cancelling the yearly plan. */
+/** Play's own page for managing or cancelling the subscription. */
 export const MANAGE_SUBSCRIPTION_URL = `https://play.google.com/store/account/subscriptions?sku=${PRO_YEARLY_ID}&package=com.kidrota.app`;
