@@ -251,6 +251,28 @@ Colours that serve two roles need two tokens: `--red-text` is a foreground and
 `--danger-bg`/`--danger-on` the destructive button, because a red that reads on
 the page background is unreadable as a button fill once the theme flips.
 
+## Releasing an update
+
+Updates install over the old app and never touch users' data (the SQLite
+database and the WebView's settings). Keep it that way:
+
+1. **Bump the version** in `package.json` — `npm version patch --no-git-tag-version`
+   (or `minor` / `major`). Android's `versionName` and Play's `versionCode`
+   (major×10000 + minor×100 + patch) are derived from it in
+   `android/app/build.gradle`; `src/utils/__tests__/version.test.ts` keeps
+   each part below 100 so the code always rises.
+2. **Database changes go in a new migration** at the end of `MIGRATIONS` in
+   `src/db/schema.ts`. Shipped migrations are sealed by fingerprint in
+   `src/db/__tests__/migrationsSealed.test.ts`: editing one fails the tests; a
+   new one must have its fingerprint added there.
+3. **Never change** the package ID, the signing key, the database name
+   (`kidrota`), the WebView's origin (Capacitor's default), or turn the SQLite
+   plugin's `androidIsEncryption` back on.
+4. `npm test`, `npm run lint`, `npm run build`, then `npx cap sync android`.
+5. Upload to the **internal testing** track first and let your own phone update
+   over real data from Play before promoting; use a staged rollout for
+   production.
+
 ## Tested on hardware
 
 Native behaviour that a browser cannot show, checked on a Samsung SM-A346B

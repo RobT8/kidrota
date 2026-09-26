@@ -1,5 +1,15 @@
 apply plugin: 'com.android.application'
 
+// The version lives in one place: package.json, which is also what the app
+// shows in Settings. Google Play needs versionCode to rise with every upload,
+// so it is derived from the version: major*10000 + minor*100 + patch
+// (1.0.0 -> 10000, 1.0.1 -> 10001, 1.1.0 -> 10100). To release, bump the
+// version in package.json, e.g. `npm version patch --no-git-tag-version`.
+// src/utils/__tests__/version.test.ts keeps each part below 100 so the
+// numbers can never collide or go backwards.
+def appVersion = new groovy.json.JsonSlurper().parse(file('../../package.json')).version
+def (vMajor, vMinor, vPatch) = appVersion.tokenize('.').collect { it as int }
+
 android {
     namespace = "com.kidrota.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +17,8 @@ android {
         applicationId "com.kidrota.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode vMajor * 10000 + vMinor * 100 + vPatch
+        versionName appVersion
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
