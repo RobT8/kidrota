@@ -5,7 +5,7 @@ import { importSharedPlan } from '../db/importPlan';
 import { ShareCodeError, decodePlan } from '../utils/shareCode';
 import { plural } from '../utils/status';
 import Modal from '../components/Modal';
-import { listHolidays } from '../db/holidays';
+import { countHolidaysEverAdded, listHolidays } from '../db/holidays';
 import { listChildren } from '../db/children';
 import { usePro } from '../hooks/usePro';
 import { importBlockedBy } from '../utils/freeTier';
@@ -151,7 +151,7 @@ export default function SettingsScreen() {
       const blocked = importBlockedBy(
         (await listChildren()).map((child) => child.name),
         plan.children.map((child) => child.name),
-        (await listHolidays()).length,
+        await countHolidaysEverAdded(),
         pro,
       );
       if (blocked) {

@@ -166,8 +166,9 @@ navigates back, and only at the first screen does the app exit.
 
 | | Free | Pro |
 |---|---|---|
-| Children | 2 | Unlimited |
-| Holidays at a time | 2 | Unlimited |
+| Children | 1 | Unlimited |
+| Holidays | 1, ever — deleting it does not free the slot | Unlimited |
+| Changing a finished holiday's dates | No | Yes |
 | Custom carer colours | — | ✓ |
 
 Sold through Google Play Billing as one yearly subscription that Play renews
@@ -192,6 +193,13 @@ Play is the only authority, which is how a lapsed subscription or a refund
 turns Pro off. That last answer is cached in `localStorage`, deliberately not
 in `app_settings` — settings travel inside backup files, and a backup must not
 carry Pro to another Google account.
+
+The holiday cap counts every holiday ever added (`countHolidaysEverAdded`,
+kept in `app_settings` as `holidays_added`), and a finished holiday's dates
+are frozen on the free version, so the one free holiday cannot be deleted and
+re-added, or re-dated, for each break. With no server, deleting all data or
+reinstalling resets the count — but also throws away every plan, which is the
+deterrent.
 
 The caps only stop new things being added (`utils/freeTier.ts`). Anything
 already on the phone — from a backup restore, or from before Pro lapsed —

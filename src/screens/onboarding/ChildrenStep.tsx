@@ -3,8 +3,8 @@ import Loading from '../../components/Loading';
 import ChildAvatar from '../../components/ChildAvatar';
 import { createChild, deleteChild, listChildren, updateChild } from '../../db/children';
 import type { Child } from '../../db/types';
-import { CHILD_COLOURS, FREE_TIER_MAX_CHILDREN } from '../../utils/constants';
-import { canAddChild } from '../../utils/freeTier';
+import { CHILD_COLOURS } from '../../utils/constants';
+import { canAddChild, limitMessage } from '../../utils/freeTier';
 import { usePro } from '../../hooks/usePro';
 
 const MAX_NAME_LENGTH = 24;
@@ -101,7 +101,7 @@ export default function ChildrenStep({ onNext }: ChildrenStepProps) {
     <div className="step">
       <header className="step__header">
         <h1 className="step__title">Who are your children?</h1>
-        <p className="step__subtitle">You can always add more later</p>
+        <p className="step__subtitle">You can change these later</p>
       </header>
 
       {children.length > 0 && (
@@ -134,8 +134,7 @@ export default function ChildrenStep({ onNext }: ChildrenStepProps) {
       {atLimit ? (
         <div className="card add-form">
           <p className="pro-sheet__note">
-            The free version plans for up to {FREE_TIER_MAX_CHILDREN} children. KidRota Pro
-            removes the limit.
+            {limitMessage('children')} KidRota Pro adds brothers and sisters.
           </p>
           <button type="button" className="button button--secondary" onClick={() => openUpgrade('children')}>
             See KidRota Pro

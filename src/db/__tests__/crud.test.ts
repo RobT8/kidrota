@@ -20,7 +20,9 @@ import {
   updateCarer,
 } from '../carers';
 import {
+  HOLIDAYS_ADDED_KEY,
   countHolidays,
+  countHolidaysEverAdded,
   createHoliday,
   deleteHoliday,
   getHoliday,
@@ -213,6 +215,23 @@ describe('holidays', () => {
     const id = await createHoliday(october);
     await deleteHoliday(id);
     expect(await listHolidays()).toHaveLength(0);
+  });
+
+  it('keeps counting holidays that have been deleted', async () => {
+    expect(await countHolidaysEverAdded()).toBe(0);
+    const id = await createHoliday(october);
+    await deleteHoliday(id);
+    expect(await countHolidaysEverAdded()).toBe(1);
+    await createHoliday(october);
+    expect(await countHolidaysEverAdded()).toBe(2);
+  });
+
+  it('never counts fewer than the holidays actually present', async () => {
+    await createHoliday(october);
+    await createHoliday({ ...october, name: 'Christmas' });
+    // A restored backup from before the count existed, or a stale value.
+    await setSetting(HOLIDAYS_ADDED_KEY, '0');
+    expect(await countHolidaysEverAdded()).toBe(2);
   });
 });
 

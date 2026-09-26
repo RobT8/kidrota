@@ -1,4 +1,5 @@
 import { getDb } from './database';
+import { getSetting, setSetting } from './settings';
 import { buildSetClause } from './sql';
 import type { Holiday, NewHoliday } from './types';
 
@@ -32,7 +33,22 @@ export async function getNextHoliday(today: string): Promise<Holiday | null> {
   return rows[0] ?? null;
 }
 
+/** app_settings key holding how many holidays have ever been added. */
+export const HOLIDAYS_ADDED_KEY = 'holidays_added';
+
+/**
+ * Every holiday ever added on this phone, including ones since deleted — what
+ * the free version's one-holiday allowance counts, so deleting a holiday does
+ * not make room for another. Never less than the holidays actually present,
+ * which also covers data from before the count existed, or a restored backup.
+ */
+export async function countHolidaysEverAdded(): Promise<number> {
+  const stored = Number(await getSetting(HOLIDAYS_ADDED_KEY));
+  return Math.max(Number.isFinite(stored) ? stored : 0, await countHolidays());
+}
+
 export async function createHoliday(holiday: NewHoliday): Promise<number> {
+  const everAdded = await countHolidaysEverAdded();
   const db = await getDb();
   const result = await db.run(
     `INSERT INTO holidays (name, start_date, end_date, mode, exclude_weekends)
@@ -45,6 +61,7 @@ export async function createHoliday(holiday: NewHoliday): Promise<number> {
       holiday.exclude_weekends,
     ],
   );
+  await setSetting(HOLIDAYS_ADDED_KEY, String(everAdded + 1));
   return result.lastId;
 }
 

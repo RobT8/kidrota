@@ -9,11 +9,13 @@ interface HolidayFormProps {
   onSave: (values: NewHoliday) => Promise<void>;
   onDelete?: () => void;
   onCancel: () => void;
+  /** A finished holiday on the free version keeps its dates. */
+  datesLocked?: boolean;
 }
 
 const MAX_NAME_LENGTH = 40;
 
-export default function HolidayForm({ holiday, onSave, onDelete, onCancel }: HolidayFormProps) {
+export default function HolidayForm({ holiday, onSave, onDelete, onCancel, datesLocked = false }: HolidayFormProps) {
   const [name, setName] = useState(holiday?.name ?? '');
   const [startDate, setStartDate] = useState(holiday?.start_date ?? '');
   const [endDate, setEndDate] = useState(holiday?.end_date ?? '');
@@ -90,6 +92,7 @@ export default function HolidayForm({ holiday, onSave, onDelete, onCancel }: Hol
             type="date"
             className="field__input"
             value={startDate}
+            disabled={datesLocked}
             onChange={(event) => setStartDate(event.target.value)}
           />
         </label>
@@ -100,10 +103,17 @@ export default function HolidayForm({ holiday, onSave, onDelete, onCancel }: Hol
             className="field__input"
             value={endDate}
             min={startDate || undefined}
+            disabled={datesLocked}
             onChange={(event) => setEndDate(event.target.value)}
           />
         </label>
       </div>
+      {datesLocked && (
+        <p className="field-note">
+          This holiday has finished, so on the free version it keeps its dates. KidRota Pro plans
+          every holiday of the year.
+        </p>
+      )}
 
       <fieldset className="field">
         <legend className="field__label">Planning detail</legend>

@@ -3,10 +3,17 @@ import { FREE_TIER_MAX_CHILDREN, FREE_TIER_MAX_HOLIDAYS } from './constants';
 /**
  * What the free version allows, and why an action was refused.
  *
- * The caps only stop something new being added. Anything already on the
- * device stays usable even when it is over the cap — after restoring a
- * backup, importing a plan, or a Pro subscription lapsing — so nobody ever
- * loses a plan by not paying.
+ * The free version is one child and one holiday: enough to try KidRota
+ * properly on a real break. The caps only stop something new being added.
+ * Anything already on the device stays usable even when it is over the cap —
+ * after restoring a backup, importing a plan, or a Pro subscription lapsing —
+ * so nobody ever loses a plan by not paying.
+ *
+ * The holiday cap counts every holiday ever added, and a finished holiday's
+ * dates are frozen, so the one free holiday cannot be deleted and re-added,
+ * or re-dated, to plan every break of the year. With no server this can
+ * still be undone by deleting all data or reinstalling — which also throws
+ * away every child, carer and plan, so it is a real deterrent.
  */
 
 /** What Pro unlocks, which is also what the upgrade sheet can be opened for. */
@@ -16,8 +23,19 @@ export function canAddChild(currentCount: number, pro: boolean): boolean {
   return pro || currentCount < FREE_TIER_MAX_CHILDREN;
 }
 
-export function canAddHoliday(currentCount: number, pro: boolean): boolean {
-  return pro || currentCount < FREE_TIER_MAX_HOLIDAYS;
+/** `everAdded` is every holiday ever added on this phone, deleted ones included. */
+export function canAddHoliday(everAdded: number, pro: boolean): boolean {
+  return pro || everAdded < FREE_TIER_MAX_HOLIDAYS;
+}
+
+/**
+ * Can this holiday's dates still be changed? Always before it has finished,
+ * so a typo or a school changing its dates is easy to fix. On the free
+ * version a finished holiday keeps its dates, so it cannot be turned into
+ * the next break.
+ */
+export function canChangeHolidayDates(endDate: string, today: string, pro: boolean): boolean {
+  return pro || endDate >= today;
 }
 
 /** Names match loosely, so "Grandma" and "grandma " are the same person. */
@@ -35,11 +53,11 @@ export function nameKey(name: string): string {
 export function importBlockedBy(
   existingChildNames: string[],
   planChildNames: string[],
-  holidayCount: number,
+  holidaysEverAdded: number,
   pro: boolean,
 ): ProFeature | null {
   if (pro) return null;
-  if (!canAddHoliday(holidayCount, false)) return 'holidays';
+  if (!canAddHoliday(holidaysEverAdded, false)) return 'holidays';
 
   const known = new Set(existingChildNames.map(nameKey));
   const incoming = new Set(planChildNames.map(nameKey).filter((key) => !known.has(key)));
@@ -51,9 +69,9 @@ export function importBlockedBy(
 export function limitMessage(feature: ProFeature): string {
   switch (feature) {
     case 'children':
-      return `The free version plans for up to ${FREE_TIER_MAX_CHILDREN} children.`;
+      return 'The free version plans for one child.';
     case 'holidays':
-      return `The free version plans up to ${FREE_TIER_MAX_HOLIDAYS} holidays at a time.`;
+      return 'The free version includes one holiday. Deleting it does not make room for another.';
     case 'colours':
       return 'Custom carer colours are part of Pro.';
   }

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   canAddChild,
   canAddHoliday,
+  canChangeHolidayDates,
   importBlockedBy,
   limitMessage,
   nameKey,
@@ -9,11 +10,11 @@ import {
 } from '../freeTier';
 
 describe('canAddChild / canAddHoliday', () => {
-  it('allows up to two of each on the free version', () => {
-    expect(canAddChild(1, false)).toBe(true);
-    expect(canAddChild(2, false)).toBe(false);
-    expect(canAddHoliday(1, false)).toBe(true);
-    expect(canAddHoliday(2, false)).toBe(false);
+  it('allows one child and one holiday on the free version', () => {
+    expect(canAddChild(0, false)).toBe(true);
+    expect(canAddChild(1, false)).toBe(false);
+    expect(canAddHoliday(0, false)).toBe(true);
+    expect(canAddHoliday(1, false)).toBe(false);
   });
 
   it('refuses a free user already over the cap, without taking anything away', () => {
@@ -27,6 +28,21 @@ describe('canAddChild / canAddHoliday', () => {
   });
 });
 
+describe('canChangeHolidayDates', () => {
+  it('allows changing dates until the holiday has finished', () => {
+    expect(canChangeHolidayDates('2026-10-30', '2026-10-01', false)).toBe(true);
+    expect(canChangeHolidayDates('2026-10-30', '2026-10-30', false)).toBe(true);
+  });
+
+  it('freezes a finished holiday on the free version', () => {
+    expect(canChangeHolidayDates('2026-10-30', '2026-10-31', false)).toBe(false);
+  });
+
+  it('never freezes with Pro', () => {
+    expect(canChangeHolidayDates('2020-01-01', '2026-10-31', true)).toBe(true);
+  });
+});
+
 describe('nameKey', () => {
   it('ignores case and surrounding spaces', () => {
     expect(nameKey('  Grandma ')).toBe(nameKey('grandma'));
@@ -34,20 +50,20 @@ describe('nameKey', () => {
 });
 
 describe('importBlockedBy', () => {
-  it('lets a plan about the same children in', () => {
-    expect(importBlockedBy(['Ada', 'Ben'], ['ada ', 'BEN'], 1, false)).toBeNull();
+  it('lets a plan about the same child in', () => {
+    expect(importBlockedBy(['Ada'], ['ada '], 0, false)).toBeNull();
   });
 
-  it('refuses a plan that would add a third child', () => {
-    expect(importBlockedBy(['Ada', 'Ben'], ['Ada', 'Cleo'], 1, false)).toBe('children');
+  it('refuses a plan that would add a second child', () => {
+    expect(importBlockedBy(['Ada'], ['Ada', 'Ben'], 0, false)).toBe('children');
   });
 
   it('counts the same new name only once', () => {
-    expect(importBlockedBy(['Ada'], ['Ben', 'ben'], 0, false)).toBeNull();
+    expect(importBlockedBy([], ['Ben', 'ben'], 0, false)).toBeNull();
   });
 
-  it('refuses when the holiday cap is already reached', () => {
-    expect(importBlockedBy(['Ada'], ['Ada'], 2, false)).toBe('holidays');
+  it('refuses once the free holiday has been used, even if deleted since', () => {
+    expect(importBlockedBy(['Ada'], ['Ada'], 1, false)).toBe('holidays');
   });
 
   it('lets an over-cap user import a plan that adds no children', () => {
@@ -60,9 +76,10 @@ describe('importBlockedBy', () => {
 });
 
 describe('limitMessage', () => {
-  it('names the cap in the message', () => {
-    expect(limitMessage('children')).toContain('2 children');
-    expect(limitMessage('holidays')).toContain('2 holidays');
+  it('names the one-child and one-holiday allowance', () => {
+    expect(limitMessage('children')).toContain('one child');
+    expect(limitMessage('holidays')).toContain('one holiday');
+    expect(limitMessage('holidays')).toContain('Deleting it does not make room');
   });
 });
 

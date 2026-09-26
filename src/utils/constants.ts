@@ -66,8 +66,9 @@ export const CARER_COLOURS = [
 export const ONBOARDING_COMPLETE_KEY = 'onboarding_complete';
 
 /** Free-tier caps. Lifted by the Pro unlock. */
-export const FREE_TIER_MAX_CHILDREN = 2;
-export const FREE_TIER_MAX_HOLIDAYS = 2;
+export const FREE_TIER_MAX_CHILDREN = 1;
+/** Counts every holiday ever added, not just those still on the phone. */
+export const FREE_TIER_MAX_HOLIDAYS = 1;
 
 /**
  * Outward-facing links and addresses, kept together so there is one place to

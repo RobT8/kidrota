@@ -7,7 +7,8 @@ import Modal from '../components/Modal';
 import type { Holiday, NewHoliday } from '../db/types';
 import { useHolidays } from '../hooks/useHolidays';
 import { usePro } from '../hooks/usePro';
-import { canAddHoliday } from '../utils/freeTier';
+import { canAddHoliday, canChangeHolidayDates } from '../utils/freeTier';
+import { countHolidaysEverAdded } from '../db/holidays';
 import { todayISO } from '../utils/dates';
 import { formatGapCount, formatNextBreak, nextBreak } from '../utils/status';
 
@@ -20,8 +21,8 @@ export default function HomeScreen() {
   const { pro, openUpgrade } = usePro();
 
   /** At the free-tier cap, offer Pro instead of an add form that cannot save. */
-  function startAdding() {
-    if (canAddHoliday(holidays.length, pro)) setAdding(true);
+  async function startAdding() {
+    if (canAddHoliday(await countHolidaysEverAdded(), pro)) setAdding(true);
     else openUpgrade('holidays');
   }
   const upcoming = nextBreak(todayISO(), next);
@@ -119,6 +120,7 @@ export default function HomeScreen() {
         <Modal title="Edit holiday" onClose={() => setEditing(null)}>
           <HolidayForm
             holiday={editing}
+            datesLocked={!canChangeHolidayDates(editing.end_date, todayISO(), pro)}
             onSave={handleSave}
             onDelete={() => setDeleting(editing)}
             onCancel={() => setEditing(null)}
