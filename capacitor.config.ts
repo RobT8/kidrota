@@ -11,6 +11,16 @@ const config: CapacitorConfig = {
     SystemBars: {
       style: 'LIGHT',
     },
+    // KidRota never encrypts its database, so the plugin's encryption support
+    // stays off. Left on (the plugin's default), it opens an encrypted
+    // preferences file at start-up with a key from the Android Keystore; after
+    // an uninstall and reinstall, Android's auto-backup restores that file but
+    // not the key, the file cannot be opened, and the plugin fails to load —
+    // the app then shows "could not open its database: CapacitorSQLitePlugin:
+    // null" on every launch.
+    CapacitorSQLite: {
+      androidIsEncryption: false,
+    },
   },
 };
 
