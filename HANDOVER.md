@@ -74,7 +74,7 @@ See the README's **Tested on hardware** table for the detail. In short:
 - [ ] Email forwarding for `kidrota@t80.dev`.
 - [ ] Create the **upload key** (`C:\Users\robta\KidRota-keys\kidrota-upload.jks`,
       alias `upload`) and the first signed `app-release.aab`; back up the
-      key and passwords. Steps are in the conversation summary below.
+      key and passwords. Steps: "Next steps" 2 below, and "Signing" in README.
 - [ ] Recruit **12+ testers** (Android + Gmail) for the mandatory 14-day
       closed test; add them as licence testers so Pro is free for them.
 - [ ] Optional: a 30–60 s screen recording for a YouTube promo video.
