@@ -1,6 +1,6 @@
 // Frames the recorded walkthrough in a phone with captions: portrait + landscape MP4.
 import { chromium } from 'playwright';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import ffmpeg from 'ffmpeg-static';
 const DIR = new URL('./', import.meta.url).pathname;
@@ -18,7 +18,10 @@ const CAPTIONS = {
   list:   ['Every day, every child', 'The whole break in one list'],
   share:  ['Share it with the other parent', 'As a picture, or the whole plan as a code'],
 };
-const END_SECS = 3;
+// Voice-over clips (vo/<beat>.wav) are optional; with them, the end card waits for its line.
+const VO = DIR + 'vo/';
+const voice = existsSync(VO + 'durations.json') ? JSON.parse(readFileSync(VO + 'durations.json')) : null;
+const END_SECS = voice ? Math.max(3, voice.end + 1.2) : 3;
 const FPS = 30;
 const run = (args) => execFileSync(ffmpeg, ['-hide_banner', '-loglevel', 'error', '-y', ...args], { stdio: 'inherit' });
 
@@ -71,6 +74,30 @@ const endCard = (L) => `<body style="width:${L.w}px;height:${L.h}px;background:$
     <div style="font:500 36px Inter;margin-top:56px;padding:18px 40px;border:2px solid rgba(255,255,255,.6);border-radius:999px">Get it on Google Play</div>
   </div></body>`;
 
+// Music (synthesised, see music.py) ducked under the voice-over, muxed onto the video.
+function mixAudio(video, out, total) {
+  const music = V + 'music.wav';
+  if (!existsSync(music)) execFileSync('python3', [DIR + 'music.py', music, total.toFixed(2)], { stdio: 'inherit' });
+  if (!voice) {
+    run(['-i', video, '-i', music, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-shortest', out]);
+    return;
+  }
+  // Each line starts a beat after its scene appears; the last one over the end card.
+  const starts = Object.fromEntries(tl.marks.filter((m) => voice[m.id] !== undefined).map((m) => [m.id, m.t + 0.3]));
+  starts.end = appDur + 0.5;
+  const ids = Object.keys(voice);
+  const inputs = ids.flatMap((id) => ['-i', `${VO}${id}.wav`]);
+  const delayed = ids.map((id, i) => `[${i + 2}:a]aresample=44100,aformat=channel_layouts=stereo,adelay=${Math.round(starts[id] * 1000)}:all=1[v${i}]`).join(';');
+  run([
+    '-i', video, '-i', music, ...inputs,
+    '-filter_complex',
+    `${delayed};${ids.map((_, i) => `[v${i}]`).join('')}amix=inputs=${ids.length}:normalize=0,volume=1.6,asplit[vo][key];` +
+    `[1:a]volume=0.55[m];[m][key]sidechaincompress=threshold=0.03:ratio=6:attack=40:release=450[duck];` +
+    `[duck][vo]amix=inputs=2:normalize=0,alimiter=limit=0.95,atrim=duration=${total.toFixed(3)}[a]`,
+    '-map', '0:v', '-map', '[a]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', out,
+  ]);
+}
+
 for (const [name, L] of Object.entries(LAYOUTS)) {
   const d = `${V}${name}/`; mkdirSync(d, { recursive: true });
   // Background track: one caption card per story beat, cut on the recorded marks.
@@ -97,8 +124,9 @@ for (const [name, L] of Object.entries(LAYOUTS)) {
     `[3:v]fps=${FPS},format=rgba,fade=in:st=0:d=0.5:alpha=1,setpts=PTS+${appDur.toFixed(3)}/TB[e];` +
     `[b][e]overlay=0:0:eof_action=pass,fade=in:st=0:d=0.4,trim=duration=${total.toFixed(3)}[v]`,
     '-map', '[v]', '-r', String(FPS), '-c:v', 'libx264', '-preset', 'slow', '-crf', '18', '-pix_fmt', 'yuv420p', '-movflags', '+faststart',
-    `${OUT}kidrota-demo-${name}.mp4`,
+    `${d}silent.mp4`,
   ]);
+  mixAudio(`${d}silent.mp4`, `${OUT}kidrota-demo-${name}.mp4`, total);
 }
 await browser.close();
 console.log('done', (appDur + END_SECS).toFixed(1), 's');

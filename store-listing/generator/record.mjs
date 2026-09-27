@@ -1,6 +1,6 @@
 // Drives the real app through a short story and records it via CDP screencast.
 import { chromium } from 'playwright';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readFileSync, existsSync } from 'node:fs';
 import { backup } from './seed.mjs';
 const DIR = new URL('./video/', import.meta.url).pathname;
 mkdirSync(DIR + 'frames', { recursive: true });
@@ -40,6 +40,14 @@ cdp.on('Page.screencastFrame', async (f) => {
 const t0 = Date.now() / 1000;
 const marks = [];
 const mark = (id) => marks.push({ id, t: Date.now() / 1000 - t0 });
+// When a voice-over exists, hold each scene until its line has finished.
+const VO = new URL('./vo/durations.json', import.meta.url).pathname;
+const voice = existsSync(VO) ? JSON.parse(readFileSync(VO)) : {};
+const hold = async () => {
+  const last = marks.at(-1), need = (voice[last.id] ?? 0) + 0.7;
+  const left = need - (Date.now() / 1000 - t0 - last.t);
+  if (left > 0) await page.waitForTimeout(left * 1000);
+};
 const wait = (ms) => page.waitForTimeout(ms);
 const tap = async (loc) => { await loc.scrollIntoViewIfNeeded(); await wait(250); await loc.click(); };
 const smoothTo = (sel, block = 'center') => page.evaluate(([s, b]) => document.querySelector(s)?.scrollIntoView({ behavior: 'smooth', block: b }), [sel, block]);
@@ -49,18 +57,18 @@ await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 92, maxWidth: 
 // Keep a repaint ticking so still moments still produce frames.
 await page.evaluate(() => { const d = document.createElement('div'); d.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:.01;z-index:-1'; document.body.appendChild(d); let i = 0; setInterval(() => { d.style.background = (i++ % 2) ? '#fff' : '#fefefe'; }, 33); });
 
-mark('home'); await wait(2800);
-await tap(page.getByText('October half term').first()); mark('grid'); await wait(3000);
+mark('home'); await wait(2800); await hold();
+await tap(page.getByText('October half term').first()); mark('grid'); await wait(3000); await hold();
 await tap(page.getByRole('button', { name: /Leo.*Wed.*(afternoon|PM)|Wed.*Leo.*(afternoon|PM)/i }).first()
   .or(page.locator('.slot--gap').first())); mark('day'); await wait(1300);
 await smoothTo('.child-card:last-of-type .carer-picker', 'center'); await wait(1300);
-await tap(page.locator('.child-card').last().locator('.carer-card', { hasText: 'Grandma' }).last()); await wait(1600);
-await tap(page.getByRole('button', { name: 'Back to the week' })); mark('filled'); await wait(2600);
+await tap(page.locator('.child-card').last().locator('.carer-card', { hasText: 'Grandma' }).last()); await wait(1600); await hold();
+await tap(page.getByRole('button', { name: 'Back to the week' })); mark('filled'); await wait(2600); await hold();
 await tap(page.getByRole('button', { name: /^list$/i })); mark('list'); await wait(1400);
 await smoothTo('.screen > :last-child', 'end'); await wait(1800);
-await smoothTop(); await wait(900);
+await smoothTop(); await wait(900); await hold();
 await tap(page.getByRole('button', { name: /^week$/i })); await wait(700);
-await tap(page.getByRole('button', { name: /^share/i }).first()); mark('share'); await wait(3000);
+await tap(page.getByRole('button', { name: /^share/i }).first()); mark('share'); await wait(3000); await hold();
 mark('end');
 await cdp.send('Page.stopScreencast');
 writeFileSync(DIR + 'timeline.json', JSON.stringify({ frames: frames.map((t) => t - frames[0]), marks: marks.map((m) => ({ ...m, t: m.t - (frames[0] - t0 > 0 ? 0 : 0) })) }, null, 1));
