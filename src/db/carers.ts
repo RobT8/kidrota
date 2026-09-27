@@ -24,7 +24,8 @@ export async function listCarersByType(): Promise<Record<CarerType, Carer[]>> {
     playdate: [],
     other: [],
   };
-  for (const carer of carers) grouped[carer.type].push(carer);
+  // An unknown type can only come from outside data; show it rather than fail.
+  for (const carer of carers) (grouped[carer.type] ?? grouped.other).push(carer);
   return grouped;
 }
 

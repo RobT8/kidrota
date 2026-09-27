@@ -20,6 +20,10 @@ function capacitorExecutor(conn: SQLiteDBConnection, isWeb: boolean): DbExecutor
     ? () => CapacitorSQLite.saveToStore({ database: DB_NAME })
     : async () => {};
 
+  // How many transaction() calls are open. Inside one, nothing is flushed to
+  // the browser store until the outermost commit.
+  let depth = 0;
+
   return {
     async query<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {
       const result = await conn.query(sql, params);
@@ -27,7 +31,7 @@ function capacitorExecutor(conn: SQLiteDBConnection, isWeb: boolean): DbExecutor
     },
     async run(sql: string, params: SqlValue[] = []): Promise<RunResult> {
       const result = await conn.run(sql, params, false);
-      await persist();
+      if (depth === 0) await persist();
       return {
         changes: result.changes?.changes ?? 0,
         lastId: result.changes?.lastId ?? 0,
@@ -37,6 +41,24 @@ function capacitorExecutor(conn: SQLiteDBConnection, isWeb: boolean): DbExecutor
       await conn.execute(sql);
     },
     persist,
+    async transaction<T>(work: () => Promise<T>): Promise<T> {
+      if (depth > 0) return work();
+      await conn.beginTransaction();
+      depth++;
+      try {
+        const result = await work();
+        depth--;
+        await conn.commitTransaction();
+        await persist();
+        return result;
+      } catch (error) {
+        depth--;
+        await conn.rollbackTransaction().catch(() => {
+          // Nothing more to do: the original error is the one worth reporting.
+        });
+        throw error;
+      }
+    },
   };
 }
 

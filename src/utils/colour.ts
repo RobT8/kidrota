@@ -1,4 +1,5 @@
 import { CARER_TYPE_VARS, type CarerType } from './constants';
+import { isHexColour } from './validate';
 
 const LIGHT_TEXT = '#FFFFFF';
 const DARK_TEXT = '#1A1A1A';
@@ -46,6 +47,15 @@ function parseHex(hex: string): { r: number; g: number; b: number } {
   return { r: (int >> 16) & 255, g: (int >> 8) & 255, b: int & 255 };
 }
 
+/**
+ * A colour that is safe to hand to CSS. Stored colours are checked on the way
+ * in; this is the last line of defence, since a value like `url(…)` in a
+ * `background` would make the app fetch it.
+ */
+export function safeColour(colour: string, fallback = '#378ADD'): string {
+  return isHexColour(colour) ? colour : fallback;
+}
+
 /** First letter of a name, for avatars. Falls back to "?" for a blank name. */
 export function initialOf(name: string): string {
   const trimmed = name.trim();
@@ -63,6 +73,6 @@ export function carerSwatch(carer: { type: CarerType; colour: string | null }): 
   bg: string;
   text: string;
 } {
-  if (carer.colour) return { bg: carer.colour, text: textOn(carer.colour) };
-  return CARER_TYPE_VARS[carer.type];
+  if (isHexColour(carer.colour)) return { bg: carer.colour, text: textOn(carer.colour) };
+  return CARER_TYPE_VARS[carer.type] ?? CARER_TYPE_VARS.other;
 }

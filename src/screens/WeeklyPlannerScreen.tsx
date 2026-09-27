@@ -6,7 +6,7 @@ import WeekGrid from '../components/WeekGrid';
 import { useAssignments } from '../hooks/useAssignments';
 import Modal from '../components/Modal';
 import { buildPlanCode } from '../db/exportPlan';
-import { shareElementAsImage, sharePlanCode } from '../utils/share';
+import { isShareCancelled, shareElementAsImage, sharePlanCode } from '../utils/share';
 import { todayISO } from '../utils/dates';
 import { getHolidayCoverage } from '../db/coverage';
 import { maybeAskForReview } from '../utils/review';
@@ -105,7 +105,7 @@ export default function WeeklyPlannerScreen() {
       setShareStatus(result.shared ? null : `Saved ${result.filename}`);
       if (result.shared) setSharing(false);
     } catch (error) {
-      setShareStatus(`Could not create the image: ${(error as Error).message}`);
+      if (!isShareCancelled(error)) setShareStatus(`Could not create the image: ${(error as Error).message}`);
     } finally {
       setBusy(false);
     }
@@ -121,7 +121,7 @@ export default function WeeklyPlannerScreen() {
       setShareStatus(how === 'copied' ? 'Plan copied to the clipboard.' : null);
       if (how === 'shared') setSharing(false);
     } catch (error) {
-      setShareStatus(`Could not share the plan: ${(error as Error).message}`);
+      if (!isShareCancelled(error)) setShareStatus(`Could not share the plan: ${(error as Error).message}`);
     } finally {
       setBusy(false);
     }

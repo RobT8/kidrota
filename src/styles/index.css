@@ -977,15 +977,12 @@ button {
 }
 
 .slot__period {
-  font-size: 9px;
-  opacity: 0.75;
+  /* Full strength: dimmed, "AM" measured 4.3–4.4:1 on the carer colours,
+     just under WCAG AA's 4.5:1. The lighter weight still sets it apart from
+     the carer's name below it. */
+  font-size: 10px;
+  font-weight: 400;
   line-height: 1.1;
-}
-
-/* On a custom colour the dimmed label drops below 4.5:1 (3.35:1 on the
-   purple), so it keeps full strength there. */
-.slot--custom .slot__period {
-  opacity: 1;
 }
 
 .slot__carer {
@@ -1798,14 +1795,14 @@ button {
   outline-offset: 2px;
 }
 
-/* Back arrow: large enough to hit without aiming, with a 44px tap target. */
+/* Back arrow: large enough to hit without aiming, with a 48px tap target. */
 .back-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  margin-left: -10px;
+  width: 48px;
+  height: 48px;
+  margin-left: -12px;
   padding: 0;
   border: 0;
   background: none;
@@ -1848,4 +1845,61 @@ button {
   line-height: 1.5;
   resize: vertical;
   word-break: break-all;
+}
+
+/* ============================================================
+   Touch targets
+   ============================================================ */
+
+/* Android asks for at least 48dp for anything tappable (CSS px are dp in the
+   WebView), and Play's pre-launch report flags anything smaller. Controls
+   that can simply grow do so here. */
+.icon-button,
+.segmented__option,
+.chip,
+.slot,
+.setting-row--action,
+.setting-row__control,
+.entity-row__main,
+.dashed-button,
+.field__input {
+  min-height: 48px;
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+}
+
+/* Taller rows keep their text centred rather than riding at the top. */
+.entity-row__main {
+  justify-content: center;
+}
+
+.segmented + .field-note {
+  margin-top: 8px;
+}
+
+/* Controls whose look is deliberately small keep it, with an invisible hit
+   area of at least 48 × 48 centred on them. */
+/* (.holiday-card__edit is absolutely positioned already, which serves.) */
+.fab,
+.share-button,
+.link-button {
+  position: relative;
+}
+
+.fab::after,
+.share-button::after,
+.link-button::after,
+.holiday-card__edit::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 48px);
+  height: max(100%, 48px);
+  transform: translate(-50%, -50%);
 }

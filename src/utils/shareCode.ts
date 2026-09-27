@@ -1,6 +1,20 @@
 import type { Assignment, Carer, Child, Holiday } from '../db/types';
-import type { CarerType, HolidayMode, Period } from './constants';
+import { MAX_HOLIDAY_DAYS, type CarerType, type HolidayMode, type Period } from './constants';
 import { addDays, daysBetween } from './dates';
+import {
+  holidayLength,
+  isCarerType,
+  isHexColour,
+  isHolidayMode,
+  isISODate,
+  isName,
+  isOptionalCost,
+  isOptionalText,
+  isSlotPeriod,
+  isTimeRange,
+  isWholeNumber,
+  MAX_TEXT_LENGTH,
+} from './validate';
 
 /**
  * A whole holiday plan as a single shareable string.
@@ -156,34 +170,125 @@ export function extractShareCode(text: string): string | null {
   return match ? match[0] : null;
 }
 
+/** Longest code accepted; a real one is a few kilobytes. */
+const MAX_CODE_LENGTH = 200_000;
+/** Generous caps on what one plan can bring, so a damaged code cannot flood the phone. */
+const MAX_CHILDREN = 20;
+const MAX_CARERS = 50;
+const MAX_ASSIGNMENTS = 5_000;
+/**
+ * How far from the holiday's start a day may sit. A stray assignment left
+ * outside the holiday after its dates were changed travels with the plan, so
+ * this is wider than the holiday itself — it only rules out nonsense.
+ */
+const MAX_DAY_OFFSET = 400;
+
+function damaged(): never {
+  throw new ShareCodeError('That code is incomplete or damaged. Ask for it again.');
+}
+
+function isOffset(value: unknown): value is number {
+  return isWholeNumber(value) && Math.abs(value) <= MAX_DAY_OFFSET;
+}
+
+/**
+ * Turn a pasted code back into a plan, checking every field on the way.
+ *
+ * A code arrives from someone else's phone through WhatsApp or email, so it is
+ * outside input: anything that is not exactly what encodePlan writes is
+ * refused here, before a single row is added — rather than being stored and
+ * breaking a screen later.
+ */
 export function decodePlan(code: string): SharedPlan {
   const trimmed = extractShareCode(code);
   if (!trimmed) {
     throw new ShareCodeError('That does not look like a KidRota plan code.');
   }
+  if (trimmed.length > MAX_CODE_LENGTH) damaged();
 
   let compact: CompactPlan;
   try {
     compact = JSON.parse(fromBase64(trimmed.slice(SHARE_PREFIX.length)));
   } catch {
-    throw new ShareCodeError('That code is incomplete or damaged. Ask for it again.');
+    damaged();
   }
 
-  if (compact?.v !== CURRENT_VERSION) {
+  if (typeof compact !== 'object' || compact === null) damaged();
+  if (compact.v !== CURRENT_VERSION) {
     throw new ShareCodeError('That code came from a different version of KidRota.');
   }
-  if (!Array.isArray(compact.h) || compact.h.length < 5) {
-    throw new ShareCodeError('That code is incomplete or damaged. Ask for it again.');
-  }
+  if (!Array.isArray(compact.h) || compact.h.length < 5) damaged();
   for (const key of ['c', 'k', 'a'] as const) {
-    if (!Array.isArray(compact[key])) {
-      throw new ShareCodeError('That code is incomplete or damaged. Ask for it again.');
-    }
+    if (!Array.isArray(compact[key])) damaged();
   }
+  if (compact.n !== undefined && !Array.isArray(compact.n)) damaged();
 
   const [name, startDate, endDate, mode, excludeWeekends] = compact.h;
-  const childCount = compact.c.length;
-  const carerCount = compact.k.length;
+  if (
+    !isName(name) ||
+    !isISODate(startDate) ||
+    !isISODate(endDate) ||
+    endDate < startDate ||
+    !isHolidayMode(mode) ||
+    (excludeWeekends !== 0 && excludeWeekends !== 1)
+  ) {
+    damaged();
+  }
+  if (holidayLength(startDate, endDate) > MAX_HOLIDAY_DAYS) {
+    throw new ShareCodeError(
+      `That plan is longer than KidRota can hold (${MAX_HOLIDAY_DAYS / 7} weeks). Ask for it to be split into shorter holidays.`,
+    );
+  }
+
+  if (compact.c.length > MAX_CHILDREN || compact.k.length > MAX_CARERS || compact.a.length > MAX_ASSIGNMENTS) {
+    damaged();
+  }
+
+  const children = compact.c.map((entry) => {
+    if (!Array.isArray(entry)) damaged();
+    const [childName, colour] = entry;
+    if (!isName(childName) || !isHexColour(colour)) damaged();
+    return { name: childName, colour };
+  });
+
+  const carers = compact.k.map((entry) => {
+    if (!Array.isArray(entry)) damaged();
+    const [carerName, shortName, type, cost] = entry;
+    if (!isName(carerName) || !isName(shortName) || !isCarerType(type) || !isOptionalCost(cost)) damaged();
+    return { name: carerName, short_name: shortName, type, cost_per_day: cost ?? null };
+  });
+
+  const assignments = compact.a
+    .map((entry) => {
+      if (!Array.isArray(entry)) damaged();
+      // Trailing nulls are trimmed when encoding, so these may arrive undefined.
+      const [child, carer, offset, period = null, startTime = null, endTime = null, notes = null, cost = null] = entry;
+      if (!isWholeNumber(child) || !isWholeNumber(carer) || !isOffset(offset)) damaged();
+      const shapeOk =
+        period === null
+          ? isTimeRange(startTime, endTime)
+          : isSlotPeriod(period) && startTime === null && endTime === null;
+      if (!shapeOk || !isOptionalText(notes) || !isOptionalCost(cost)) damaged();
+      return {
+        childIndex: child,
+        carerIndex: carer,
+        date: addDays(startDate, offset),
+        period,
+        start_time: startTime,
+        end_time: endTime,
+        notes,
+        cost,
+      };
+    })
+    // Guard against a damaged code pointing at someone who is not there.
+    .filter((item) => item.childIndex >= 0 && item.childIndex < children.length && item.carerIndex >= 0 && item.carerIndex < carers.length);
+
+  const dayNotes = (compact.n ?? []).map((entry) => {
+    if (!Array.isArray(entry)) damaged();
+    const [offset, note] = entry;
+    if (!isOffset(offset) || typeof note !== 'string' || note.length > MAX_TEXT_LENGTH) damaged();
+    return { date: addDays(startDate, offset), note };
+  });
 
   return {
     holiday: {
@@ -193,30 +298,9 @@ export function decodePlan(code: string): SharedPlan {
       mode,
       exclude_weekends: excludeWeekends,
     },
-    children: compact.c.map(([childName, colour]) => ({ name: childName, colour })),
-    carers: compact.k.map(([carerName, shortName, type, cost]) => ({
-      name: carerName,
-      short_name: shortName,
-      type,
-      cost_per_day: cost,
-    })),
-    assignments: compact.a
-      // Guard against a damaged code pointing at someone who is not there.
-      .filter(([child, carer]) => child >= 0 && child < childCount && carer >= 0 && carer < carerCount)
-      .map(([child, carer, offset, period, startTime, endTime, notes, cost]) => ({
-        childIndex: child,
-        carerIndex: carer,
-        date: addDays(startDate, offset),
-        // Trailing nulls are trimmed when encoding, so these arrive undefined.
-        period: period ?? null,
-        start_time: startTime ?? null,
-        end_time: endTime ?? null,
-        notes: notes ?? null,
-        cost: cost ?? null,
-      })),
-    dayNotes: (compact.n ?? []).map(([offset, note]) => ({
-      date: addDays(startDate, offset),
-      note,
-    })),
+    children,
+    carers,
+    assignments,
+    dayNotes,
   };
 }

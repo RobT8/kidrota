@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { setDbExecutor } from '../database';
 import { createTestDb } from '../testExecutor';
 import type { DbExecutor } from '../executor';
-import { BackupError, exportData, importData, validateBackup, wipeAllData } from '../backup';
+import { BackupError, backupDate, exportData, importData, validateBackup, wipeAllData } from '../backup';
 import { SCHEMA_VERSION } from '../schema';
 import { createChild, listChildren } from '../children';
 import { createCarer, listCarers } from '../carers';
@@ -226,5 +226,93 @@ describe('importData', () => {
     await importData(JSON.parse(JSON.stringify(file)));
     // The export predates it, so restoring removes it — replace, not merge.
     expect(await getSetting('theme')).toBeNull();
+  });
+});
+
+/** A backup being deliberately broken, so any shape goes. */
+type Damageable = any;
+
+describe('importData with a damaged file', () => {
+  /** A backup of the seeded device, as a plain object a test can damage. */
+  async function backupToDamage() {
+    await seed();
+    return JSON.parse(JSON.stringify(await exportData()));
+  }
+
+  async function expectDeviceUnchanged(before: Awaited<ReturnType<typeof exportData>>) {
+    const after = await exportData();
+    expect({ ...after, exportedAt: '' }).toEqual({ ...before, exportedAt: '' });
+  }
+
+  it('keeps everything when one day of cover points at a carer that is not in the file', async () => {
+    const file = await backupToDamage();
+    const before = await exportData();
+    file.assignments.push({ ...file.assignments[0], id: 99, carer_id: 777 });
+
+    await expect(importData(file)).rejects.toThrow(BackupError);
+    await expectDeviceUnchanged(before);
+  });
+
+  it('keeps everything when a child has no name', async () => {
+    const file = await backupToDamage();
+    const before = await exportData();
+    file.children[0].name = null;
+
+    await expect(importData(file)).rejects.toThrow('nothing was restored');
+    await expectDeviceUnchanged(before);
+  });
+
+  it('keeps everything when the database itself refuses a row', async () => {
+    const file = await backupToDamage();
+    const before = await exportData();
+    // Passes the row checks, but breaks the one-carer-per-slot unique index.
+    file.assignments.push({ ...file.assignments[0], id: 99 });
+
+    await expect(importData(file)).rejects.toThrow('booked twice');
+    await expectDeviceUnchanged(before);
+    // And the database still works normally afterwards.
+    await setSetting('after', 'yes');
+    expect(await getSetting('after')).toBe('yes');
+  });
+
+  it.each([
+    ['an impossible date', (f: Damageable) => { f.holidays[0].start_date = '2026-02-30'; }],
+    ['dates the wrong way round', (f: Damageable) => { f.holidays[0].end_date = '2026-01-01'; }],
+    ['a centuries-long holiday', (f: Damageable) => { f.holidays[0].start_date = '1900-01-01'; }],
+    ['an unknown planning mode', (f: Damageable) => { f.holidays[0].mode = 'weird'; }],
+    ['an unknown carer type', (f: Damageable) => { f.carers[0].type = 'hacker'; }],
+    ['a colour that is not a colour', (f: Damageable) => { f.children[0].colour = 'url(https://example.invalid/x)'; }],
+    ['a slot that is neither AM/PM nor timed', (f: Damageable) => { f.assignments[0].period = 'all_day'; }],
+    ['a timed session ending before it starts', (f: Damageable) => { f.assignments[2].start_time = '13:00'; }],
+    ['a negative cost', (f: Damageable) => { f.carers[1].cost_per_day = -5; }],
+    ['a note on a holiday that is not there', (f: Damageable) => { f.dayNotes[0].holiday_id = 42; }],
+    ['a setting that is not text', (f: Damageable) => { f.settings.reminder_days = 7; }],
+    ['two children with the same id', (f: Damageable) => { f.children[1].id = f.children[0].id; }],
+  ])('rejects %s before touching anything', async (_what, damage) => {
+    const file = await backupToDamage();
+    const before = await exportData();
+    damage(file);
+
+    expect(() => validateBackup(file)).toThrow(BackupError);
+    await expect(importData(file)).rejects.toThrow(BackupError);
+    await expectDeviceUnchanged(before);
+  });
+});
+
+describe('backupDate', () => {
+  it('formats the export date for the confirmation', () => {
+    const file = validateBackup({
+      app: 'kidrota', schemaVersion: 1, exportedAt: '2026-09-03T10:00:00.000Z',
+      children: [], carers: [], holidays: [], assignments: [],
+    });
+    // "Sep" or "Sept" depending on the ICU data the runtime ships.
+    expect(backupDate(file)).toMatch(/^3 Sept? 2026$/);
+  });
+
+  it('is null for a file without a usable date', () => {
+    const file = validateBackup({
+      app: 'kidrota', schemaVersion: 1, children: [], carers: [], holidays: [], assignments: [],
+    });
+    expect(backupDate(file)).toBeNull();
   });
 });

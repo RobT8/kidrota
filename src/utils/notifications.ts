@@ -5,7 +5,23 @@ import { parseISODate, todayISO } from './dates';
 /** Notifications fire at 9am local time — morning of, not middle of the night. */
 const REMINDER_HOUR = 9;
 
-export const DEFAULT_REMINDER_DAYS = 7;
+/**
+ * Reminders start off. Turning them on is what asks for the notification
+ * permission, so it happens when someone chooses it in Settings rather than
+ * as a surprise while adding their first holiday.
+ */
+export const DEFAULT_REMINDER_DAYS = 0;
+
+/**
+ * The saved "days before" setting. Nothing saved means the default — which
+ * has to be checked for explicitly, because `Number(null)` is 0 and would
+ * pass for a real choice.
+ */
+export function parseReminderDays(saved: string | null): number {
+  if (saved === null || saved.trim() === '') return DEFAULT_REMINDER_DAYS;
+  const days = Number(saved);
+  return Number.isInteger(days) && days >= 0 ? days : DEFAULT_REMINDER_DAYS;
+}
 
 export function remindersSupported(): boolean {
   // The plugin is native-only; the browser build has no equivalent.
@@ -63,7 +79,13 @@ export async function rescheduleReminders(
           days === 1
             ? 'Starts tomorrow. Any gaps left to fill?'
             : `Starts in ${days} days. Any gaps left to fill?`,
-        schedule: { at: item.at },
+        // A reminder a week ahead does not need to-the-minute timing. Asking
+        // for an exact alarm makes the plugin open Android's "Alarms &
+        // reminders" settings page on Android 14+, where exact alarms are off
+        // by default — on every save once reminders are on. Inexact but
+        // allowed while idle still arrives within minutes, even in Doze.
+        schedule: { at: item.at, allowWhileIdle: true },
+        isExactNotification: false,
       }));
 
     if (notifications.length > 0) {
@@ -87,8 +109,7 @@ export async function syncReminders(): Promise<ReminderResult> {
   const { getSetting } = await import('../db/settings');
   const { listHolidays } = await import('../db/holidays');
 
-  const saved = Number(await getSetting('reminder_days'));
-  const days = Number.isFinite(saved) && saved >= 0 ? saved : DEFAULT_REMINDER_DAYS;
+  const days = parseReminderDays(await getSetting('reminder_days'));
   return rescheduleReminders(days, await listHolidays());
 }
 

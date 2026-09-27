@@ -12,6 +12,7 @@ import { migrate } from './migrate';
 export function createTestExecutor(): DbExecutor & { close: () => void } {
   const db = new DatabaseSync(':memory:');
   db.exec('PRAGMA foreign_keys = ON');
+  let depth = 0;
 
   return {
     async query<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {
@@ -25,6 +26,21 @@ export function createTestExecutor(): DbExecutor & { close: () => void } {
       db.exec(sql);
     },
     async persist(): Promise<void> {},
+    async transaction<T>(work: () => Promise<T>): Promise<T> {
+      if (depth > 0) return work();
+      db.exec('BEGIN');
+      depth++;
+      try {
+        const result = await work();
+        depth--;
+        db.exec('COMMIT');
+        return result;
+      } catch (error) {
+        depth--;
+        db.exec('ROLLBACK');
+        throw error;
+      }
+    },
     close: () => db.close(),
   };
 }

@@ -173,3 +173,22 @@ describe('buildPlanCode', () => {
     expect(await buildPlanCode(999)).toBeNull();
   });
 });
+
+describe('a plan that fails partway', () => {
+  it('adds nothing at all', async () => {
+    const plan = decodePlan(await makeCode());
+    // Start from an empty device so anything left behind is visible.
+    setDbExecutor(null);
+    db.close();
+    db = await createTestDb();
+    setDbExecutor(db);
+
+    // The children go in first; the broken carer name fails after them.
+    const broken = { ...plan, carers: [{ ...plan.carers[0], name: 42 as unknown as string }] };
+    await expect(importSharedPlan(broken)).rejects.toThrow();
+
+    expect(await listChildren()).toEqual([]);
+    expect(await listCarers()).toEqual([]);
+    expect(await listHolidays()).toEqual([]);
+  });
+});

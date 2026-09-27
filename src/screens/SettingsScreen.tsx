@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { BackupError, exportData, importData, wipeAllData } from '../db/backup';
+import { BackupError, backupDate, exportData, importData, validateBackup, wipeAllData, type BackupFile } from '../db/backup';
 import { importSharedPlan } from '../db/importPlan';
 import { ShareCodeError, decodePlan } from '../utils/shareCode';
 import { plural } from '../utils/status';
@@ -18,17 +18,20 @@ import { getSetting, setSetting } from '../db/settings';
 import {
   DEFAULT_REMINDER_DAYS,
   cancelAllReminders,
+  parseReminderDays,
   remindersSupported,
   rescheduleReminders,
+  syncReminders,
 } from '../utils/notifications';
 import { getThemePreference, setThemePreference, type ThemePreference } from '../utils/theme';
 import {
   PLAY_STORE_URL,
+  LICENSES_URL,
   PRIVACY_URL,
   SUPPORT_EMAIL,
   TERMS_URL,
 } from '../utils/constants';
-import { downloadBackup, sharePlanCode } from '../utils/share';
+import { downloadBackup, isShareCancelled, sharePlanCode } from '../utils/share';
 
 const REMINDER_KEY = 'reminder_days';
 const THEMES: { value: ThemePreference; label: string }[] = [
@@ -43,6 +46,8 @@ export default function SettingsScreen() {
   const [reminderDays, setReminderDays] = useState(DEFAULT_REMINDER_DAYS);
   const [status, setStatus] = useState<{ kind: 'ok' | 'bad'; text: string } | null>(null);
   const [confirmWipe, setConfirmWipe] = useState(false);
+  // A backup that has been read and checked, waiting for "Replace everything".
+  const [pendingRestore, setPendingRestore] = useState<BackupFile | null>(null);
   const [pasting, setPasting] = useState(false);
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
@@ -56,10 +61,7 @@ export default function SettingsScreen() {
   const [feedbackText, setFeedbackText] = useState('');
 
   useEffect(() => {
-    getSetting(REMINDER_KEY).then((saved) => {
-      const parsed = Number(saved);
-      if (Number.isFinite(parsed) && parsed >= 0) setReminderDays(parsed);
-    });
+    getSetting(REMINDER_KEY).then((saved) => setReminderDays(parseReminderDays(saved)));
   }, []);
 
   function chooseTheme(value: ThemePreference) {
@@ -106,25 +108,49 @@ export default function SettingsScreen() {
           : { kind: 'ok', text: `Saved ${result.filename}` },
       );
     } catch (error) {
-      setStatus({ kind: 'bad', text: `Export failed: ${(error as Error).message}` });
+      if (!isShareCancelled(error)) setStatus({ kind: 'bad', text: `Export failed: ${(error as Error).message}` });
     } finally {
       setBusy(false);
     }
   }
 
+  /**
+   * Read and check the chosen file, then ask before replacing anything. The
+   * file picker alone is not enough of a "yes": choosing last month's backup
+   * by mistake would silently throw away everything planned since.
+   */
   async function handleImportFile(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     // Reset so choosing the same file twice still fires a change event.
     event.target.value = '';
     if (!file) return;
 
+    setStatus(null);
+    try {
+      setPendingRestore(validateBackup(JSON.parse(await file.text())));
+    } catch (error) {
+      setStatus({
+        kind: 'bad',
+        text:
+          error instanceof BackupError
+            ? error.message
+            : 'That file could not be read. It may not be a KidRota backup.',
+      });
+    }
+  }
+
+  async function restoreBackup(file: BackupFile) {
+    setPendingRestore(null);
     setBusy(true);
     setStatus(null);
     try {
-      const restored = await importData(JSON.parse(await file.text()));
+      const restored = await importData(file);
+      // The backup brings its own reminder setting and holidays; line the
+      // phone's scheduled reminders up with them before starting afresh.
+      await syncReminders();
       setStatus({
         kind: 'ok',
-        text: `Restored ${restored.children.length} children and ${restored.holidays.length} holidays. Reopening…`,
+        text: `Restored ${plural(restored.children.length, 'child', 'children')} and ${plural(restored.holidays.length, 'holiday', 'holidays')}. Reopening…`,
       });
       // Everything on screen was read from the old data; restart cleanly.
       setTimeout(() => window.location.reload(), 900);
@@ -134,7 +160,7 @@ export default function SettingsScreen() {
         text:
           error instanceof BackupError
             ? error.message
-            : 'That file could not be read. It may not be a KidRota backup.',
+            : 'That backup could not be restored. Your plans are unchanged.',
       });
       setBusy(false);
     }
@@ -197,7 +223,7 @@ export default function SettingsScreen() {
       if (how === 'copied') setStatus({ kind: 'ok', text: 'Plan copied — paste it into a message.' });
     } catch (error) {
       setSendHolidays(null);
-      setStatus({ kind: 'bad', text: `Could not send the plan: ${(error as Error).message}` });
+      if (!isShareCancelled(error)) setStatus({ kind: 'bad', text: `Could not send the plan: ${(error as Error).message}` });
     } finally {
       setBusy(false);
     }
@@ -420,6 +446,10 @@ export default function SettingsScreen() {
           <span className="setting-row__label">Terms of service</span>
           <span className="setting-row__chevron">›</span>
         </button>
+        <button type="button" className="setting-row setting-row--action" onClick={() => openUrl(LICENSES_URL)}>
+          <span className="setting-row__label">Open-source licences</span>
+          <span className="setting-row__chevron">›</span>
+        </button>
         <div className="setting-row">
           <span className="setting-row__label">Version</span>
           <span className="setting-row__value">{__APP_VERSION__}</span>
@@ -562,6 +592,22 @@ export default function SettingsScreen() {
             </>
           )}
         </Modal>
+      )}
+
+      {pendingRestore && (
+        <ConfirmDialog
+          title="Restore this backup?"
+          message={`This replaces everything on this phone with the backup${
+            backupDate(pendingRestore) ? ` from ${backupDate(pendingRestore)}` : ''
+          }: ${plural(pendingRestore.children.length, 'child', 'children')}, ${plural(
+            pendingRestore.carers.length,
+            'carer',
+            'carers',
+          )} and ${plural(pendingRestore.holidays.length, 'holiday', 'holidays')}. Anything added since that backup will be lost.`}
+          confirmLabel="Replace everything"
+          onConfirm={() => restoreBackup(pendingRestore)}
+          onCancel={() => setPendingRestore(null)}
+        />
       )}
 
       {confirmWipe && (

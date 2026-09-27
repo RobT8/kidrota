@@ -201,3 +201,58 @@ describe('planMessage wording', () => {
     expect(message).not.toContain('whole message');
   });
 });
+
+describe('refusing damaged or hand-made codes', () => {
+  /** A code built from the compact form, the way a damaged or edited code arrives. */
+  function codeOf(compact: unknown): string {
+    const bytes = new TextEncoder().encode(JSON.stringify(compact));
+    let binary = '';
+    for (const byte of bytes) binary += String.fromCharCode(byte);
+    return SHARE_PREFIX + btoa(binary);
+  }
+  const good = {
+    v: 1,
+    h: ['October half term', '2026-10-19', '2026-10-23', 'simple', 1],
+    c: [['Ada', '#378ADD']],
+    k: [['Grandma', 'Gran', 'family', null]],
+    a: [[0, 0, 0, 'am'], [0, 0, 1, null, '09:00', '12:00']],
+    n: [[0, 'pack swimming kit']],
+  };
+
+  it('accepts a well-formed code', () => {
+    const decoded = decodePlan(codeOf(good));
+    expect(decoded.assignments).toHaveLength(2);
+    expect(decoded.assignments[1]).toMatchObject({ date: '2026-10-20', start_time: '09:00', end_time: '12:00' });
+  });
+
+  it.each([
+    ['an unknown carer type', { k: [['Bob', 'Bob', 'hacker', null]] }],
+    ['a colour that could load a web address', { c: [['Ada', 'url(https://example.invalid/x)']] }],
+    ['a name that is not text', { k: [[123, 'B', 'family', null]] }],
+    ['an empty name', { c: [['  ', '#378ADD']] }],
+    ['a start date that is not a date', { h: ['X', 'garbage', '2026-10-23', 'simple', 1] }],
+    ['an impossible date', { h: ['X', '2026-02-30', '2026-03-02', 'simple', 1] }],
+    ['dates the wrong way round', { h: ['X', '2026-10-23', '2026-10-19', 'simple', 1] }],
+    ['an unknown planning mode', { h: ['X', '2026-10-19', '2026-10-23', 'weird', 1] }],
+    ['a weekend flag that is not 0 or 1', { h: ['X', '2026-10-19', '2026-10-23', 'simple', 'yes'] }],
+    ['day notes that are not a list', { n: 'notarray' }],
+    ['a slot period the app never makes', { a: [[0, 0, 0, 'all_day']] }],
+    ['a timed session ending before it starts', { a: [[0, 0, 0, null, '12:00', '09:00']] }],
+    ['a slot with times as well', { a: [[0, 0, 0, 'am', '09:00', '12:00']] }],
+    ['a day offset centuries away', { a: [[0, 0, 100000, 'am']] }],
+    ['a negative cost', { k: [['Grandma', 'Gran', 'family', -5]] }],
+    ['far too many children', { c: Array.from({ length: 21 }, (_, i) => [`Child ${i}`, '#378ADD']) }],
+  ])('refuses %s', (_what, change) => {
+    expect(() => decodePlan(codeOf({ ...good, ...change }))).toThrow(ShareCodeError);
+  });
+
+  it('refuses a holiday longer than the app can plan, saying why', () => {
+    expect(() => decodePlan(codeOf({ ...good, h: ['Year', '2026-09-01', '2027-08-31', 'simple', 1] }))).toThrow(/longer than KidRota can hold/);
+  });
+
+  it('refuses an enormous paste quickly', () => {
+    const started = Date.now();
+    expect(() => decodePlan(`${'x'.repeat(1_000_000)} ${SHARE_PREFIX}${'A'.repeat(1_000_000)}`)).toThrow(ShareCodeError);
+    expect(Date.now() - started).toBeLessThan(2000);
+  });
+});

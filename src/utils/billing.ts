@@ -23,6 +23,11 @@ export interface BillingState {
   available: boolean;
   /** Localised yearly price from Play, e.g. "£1.99". Null until loaded. */
   price: string | null;
+  /**
+   * A purchase is waiting on payment — a cash payment at a shop, say. Play
+   * has not taken the money yet, so Pro stays locked until it does.
+   */
+  pending: boolean;
 }
 
 export type PurchaseOutcome =
@@ -61,6 +66,7 @@ let state: BillingState = {
   pro: readCache(),
   available: false,
   price: null,
+  pending: false,
 };
 
 const listeners = new Set<() => void>();
@@ -118,6 +124,7 @@ async function connect(): Promise<void> {
     // Finishing is what acknowledges it to Play, which otherwise refunds the
     // buyer automatically after three days.
     .approved((transaction) => transaction.finish())
+    .pending(refresh)
     .finished(refresh)
     .productUpdated(refresh)
     .receiptUpdated(refresh)
@@ -140,8 +147,38 @@ function refresh(): void {
 
   update({
     pro,
+    pending: !pro && isPendingPro(store.localTransactions),
     price: store.get(PRO_YEARLY_ID, Platform.GOOGLE_PLAY)?.pricing?.price ?? null,
   });
+}
+
+/** Is a Pro purchase waiting on payment among these transactions? */
+export function isPendingPro(transactions: { isPending?: boolean; products: { id: string }[] }[]): boolean {
+  return transactions.some(
+    (transaction) => transaction.isPending === true && transaction.products.some((product) => product.id === PRO_YEARLY_ID),
+  );
+}
+
+/** Don't ask Play again more often than this when the app keeps coming back. */
+const RECHECK_INTERVAL_MS = 60_000;
+let lastRecheck = 0;
+
+/**
+ * Ask Play again what this account owns, when the app comes back to the
+ * front. Cancelling, re-subscribing or a pending payment clearing all happen
+ * in the Play Store while KidRota is in the background; without this the app
+ * would only notice at its next launch. It reads Play's copy on the phone, so
+ * it is quick and shows nothing.
+ */
+export async function recheckPurchases(): Promise<void> {
+  if (!cdv || !purchasesLoaded) return;
+  const now = Date.now();
+  if (now - lastRecheck < RECHECK_INTERVAL_MS) return;
+  lastRecheck = now;
+  await cdv.store.restorePurchases().catch(() => {
+    // Offline or Play busy: the last answer stands, as it does at launch.
+  });
+  refresh();
 }
 
 /**

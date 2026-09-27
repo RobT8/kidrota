@@ -124,6 +124,12 @@ then the code on its own line (`planMessage`). The recipient pastes the whole
 message; `extractShareCode` finds the `KIDROTA1:` code inside it, so nothing
 needs trimming by hand.
 
+A code is outside input too. `decodePlan` checks every field against what
+`encodePlan` writes (`utils/validate.ts`) and refuses anything else before a
+row is added — an unknown carer type or a colour that is not a hex colour
+would otherwise be stored and break a screen, or, as a CSS `url(…)`, make the
+app fetch a stranger's address. The import itself runs in one transaction.
+
 Importing a code *adds* to the device rather than replacing it, unlike a backup
 restore: the code arrives while the recipient already has their own children
 and carers set up. People are matched by name, case and spacing ignored, so an
@@ -132,12 +138,19 @@ import does not leave you with two of everyone.
 ## Backup files
 
 `exportData` writes every table plus the app settings into one JSON file
-stamped with the schema version. Import validates before touching anything —
-a malformed file is rejected with nothing deleted — then replaces the device's
-contents wholesale rather than merging, keeping row ids so assignments still
-point at the right child and carer. A backup from a newer schema is refused;
-one from an older schema is accepted, with tables added since defaulting to
-empty.
+stamped with the schema version. A restore replaces the device's contents
+wholesale rather than merging, keeping row ids so assignments still point at
+the right child and carer. A backup from a newer schema is refused; one from
+an older schema is accepted, with tables added since defaulting to empty.
+
+A backup file is outside input — a person can damage or edit it — so
+`validateBackup` checks every row (types, dates, colours, carer types,
+references between tables) before anything is touched, and `importData`
+then runs the wipe and every insert in one transaction
+(`DbExecutor.transaction`). Either the whole backup lands or the device keeps
+exactly what it had. Settings shows the backup's date and what it holds and
+asks before replacing anything, since picking an old file by mistake would
+otherwise throw away everything planned since.
 
 On Android the file goes to app storage and then the system share sheet, so it
 can be saved to Drive, Files or email. Writing straight to the public Downloads
@@ -160,9 +173,32 @@ user's own email app with a message to `kidrota@t80.dev` filled in, including
 the app version (`utils/feedback.ts`). The app sends nothing itself; the
 privacy policy's "Sending feedback" section says what happens to the email.
 
-The legal pages' source is `docs/`; they are served from
-`https://t80.dev/kidrota/`. Google Play needs the privacy policy as a web
-page, not a PDF.
+The legal pages' source is `docs/` (privacy policy, terms, and the
+open-source licences page, which Settings → About links to); they are served
+from `https://t80.dev/kidrota/`. Google Play needs the privacy policy as a web
+page, not a PDF. When a dependency is added, add its notice to
+`docs/licenses.html`.
+
+## Reminders
+
+Settings → "Remind me before a holiday" schedules one local notification per
+upcoming holiday, at 09:00 that many days before it starts
+(`utils/notifications.ts`). Reminders start **off**: turning them on is what
+asks for Android 13's notification permission, so the prompt only appears
+when someone chooses it. They are re-synced after every holiday change and
+after a backup restore.
+
+They are scheduled as *inexact* alarms allowed while idle, and the manifest
+removes `SCHEDULE_EXACT_ALARM`. Exact alarms are off by default on Android
+14+, and asking for one makes the plugin send the user to the system "Alarms
+& reminders" page; a nudge a week ahead does not need to-the-minute timing.
+
+## Android backup
+
+`android:allowBackup` is on: Android's own backup copies the app's data (the
+SQLite database and WebView storage) into the user's Google account, which is
+how plans survive a new phone or a reinstall. It is Android's service, not
+ours — the privacy policy's "Your phone's own backup" section says so.
 
 ## Android back button
 
@@ -180,6 +216,10 @@ navigates back, and only at the first screen does the app exit.
 | Holidays | 1, ever — deleting it does not free the slot | Unlimited |
 | Changing a finished holiday's dates | No | Yes |
 | Custom carer colours | — | ✓ |
+
+Every holiday, free or Pro, is at most ten weeks long (`MAX_HOLIDAY_DAYS`).
+That covers the longest UK summer break, keeps the planner quick, and stops the
+one free holiday being stretched across a whole school year.
 
 Sold through Google Play Billing as one yearly subscription that Play renews
 automatically until the user cancels it. The ID must be created in the Play
@@ -203,6 +243,12 @@ Play is the only authority, which is how a lapsed subscription or a refund
 turns Pro off. That last answer is cached in `localStorage`, deliberately not
 in `app_settings` — settings travel inside backup files, and a backup must not
 carry Pro to another Google account.
+
+A payment that is still pending (a cash payment at a shop, say) never unlocks
+Pro; the upgrade sheet says it is waiting on Google Play instead. When the
+app returns to the front, `recheckPurchases` asks Play again (at most once a
+minute), so a cancellation, renewal or cleared payment made in the Play Store
+shows without restarting the app.
 
 The holiday cap counts every holiday ever added (`countHolidaysEverAdded`,
 kept in `app_settings` as `holidays_added`), and a finished holiday's dates

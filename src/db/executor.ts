@@ -21,4 +21,9 @@ export interface DbExecutor {
   executeScript(sql: string): Promise<void>;
   /** Flush to durable storage. No-op where writes are already durable. */
   persist(): Promise<void>;
+  /**
+   * Run `work` as one transaction: every write lands, or — if anything throws
+   * — none of them do. A call made inside another transaction simply joins it.
+   */
+  transaction<T>(work: () => Promise<T>): Promise<T>;
 }

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { Holiday, NewHoliday } from '../db/types';
-import type { HolidayMode } from '../utils/constants';
 import { getHolidayDates } from '../utils/dates';
+import { MAX_HOLIDAY_DAYS, type HolidayMode } from '../utils/constants';
+import { holidayDatesProblem, holidayLength } from '../utils/validate';
 
 interface HolidayFormProps {
   /** Omitted when adding. */
@@ -11,11 +12,20 @@ interface HolidayFormProps {
   onCancel: () => void;
   /** A finished holiday on the free version keeps its dates. */
   datesLocked?: boolean;
+  /** Anything is already planned for this holiday, in its current mode. */
+  hasPlan?: boolean;
 }
 
 const MAX_NAME_LENGTH = 40;
 
-export default function HolidayForm({ holiday, onSave, onDelete, onCancel, datesLocked = false }: HolidayFormProps) {
+export default function HolidayForm({
+  holiday,
+  onSave,
+  onDelete,
+  onCancel,
+  datesLocked = false,
+  hasPlan = false,
+}: HolidayFormProps) {
   const [name, setName] = useState(holiday?.name ?? '');
   const [startDate, setStartDate] = useState(holiday?.start_date ?? '');
   const [endDate, setEndDate] = useState(holiday?.end_date ?? '');
@@ -30,7 +40,7 @@ export default function HolidayForm({ holiday, onSave, onDelete, onCancel, dates
   // Show what the holiday will actually cover, so "excludes weekends" and a
   // back-to-front date range are obvious before saving rather than after.
   const plannedDays =
-    complete && endDate >= startDate
+    complete && endDate >= startDate && holidayLength(startDate, endDate) <= MAX_HOLIDAY_DAYS
       ? getHolidayDates({
           start_date: startDate,
           end_date: endDate,
@@ -42,12 +52,9 @@ export default function HolidayForm({ holiday, onSave, onDelete, onCancel, dates
     event.preventDefault();
     if (!complete) return;
 
-    if (endDate < startDate) {
-      setError('The end date is before the start date.');
-      return;
-    }
-    if (plannedDays === 0) {
-      setError('That range is all weekend. Turn off “Weekdays only” to include it.');
+    const problem = holidayDatesProblem(startDate, endDate, excludeWeekends);
+    if (problem) {
+      setError(problem);
       return;
     }
 
@@ -135,6 +142,13 @@ export default function HolidayForm({ holiday, onSave, onDelete, onCancel, dates
             Set times
           </button>
         </div>
+        {holiday && hasPlan && mode !== holiday.mode && (
+          <p className="field-note" role="status">
+            {holiday.mode === 'simple'
+              ? 'The morning / afternoon plan for this holiday will be hidden, not deleted. Switch back to see it again.'
+              : 'The timed plan for this holiday will be hidden, not deleted. Switch back to see it again.'}
+          </p>
+        )}
       </fieldset>
 
       <label className="toggle-row">

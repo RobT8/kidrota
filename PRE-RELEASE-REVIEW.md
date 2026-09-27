@@ -12,6 +12,32 @@ Every finding is tagged:
 
 ---
 
+## Fix status (27 September 2026, same day)
+
+The owner approved **B1-B2 and S1-S12, keeping `allowBackup` on**. All are fixed on this branch;
+325 tests pass (was 270), lint and build are clean. 📱 = still to confirm on the phone.
+
+| # | What was done | Proof |
+|---|---|---|
+| B1 | Privacy policy gains "Your phone's own backup"; uninstall, children, terms §4 and summary, welcome screen and `docs/index.html` reworded; pages dated 27 Sep 2026 | Text review |
+| B2 | Reminders scheduled with `isExactNotification: false`, `allowWhileIdle: true`; `SCHEDULE_EXACT_ALARM` removed via `tools:node="remove"` | Plugin source path; 📱 P3 + merged manifest |
+| S1 | Every backup row validated first (`utils/validate.ts`); restore runs in one transaction (new `DbExecutor.transaction`); Settings asks "Restore this backup?" with date and counts; damaged file says "nothing was restored" | 15 new tests incl. both probe cases; Playwright: damaged file refused, confirm/cancel/restore all work |
+| S2 | `decodePlan` checks every field, caps sizes; plan import is one transaction; `listCarersByType`, `carerSwatch`, `ChildAvatar` tolerate bad stored values | 19 new tests; Playwright: "hacker" carer type refused |
+| S3 | Holidays capped at 70 days for everyone (`MAX_HOLIDAY_DAYS`), in the form and in share codes; backups allow up to 400 days (restores what was yours) | Tests at 70/71 days and a full school year; Playwright shows the message |
+| S4 | Reminders default **Off**; `parseReminderDays` treats "nothing saved" explicitly; reminders re-synced after a restore. (Not at launch — that could pop the permission prompt unprompted.) | 4 tests; select shows Off on a new install |
+| S5 | Privacy policy: "Sending a plan or a picture of the week", in-app review card, "Permissions you may be asked for" plus the silent ones, Pro not cancelled by deleting data | Text review |
+| S6 | Pending payment shows "Payment pending — Pro unlocks as soon as Google Play confirms it" and disables Subscribe; purchases re-read on app resume (at most once a minute) via `restorePurchases()` — `store.update()` only reloads prices | 4 tests for `isPendingPro`; 📱 P7-P8 |
+| S7 | Editing a holiday with a plan and switching mode shows "…will be hidden, not deleted. Switch back to see it again." | Playwright |
+| S8 | "Share canceled" is now silent in all three share paths | 2 tests; 📱 confirm |
+| S9 | 48 dp minimum: growing controls get `min-height`/`min-width`; small-looking ones (+ button, Share, text links, Edit) get an invisible 48 × 48 hit area; back arrow 48 × 48 | Playwright `elementFromPoint` check on every screen, both themes: nothing under 48 except the "Weekdays only" checkbox, whose whole `<label>` row is the target |
+| S10 | `.slot__period` full strength at 10 px | Playwright: no text fails AA in either theme (decorative eyebrow/chevrons excepted, as before) |
+| S11 | `docs/licenses.html` (MIT/Apache/SQLCipher/Google SDK notices), linked from Settings → About and every legal page | 🟡 SQLCipher text written from its published BSD-style licence — check against zetetic.net/sqlcipher/license when uploading |
+| S12 | README: backup, share-code, reminders, Android backup, 10-week cap, pending/resume sections | Text review |
+
+Not done (not approved): the N-list below.
+
+---
+
 ## At a glance
 
 | | Count | Headline |

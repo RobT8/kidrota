@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { carerSwatch, contrast, initialOf, textOn } from '../colour';
-import { CARER_COLOURS, CARER_TYPE_VARS, CHILD_COLOURS } from '../constants';
+import { carerSwatch, contrast, initialOf, safeColour, textOn } from '../colour';
+import { CARER_COLOURS, CARER_TYPE_VARS, CHILD_COLOURS, type CarerType } from '../constants';
 
 describe('textOn', () => {
   it('picks white on dark backgrounds and near-black on light ones', () => {
@@ -64,5 +64,17 @@ describe('carerSwatch', () => {
       expect(bg).toBe(colour);
       expect(contrast(bg, text)).toBeGreaterThanOrEqual(4.5);
     }
+  });
+});
+
+describe('last line of defence for outside colours', () => {
+  it('never hands CSS anything but a hex colour', () => {
+    expect(safeColour('#E2725B')).toBe('#E2725B');
+    expect(safeColour('url(https://example.invalid/x)')).toBe('#378ADD');
+    expect(carerSwatch({ type: 'family', colour: 'url(https://example.invalid/x)' })).toEqual(CARER_TYPE_VARS.family);
+  });
+
+  it('shows a carer of an unknown type in the Other colours rather than failing', () => {
+    expect(carerSwatch({ type: 'hacker' as CarerType, colour: null })).toEqual(CARER_TYPE_VARS.other);
   });
 });

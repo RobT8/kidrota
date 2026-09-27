@@ -91,10 +91,17 @@ export default function ProSheet({ billing, feature, onClose }: ProSheetProps) {
       </ul>
 
       <div className="pro-sheet__options">
-        <button type="button" className="button button--primary" disabled={busy || !price} onClick={buy}>
+        <button type="button" className="button button--primary" disabled={busy || !price || billing.pending} onClick={buy}>
           {price ? `Subscribe — ${price} a year` : 'Subscribe'}
         </button>
       </div>
+
+      {billing.pending && (
+        <p className="form-success" role="status">
+          Payment pending — Pro unlocks as soon as Google Play confirms it. There is nothing more
+          to do here.
+        </p>
+      )}
 
       {!billing.available && (
         <p className="pro-sheet__note">

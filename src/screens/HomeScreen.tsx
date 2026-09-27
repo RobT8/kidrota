@@ -121,6 +121,7 @@ export default function HomeScreen() {
           <HolidayForm
             holiday={editing}
             datesLocked={!canChangeHolidayDates(editing.end_date, todayISO(), pro)}
+            hasPlan={coverage.get(editing.id)?.empty === false}
             onSave={handleSave}
             onDelete={() => setDeleting(editing)}
             onCancel={() => setEditing(null)}

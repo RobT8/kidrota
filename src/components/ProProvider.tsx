@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { ProContext } from '../hooks/usePro';
-import { getBillingState, startBilling, subscribeBilling } from '../utils/billing';
+import { Capacitor } from '@capacitor/core';
+import { getBillingState, recheckPurchases, startBilling, subscribeBilling } from '../utils/billing';
 import type { ProFeature } from '../utils/freeTier';
 import ProSheet from './ProSheet';
 
@@ -15,6 +16,25 @@ export default function ProProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     startBilling();
+  }, []);
+
+  // Pick up changes made in the Play Store while the app was in the background.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    let remove: (() => void) | undefined;
+    let cancelled = false;
+    (async () => {
+      const { App } = await import('@capacitor/app');
+      const handle = await App.addListener('resume', () => {
+        recheckPurchases();
+      });
+      if (cancelled) handle.remove();
+      else remove = () => handle.remove();
+    })();
+    return () => {
+      cancelled = true;
+      remove?.();
+    };
   }, []);
 
   const openUpgrade = useCallback((feature?: ProFeature) => setSheet({ feature }), []);

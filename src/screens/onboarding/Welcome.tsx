@@ -12,7 +12,7 @@ const POINTS = [
   {
     icon: 'lock',
     title: 'No account needed',
-    body: 'Everything stays on your phone. Private and offline.',
+    body: 'No sign-up, no servers. Your plans stay on your phone.',
   },
 ];
 

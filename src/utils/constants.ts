@@ -65,6 +65,14 @@ export const CARER_COLOURS = [
 /** Key used in the app_settings table to skip onboarding on later launches. */
 export const ONBOARDING_COMPLETE_KEY = 'onboarding_complete';
 
+/**
+ * The longest holiday that can be planned, in calendar days: ten weeks, which
+ * covers the longest UK summer break with room to spare. It applies to
+ * everyone — it keeps the planner quick, and stops the free version's one
+ * holiday being stretched across a whole school year.
+ */
+export const MAX_HOLIDAY_DAYS = 70;
+
 /** Free-tier caps. Lifted by the Pro unlock. */
 export const FREE_TIER_MAX_CHILDREN = 1;
 /** Counts every holiday ever added, not just those still on the phone. */
@@ -81,6 +89,7 @@ export const FREE_TIER_MAX_HOLIDAYS = 1;
 export const SUPPORT_EMAIL = 'kidrota@t80.dev';
 export const PRIVACY_URL = 'https://t80.dev/kidrota/privacy.html';
 export const TERMS_URL = 'https://t80.dev/kidrota/terms.html';
+export const LICENSES_URL = 'https://t80.dev/kidrota/licenses.html';
 /**
  * The Settings "Rate this app" row opens the listing rather than calling the
  * In-App Review API: Google asks apps not to put that API behind a button, as

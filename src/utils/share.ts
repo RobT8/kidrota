@@ -2,6 +2,15 @@ import { Capacitor } from '@capacitor/core';
 import type { BackupFile } from '../db/backup';
 import { planMessage } from './shareCode';
 
+/**
+ * Did the user simply close the share sheet? Android reports that as an
+ * error ("Share canceled"), but it is a choice, not a failure, and needs no
+ * message.
+ */
+export function isShareCancelled(error: unknown): boolean {
+  return /cancel/i.test((error as Error)?.message ?? '');
+}
+
 export interface SaveResult {
   filename: string;
   /** True when the system share sheet was used rather than a direct download. */

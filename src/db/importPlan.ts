@@ -4,6 +4,7 @@ import { addTimeSlot, setSlotAssignment } from './assignments';
 import { createCarer, listCarers } from './carers';
 import { createChild, listChildren } from './children';
 import { setDayNote } from './dayNotes';
+import { getDb } from './database';
 import { createHoliday } from './holidays';
 
 export interface ImportResult {
@@ -25,6 +26,13 @@ export interface ImportResult {
  * reused, which is what stops an import leaving you with two of everyone.
  */
 export async function importSharedPlan(plan: SharedPlan): Promise<ImportResult> {
+  const db = await getDb();
+  // All or nothing: a plan that fails partway must not leave half its people
+  // behind.
+  return db.transaction(() => addPlan(plan));
+}
+
+async function addPlan(plan: SharedPlan): Promise<ImportResult> {
   const existingChildren = await listChildren();
   const existingCarers = await listCarers();
 

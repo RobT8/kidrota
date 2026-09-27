@@ -1,4 +1,4 @@
-import { initialOf, textOn } from '../utils/colour';
+import { initialOf, safeColour, textOn } from '../utils/colour';
 
 interface ChildAvatarProps {
   name: string;
@@ -8,7 +8,8 @@ interface ChildAvatarProps {
 }
 
 /** Circle carrying a child's initial, in that child's colour. */
-export default function ChildAvatar({ name, colour, size = 32 }: ChildAvatarProps) {
+export default function ChildAvatar({ name, colour: stored, size = 32 }: ChildAvatarProps) {
+  const colour = safeColour(stored);
   return (
     <span
       className="child-avatar"
