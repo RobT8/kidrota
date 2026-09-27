@@ -18,7 +18,7 @@ const shot = async (hash, name, fn) => {
 await shot('#/', 'home');
 await shot('#/holiday/1', 'planner');
 await shot('#/holiday/1', 'list', () => page.getByRole('button', { name: /list/i }).first().click());
-await shot('#/holiday/1/day/2026-10-28', 'day');
+await shot('#/holiday/1/day/2027-07-28', 'day');
 await shot('#/holiday/2', 'planner-xmas');
 await shot('#/carers', 'carers');
 await shot('#/children', 'children');

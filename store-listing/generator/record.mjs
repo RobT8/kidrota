@@ -58,7 +58,7 @@ await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 92, maxWidth: 
 await page.evaluate(() => { const d = document.createElement('div'); d.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:.01;z-index:-1'; document.body.appendChild(d); let i = 0; setInterval(() => { d.style.background = (i++ % 2) ? '#fff' : '#fefefe'; }, 33); });
 
 mark('home'); await wait(2800); await hold();
-await tap(page.getByText('October half term').first()); mark('grid'); await wait(3000); await hold();
+await tap(page.getByText('Summer holidays').first()); mark('grid'); await wait(3000); await hold();
 await tap(page.getByRole('button', { name: /Leo.*Wed.*(afternoon|PM)|Wed.*Leo.*(afternoon|PM)/i }).first()
   .or(page.locator('.slot--gap').first())); mark('day'); await wait(1300);
 await smoothTo('.child-card:last-of-type .carer-picker', 'center'); await wait(1300);

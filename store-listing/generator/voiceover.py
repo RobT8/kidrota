@@ -4,7 +4,7 @@ from kokoro_onnx import Kokoro
 DIR = sys.argv[1]
 VOICE = sys.argv[2] if len(sys.argv) > 2 else 'bf_isabella'
 LINES = {
-    'home':   'School holidays coming up? KidRota plans every break.',
+    'home':   'Summer holidays coming up? KidRota plans every week of them.',
     'grid':   'Any gaps in your childcare show up in red, so nothing slips through.',
     'day':    'Tap a gap, then pick Gran, the holiday club, or a playdate.',
     'filled': 'Done. The week updates straight away.',

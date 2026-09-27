@@ -10,7 +10,8 @@
 | `voice-samples/` | The voice-over line in six voices, for choosing one | — |
 
 The screenshots and videos are real captures of the app running on demo data (two
-children, three holidays), framed with a caption.
+children, a six-week summer holidays plan plus two shorter breaks), framed with a
+caption.
 
 The videos carry a voice-over made with [Kokoro](https://github.com/thewh1teagle/kokoro-onnx)
 (an open-weights text-to-speech model, voice `bf_isabella`) and a backing track that
