@@ -1,0 +1,27 @@
+import { chromium } from 'playwright';
+import { backup } from './seed.mjs';
+const OUT = new URL('./shots/', import.meta.url).pathname; (await import('node:fs')).mkdirSync(OUT, { recursive: true });
+const theme = process.argv[2] || 'light';
+const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+const ctx = await browser.newContext({ viewport: { width: 400, height: 800 }, deviceScaleFactor: 2.7, colorScheme: theme, isMobile: true, hasTouch: true });
+await ctx.addInitScript((t) => localStorage.setItem('kidrota.theme', t), theme);
+const page = await ctx.newPage();
+page.on('pageerror', e => console.log('ERR', e.message));
+await page.goto('http://localhost:5173/');
+await page.waitForSelector('.screen:not(.screen--centred)', { timeout: 30000 });
+await page.evaluate(async (b) => { const m = await import('/src/db/backup.ts'); await m.importData(b); }, backup);
+const shot = async (hash, name, fn) => {
+  await page.goto('http://localhost:5173/' + hash); await page.reload();
+  await page.waitForTimeout(1500); if (fn) await fn(); await page.waitForTimeout(500);
+  await page.screenshot({ path: `${OUT}${theme}-${name}.png` });
+};
+await shot('#/', 'home');
+await shot('#/holiday/1', 'planner');
+await shot('#/holiday/1', 'list', () => page.getByRole('button', { name: /list/i }).first().click());
+await shot('#/holiday/1/day/2026-10-28', 'day');
+await shot('#/holiday/2', 'planner-xmas');
+await shot('#/carers', 'carers');
+await shot('#/children', 'children');
+await shot('#/settings', 'settings');
+await shot('#/holiday/1', 'share', () => page.getByRole('button', { name: /^share/i }).first().click());
+await browser.close();
