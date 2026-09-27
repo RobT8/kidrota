@@ -295,7 +295,8 @@ from an Android Studio build:
 | Free-tier limits and the Pro sheet | ✓ |
 | "Rate this app" opens the Play Store app | ✓ |
 | Share sheet for plan codes | ✓ |
-| Database after uninstall + reinstall | Failed with "CapacitorSQLitePlugin: null"; fixed by `androidIsEncryption: false` in `capacitor.config.ts` — re-test |
+| Database after uninstall + reinstall | ✓ after `androidIsEncryption: false` in `capacitor.config.ts` (it failed with "CapacitorSQLitePlugin: null" before) |
+| New launcher icon | ✓ — splash screen not yet confirmed |
 | Android navigation buttons follow the app's theme (`SystemBars` in `utils/theme.ts`) | Fixed — re-test |
 | Backup export to the share sheet | ✓ |
 | Backup restore | Crashed with "Connection kidrota already exists"; fixed in `connect()` in `src/db/database.ts` — re-test |
