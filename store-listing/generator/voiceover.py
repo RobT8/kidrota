@@ -2,7 +2,7 @@
 import json, sys, soundfile as sf
 from kokoro_onnx import Kokoro
 DIR = sys.argv[1]
-VOICE = sys.argv[2] if len(sys.argv) > 2 else 'bf_emma'
+VOICE = sys.argv[2] if len(sys.argv) > 2 else 'bf_isabella'
 LINES = {
     'home':   'School holidays coming up? KidRota plans every break.',
     'grid':   'Any gaps in your childcare show up in red, so nothing slips through.',

@@ -5,15 +5,15 @@
 | `icon-512.png` | App icon | 512 × 512 |
 | `feature-graphic-1024x500.png` | Feature graphic | 1024 × 500 |
 | `phone-1` … `phone-7` | Phone screenshots, in upload order | 1080 × 1920 |
-| `kidrota-demo-landscape.mp4` | Promo video — upload to YouTube, paste the link | 1920 × 1080, 30 s |
-| `kidrota-demo-portrait.mp4` | Shorts / Reels / TikTok | 1080 × 1920, 30 s |
+| `kidrota-demo-landscape.mp4` | Promo video — upload to YouTube, paste the link | 1920 × 1080, 31 s |
+| `kidrota-demo-portrait.mp4` | Shorts / Reels / TikTok | 1080 × 1920, 31 s |
 | `voice-samples/` | The voice-over line in six voices, for choosing one | — |
 
 The screenshots and videos are real captures of the app running on demo data (two
 children, three holidays), framed with a caption.
 
 The videos carry a voice-over made with [Kokoro](https://github.com/thewh1teagle/kokoro-onnx)
-(an open-weights text-to-speech model, voice `bf_emma`) and a backing track that
+(an open-weights text-to-speech model, voice `bf_isabella`) and a backing track that
 `music.py` synthesises from scratch, so there is no third-party music to license.
 The music ducks automatically under the voice.
 
@@ -29,7 +29,7 @@ node compose.mjs                                  # framed images → store-list
 pip install kokoro-onnx soundfile numpy
 mkdir -p kokoro vo && U=https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0
 curl -sSL -o kokoro/kokoro.onnx $U/kokoro-v1.0.onnx && curl -sSL -o kokoro/voices.bin $U/voices-v1.0.bin
-python3 voiceover.py . bf_emma                    # voice lines → vo/  (swap the voice here)
+python3 voiceover.py . bf_isabella                   # voice lines → vo/  (swap the voice here)
 node record.mjs                                   # walkthrough, each scene held for its line → video/
 node compose-video.mjs                            # framed videos → store-listing/
 ```
