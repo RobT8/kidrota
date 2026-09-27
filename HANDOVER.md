@@ -44,7 +44,10 @@ reminders, feedback by email.
 - Legal pages: `https://t80.dev/kidrota/privacy.html` and `terms.html`
   (source in `docs/`, dated 26 September 2026). Contact `kidrota@t80.dev`.
 - Icon "AB1" (calendar + grown-up + child); source `design/icon/`.
-- 270 tests pass; `npm run lint` and `npm run build` clean (as of this file).
+- 270 tests pass (also under five other time zones); `npm run lint` and
+  `npm run build` clean (as of this file).
+- **Pre-release review done 27 Sep 2026 — see `PRE-RELEASE-REVIEW.md`.** It is
+  a report only: no app code was changed. Fixes wait for the owner's approval.
 
 ## Verified on the phone vs not
 
@@ -60,17 +63,38 @@ See the README's **Tested on hardware** table for the detail. In short:
   form opening the email app (`mailto:`); a real purchase, restore, cancel
   or refund; the in-app review card. The last three need a Play testing
   track.
-- **Suspected, needs checking:** on Android 15+ (targetSdk 36 forces
-  edge-to-edge) the app's bottom navigation may sit under the system
-  navigation bar — the CSS uses `env(safe-area-inset-*)`, while Capacitor 8
-  injects `--safe-area-inset-*` variables. Reminders may need attention for
-  the Android 13 notification permission and Android 14 exact-alarm rules.
+- **Edge-to-edge (Android 15+): believed fine** (review P2). Capacitor 8's
+  SystemBars either pads the window natively (WebView < 140) or passes real
+  insets to CSS `env(safe-area-inset-*)`, which `index.css` uses. Still confirm
+  on the phone.
+- **Reminders: confirmed problem in plugin source** (review B2) — on Android
+  14+ scheduling opens the system "Alarms & reminders" page, after every
+  holiday save once reminders are on. Also, reminders are actually **Off** by
+  default (`Number(null)` is 0), not 7 days (review S4).
+
+## Review findings in one screen (27 Sep 2026)
+
+| | Finding | Where |
+|---|---|---|
+| 🔴 B1 | Privacy policy/terms say data is never backed up; auto-backup is on | `docs/privacy.html:53`, `AndroidManifest.xml:5` |
+| 🔴 B2 | Reminders bounce to "Alarms & reminders" on Android 14+ | `utils/notifications.ts:62-70` |
+| 🟠 S1 | Backup restore: one bad row wipes everything; no confirm | `db/backup.ts:234` |
+| 🟠 S2 | Share codes not validated (bad carer type breaks Carers screen) | `utils/shareCode.ts:159` |
+| 🟠 S3 | One free holiday can span a whole year | `components/HolidayForm.tsx:41` |
+| 🟠 S4-S12 | Reminder default, policy gaps, pending purchase msg, mode switch, share-cancel error, 48 dp targets, one contrast fail, licences page, README | see report |
+
+Verified good: Billing Library 9.0.0, acknowledgement, lapse/refund
+handling, 16 KB-aligned native libs, release WebView debugging off, no
+secrets in git, contrast elsewhere in both themes, 200 % font layout.
 
 ## Waiting on the owner (outside the code)
 
 - [ ] Google Play Console developer account (personal) and ID check.
-- [ ] Upload latest `privacy.html` / `terms.html` (26 Sep 2026) to
-      `t80.dev/kidrota/` and confirm both load.
+- [ ] Upload `privacy.html` / `terms.html` to `t80.dev/kidrota/` **after**
+      the B1/S5 wording fixes, and confirm both load (not reachable from the
+      review environment, so still unverified).
+- [ ] Play **payments profile** (needed to sell the subscription) and the
+      trader-address decision.
 - [ ] Email forwarding for `kidrota@t80.dev`.
 - [ ] Create the **upload key** (`C:\Users\robta\KidRota-keys\kidrota-upload.jks`,
       alias `upload`) and the first signed `app-release.aab`; back up the
@@ -81,21 +105,25 @@ See the README's **Tested on hardware** table for the detail. In short:
 
 ## Open decisions
 
-1. **Android auto-backup** (`android:allowBackup="true"`): it copies app
-   data to the user's own Google Drive and is how old data came back after
-   a reinstall. Keep it and add a sentence to the privacy policy, or turn it
-   off (KidRota has its own Export backup). Must be settled before the Play
-   Data Safety form.
-2. Remove the **Contact support** row now that Settings has **Send
-   feedback**? (Suggested, not answered.)
-3. The import box still says "Paste the whole message — KidRota finds the
-   plan in it", while shared messages now say "paste the text below". Align
-   the wording? (Asked, not answered.)
+1. **Android auto-backup** (`android:allowBackup="true"`). Review
+   recommends **keep it on** and fix the privacy policy, terms and welcome
+   wording (review B1 has the exact sentences). Awaiting owner's answer.
+2. Remove the **Contact support** row? Review recommends **yes** (N5).
+3. Align "code" vs "message" wording? Review recommends **"message"
+   everywhere** (N6).
+4. Default for reminders: review recommends **Off** (S4).
+5. Maximum holiday length (closes a free-tier loophole): review suggests
+   **70 days** (S3).
+6. Trader status on Play (EU DSA): selling a subscription makes the owner a
+   trader, so an address is shown publicly on the listing — pick which
+   address before filling that form.
 
 ## Next steps, in order
 
-1. **Pre-release review** in a fresh session on the most capable model —
-   see the prompt below. Report first; fix only after the owner approves.
+1. ~~Pre-release review~~ — done, `PRE-RELEASE-REVIEW.md`. **Next: the owner
+   approves which findings to fix** (suggested: B1-B2, S1-S12, N1, N4-N7,
+   N11), then implement them with tests, then the owner re-tests on the phone
+   (review Part B).
 2. Upload key + signed `.aab` (Android Studio → Build → Generate Signed App
    Bundle → Android App Bundle → Create new key store → release).
 3. Play Console: create the app ("KidRota School Holiday Planner", English
@@ -104,15 +132,17 @@ See the README's **Tested on hardware** table for the detail. In short:
 4. Internal testing release (accept Play App Signing, release name 1.0.0);
    install from Play on the phone (uninstall the Android Studio build first
    — different signature).
-5. Create the `kidrota_pro_yearly` subscription (yearly base plan, £1.99),
-   add licence testers, test purchase / restore / cancel.
+5. Set up the Play **payments profile**, then create the
+   `kidrota_pro_yearly` subscription (yearly base plan, £1.99), add licence
+   testers, test purchase / restore / cancel (review P6-P10).
 6. Store listing: short and full description, screenshots, feature graphic
    (1024×500), icon `design/icon/play-store-icon-512.png`.
 7. Closed test with 12+ testers for 14 days, then apply for production.
 
 ## Pre-release review prompt
 
-Paste into a new session (most capable model, highest effort):
+Used on 27 Sep 2026 (result: `PRE-RELEASE-REVIEW.md`). Kept for re-running
+before a later major release:
 
 ```
 You are the world's leading Android and app-release expert. Do a complete
