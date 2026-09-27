@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
-import { readFileSync, mkdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 const DIR = new URL('./', import.meta.url).pathname;
-const OUT = DIR + '../'; 
+const OUT = DIR + '../';
 const img = (n) => 'data:image/png;base64,' + readFileSync(`${DIR}shots/${n}.png`).toString('base64');
 const f64 = (n) => readFileSync(`${DIR}fonts/${n}.woff2`).toString('base64');
 const FONTS = `<style>@font-face{font-family:Nunito;font-weight:200 1000;src:url(data:font/woff2;base64,${f64('nunito')}) format('woff2')}
