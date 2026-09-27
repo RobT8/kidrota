@@ -5,8 +5,10 @@
 | `icon-512.png` | App icon | 512 × 512 |
 | `feature-graphic-1024x500.png` | Feature graphic | 1024 × 500 |
 | `phone-1` … `phone-7` | Phone screenshots, in upload order | 1080 × 1920 |
+| `kidrota-demo-landscape.mp4` | Promo video — upload to YouTube, paste the link | 1920 × 1080, 26 s |
+| `kidrota-demo-portrait.mp4` | Shorts / Reels / TikTok | 1080 × 1920, 26 s |
 
-The screenshots are real captures of the app running on demo data (two
+The screenshots and videos are real captures of the app running on demo data (two
 children, three holidays), framed with a caption.
 
 ## Regenerating
@@ -14,11 +16,14 @@ children, three holidays), framed with a caption.
 After UI changes, from `store-listing/generator/`:
 
 ```bash
-npm i --no-save playwright sharp
+npm i --no-save playwright sharp ffmpeg-static
 (cd ../.. && npx vite --port 5173) &   # the app's dev server
 node capture.mjs light && node capture.mjs dark   # raw screens → shots/
 node compose.mjs                                  # framed images → store-listing/
+node record.mjs                                   # scripted walkthrough → video/
+node compose-video.mjs                            # framed videos → store-listing/
 ```
 
 `seed.mjs` holds the demo plan, loaded through the app's own backup import.
-Captions live in the `slides` table at the top of `compose.mjs`.
+Captions live in the `slides` table in `compose.mjs` and `CAPTIONS` in
+`compose-video.mjs`; the video's taps and pauses are the steps in `record.mjs`.
