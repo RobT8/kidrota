@@ -281,6 +281,17 @@ for an app not installed from Play (so never for an Android Studio build), it
 has its own quota, and it never says whether a review was left. An ask is
 therefore counted as soon as it is made, never retried.
 
+### Home rating card
+
+Alongside that, Home shows a small in-page card — "Finding KidRota useful?"
+with **Rate KidRota** and **Not now** — never a pop-up (`utils/ratingCard.ts`,
+unit tested). It first appears on the 5th open, and only once something has
+been planned. "Not now" hides it for 10 more opens; after three "Not now"s it
+never returns. Nothing can report whether a rating was actually left, so
+tapping Rate — on the card or in Settings — retires it for good. An open is a
+launch, or coming back to the app after at least 30 minutes away. Its state
+is one JSON value in `app_settings` under `rating_card`.
+
 The "Rate this app" row in Settings opens the Play listing instead of calling
 the API, because Google asks apps not to put the review API behind a button:
 the button would sometimes do nothing at all. The listing returns "not found"

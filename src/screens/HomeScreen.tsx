@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ConfirmDialog from '../components/ConfirmDialog';
 import HolidayCard from '../components/HolidayCard';
 import HolidayForm from '../components/HolidayForm';
 import Modal from '../components/Modal';
+import RatingCard from '../components/RatingCard';
 import type { Holiday, NewHoliday } from '../db/types';
 import { useHolidays } from '../hooks/useHolidays';
 import { usePro } from '../hooks/usePro';
@@ -11,6 +12,8 @@ import { canAddHoliday, canChangeHolidayDates } from '../utils/freeTier';
 import { countHolidaysEverAdded } from '../db/holidays';
 import { todayISO } from '../utils/dates';
 import { formatGapCount, formatNextBreak, nextBreak } from '../utils/status';
+import { loadRatingState, rateOnPlay, snoozeRatingCard } from '../utils/review';
+import { shouldShowRatingCard, type RatingCardState } from '../utils/ratingCard';
 
 export default function HomeScreen() {
   const { holidays, coverage, next, gapSlots, loading, error, add, edit, remove } = useHolidays();
@@ -19,6 +22,30 @@ export default function HomeScreen() {
   const [deleting, setDeleting] = useState<Holiday | null>(null);
   const navigate = useNavigate();
   const { pro, openUpgrade } = usePro();
+  const [rating, setRating] = useState<RatingCardState | null>(null);
+
+  useEffect(() => {
+    loadRatingState()
+      .then(setRating)
+      .catch(() => {
+        // No card is the safe answer if the state cannot be read.
+      });
+  }, []);
+
+  // Only once something has been planned — before that the app has not yet
+  // done anything worth rating.
+  const hasPlan = [...coverage.values()].some((holiday) => !holiday.empty);
+  const showRating = rating !== null && shouldShowRatingCard(rating, hasPlan);
+
+  async function rate() {
+    setRating(null);
+    await rateOnPlay();
+  }
+
+  async function later() {
+    setRating(null);
+    await snoozeRatingCard();
+  }
 
   /** At the free-tier cap, offer Pro instead of an add form that cannot save. */
   async function startAdding() {
@@ -60,6 +87,8 @@ export default function HomeScreen() {
           +
         </button>
       </header>
+
+      {showRating && <RatingCard onRate={rate} onLater={later} />}
 
       <div className="stats">
         <div className="stat card">

@@ -682,6 +682,31 @@ button {
   font-size: 12px;
 }
 
+/* The Home screen's ask for a Play rating: part of the page, never a pop-up. */
+.rating-card {
+  margin-bottom: 14px;
+  padding: 16px;
+}
+
+.rating-card__title {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rating-card__body {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--text2);
+}
+
+.rating-card__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 /* Two-tone coverage bar: one segment per day of the holiday. */
 .progress {
   display: flex;

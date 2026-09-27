@@ -1,7 +1,15 @@
 import { Capacitor } from '@capacitor/core';
 import { InAppReview } from '@capacitor-community/in-app-review';
 import { getSetting, setSetting } from '../db/settings';
+import { PLAY_STORE_URL } from './constants';
 import { todayISO } from './dates';
+import {
+  dismissRatingCard,
+  markRated,
+  parseRatingState,
+  recordOpen,
+  type RatingCardState,
+} from './ratingCard';
 import {
   parseReviewState,
   recordAsk,
@@ -46,4 +54,36 @@ export async function maybeAskForReview(): Promise<void> {
   } catch {
     // Nothing useful to tell the user: Play decides whether a card appears.
   }
+}
+
+const RATING_CARD_KEY = 'rating_card';
+
+export async function loadRatingState(): Promise<RatingCardState> {
+  return parseRatingState(await getSetting(RATING_CARD_KEY));
+}
+
+async function saveRatingState(state: RatingCardState): Promise<void> {
+  await setSetting(RATING_CARD_KEY, JSON.stringify(state));
+}
+
+/** Count an open of the app for the Home rating card. */
+export async function noteOpenForRating(): Promise<void> {
+  const state = await loadRatingState();
+  const next = recordOpen(state, Date.now());
+  if (next !== state) await saveRatingState(next);
+}
+
+/** "Not now" on the Home rating card. */
+export async function snoozeRatingCard(): Promise<void> {
+  await saveRatingState(dismissRatingCard(await loadRatingState()));
+}
+
+/**
+ * Open the Play listing to rate the app, and retire the Home card — used by
+ * both the card and Settings → "Rate this app". The listing never says
+ * whether a rating was left, so tapping Rate is the closest thing to done.
+ */
+export async function rateOnPlay(): Promise<void> {
+  window.open(PLAY_STORE_URL, '_blank', 'noopener');
+  await saveRatingState(markRated(await loadRatingState()));
 }

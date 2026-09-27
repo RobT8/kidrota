@@ -49,6 +49,10 @@ reminders, feedback by email.
   owner approved B1-B2 and S1-S12 (keep `allowBackup` on); all are fixed and
   listed in the report's "Fix status" table. The N-list (nice to have) is
   not done.
+- **Home rating card** (added 27 Sep 2026): in-page, not a pop-up; from the
+  5th open once something is planned; "Not now" = 10 more opens, 3 strikes
+  and it's gone; tapping Rate (card or Settings) retires it. See README
+  "Home rating card". Not yet seen on the phone.
 - Reminders default **Off**; every holiday is at most **10 weeks**
   (`MAX_HOLIDAY_DAYS`); backup restore and plan import are validated and
   all-or-nothing; restore asks for confirmation.

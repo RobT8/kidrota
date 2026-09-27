@@ -25,12 +25,12 @@ import {
 } from '../utils/notifications';
 import { getThemePreference, setThemePreference, type ThemePreference } from '../utils/theme';
 import {
-  PLAY_STORE_URL,
   LICENSES_URL,
   PRIVACY_URL,
   SUPPORT_EMAIL,
   TERMS_URL,
 } from '../utils/constants';
+import { rateOnPlay } from '../utils/review';
 import { downloadBackup, isShareCancelled, sharePlanCode } from '../utils/share';
 
 const REMINDER_KEY = 'reminder_days';
@@ -416,7 +416,7 @@ export default function SettingsScreen() {
 
       <section className="settings-group">
         <h2 className="settings-group__title">About</h2>
-        <button type="button" className="setting-row setting-row--action" onClick={() => openUrl(PLAY_STORE_URL)}>
+        <button type="button" className="setting-row setting-row--action" onClick={() => rateOnPlay()}>
           <span className="setting-row__label">Rate this app</span>
           <span className="setting-row__chevron">›</span>
         </button>

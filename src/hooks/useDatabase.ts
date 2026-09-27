@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { getDb } from '../db/database';
 import { isOnboardingComplete } from '../db/settings';
-import { noteLaunchForReview } from '../utils/review';
+import { Capacitor } from '@capacitor/core';
+import { noteLaunchForReview, noteOpenForRating } from '../utils/review';
 
 export interface DatabaseState {
   ready: boolean;
@@ -32,6 +33,8 @@ export function useDatabase(): DatabaseState {
         const onboarded = await isOnboardingComplete();
         // Bookkeeping for the review prompt; never worth failing launch over.
         noteLaunchForReview().catch(() => {});
+        // Awaited so Home already knows about this open when it first draws.
+        await noteOpenForRating().catch(() => {});
         if (!cancelled) setState({ ready: true, onboarded, error: null });
       } catch (error) {
         if (!cancelled) {
@@ -44,6 +47,26 @@ export function useDatabase(): DatabaseState {
       cancelled = true;
     };
   }, []);
+
+  // Coming back to an app still in memory is an open too; recordOpen ignores
+  // returns within half an hour, so switching apps briefly does not count.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform() || !state.ready) return;
+    let remove: (() => void) | undefined;
+    let cancelled = false;
+    (async () => {
+      const { App } = await import('@capacitor/app');
+      const handle = await App.addListener('resume', () => {
+        noteOpenForRating().catch(() => {});
+      });
+      if (cancelled) handle.remove();
+      else remove = () => handle.remove();
+    })();
+    return () => {
+      cancelled = true;
+      remove?.();
+    };
+  }, [state.ready]);
 
   return state;
 }
