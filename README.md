@@ -251,6 +251,17 @@ Colours that serve two roles need two tokens: `--red-text` is a foreground and
 `--danger-bg`/`--danger-on` the destructive button, because a red that reads on
 the page background is unreadable as a button fill once the theme flips.
 
+## Signing
+
+Play releases are signed with an **upload key** created in Android Studio
+(Build → Generate Signed App Bundle). Keep the `.jks` file **outside** this
+project, e.g. `C:\Users\robta\KidRota-keys\kidrota-upload.jks`, with its
+passwords in a password manager and a second copy somewhere safe.
+`.gitignore` blocks `*.jks`, `*.keystore` and built `.aab` files as a
+backstop. Google holds the final app-signing key (Play App Signing), so a
+lost upload key can be reset through Play support — slowly — but never
+committed or shared.
+
 ## Releasing an update
 
 Updates install over the old app and never touch users' data (the SQLite

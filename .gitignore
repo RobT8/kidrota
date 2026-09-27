@@ -27,3 +27,13 @@ dist-ssr
 android/app/src/main/assets/public
 android/app/src/main/assets/capacitor.config.json
 android/app/src/main/assets/capacitor.plugins.json
+
+# Signing keys and their passwords — never commit these. The upload key lives
+# outside the project (see "Signing" in the README); these patterns catch a
+# copy dropped in here by mistake.
+*.jks
+*.keystore
+keystore.properties
+# Release builds
+android/app/release/
+*.aab
