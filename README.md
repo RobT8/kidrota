@@ -289,7 +289,8 @@ unit tested). It first appears on the 5th open, and only once something has
 been planned. "Not now" hides it for 10 more opens; after three "Not now"s it
 never returns. Nothing can report whether a rating was actually left, so
 tapping Rate — on the card or in Settings — retires it for good. An open is a
-launch, or coming back to the app after at least 30 minutes away. Its state
+fresh start of the app (always counted), or coming back to it while it is
+still running after at least 30 minutes away. Its state
 is one JSON value in `app_settings` under `rating_card`.
 
 The "Rate this app" row in Settings opens the Play listing instead of calling

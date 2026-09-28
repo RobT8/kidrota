@@ -24,10 +24,19 @@ describe('recordOpen', () => {
     expect(openTimes(EMPTY_RATING_STATE, 3).opens).toBe(3);
   });
 
-  it('does not count coming straight back to the app', () => {
+  it('does not count switching straight back to the app while it is still running', () => {
     const once = recordOpen(EMPTY_RATING_STATE, 1_000_000);
-    expect(recordOpen(once, 1_000_000 + RATING_MIN_MS_BETWEEN_OPENS - 1).opens).toBe(1);
-    expect(recordOpen(once, 1_000_000 + RATING_MIN_MS_BETWEEN_OPENS).opens).toBe(2);
+    expect(recordOpen(once, 1_000_000 + RATING_MIN_MS_BETWEEN_OPENS - 1, true).opens).toBe(1);
+    expect(recordOpen(once, 1_000_000 + RATING_MIN_MS_BETWEEN_OPENS, true).opens).toBe(2);
+  });
+
+  it('always counts a fresh start, however soon after the last one', () => {
+    // The bug this guards: closing and reopening the app five times in a
+    // minute counted as one open, so the card never appeared.
+    let state = EMPTY_RATING_STATE;
+    for (let i = 0; i < 5; i++) state = recordOpen(state, 1_000_000 + i * 1000);
+    expect(state.opens).toBe(5);
+    expect(shouldShowRatingCard(state, true)).toBe(true);
   });
 });
 

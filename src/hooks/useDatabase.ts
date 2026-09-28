@@ -49,7 +49,8 @@ export function useDatabase(): DatabaseState {
   }, []);
 
   // Coming back to an app still in memory is an open too; recordOpen ignores
-  // returns within half an hour, so switching apps briefly does not count.
+  // such returns within half an hour, so switching apps briefly does not
+  // count. (A fresh start, above, always counts.)
   useEffect(() => {
     if (!Capacitor.isNativePlatform() || !state.ready) return;
     let remove: (() => void) | undefined;
@@ -57,7 +58,7 @@ export function useDatabase(): DatabaseState {
     (async () => {
       const { App } = await import('@capacitor/app');
       const handle = await App.addListener('resume', () => {
-        noteOpenForRating().catch(() => {});
+        noteOpenForRating(true).catch(() => {});
       });
       if (cancelled) handle.remove();
       else remove = () => handle.remove();

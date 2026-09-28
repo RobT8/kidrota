@@ -66,10 +66,13 @@ async function saveRatingState(state: RatingCardState): Promise<void> {
   await setSetting(RATING_CARD_KEY, JSON.stringify(state));
 }
 
-/** Count an open of the app for the Home rating card. */
-export async function noteOpenForRating(): Promise<void> {
+/**
+ * Count an open of the app for the Home rating card: a fresh start, or
+ * (`resumed`) a return to the app while it was still in memory.
+ */
+export async function noteOpenForRating(resumed = false): Promise<void> {
   const state = await loadRatingState();
-  const next = recordOpen(state, Date.now());
+  const next = recordOpen(state, Date.now(), resumed);
   if (next !== state) await saveRatingState(next);
 }
 
