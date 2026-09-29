@@ -18,11 +18,13 @@ export const RATING_SNOOZE_OPENS = 10;
 /** "Not now"s after which it never comes back. */
 export const RATING_MAX_DISMISSALS = 3;
 /**
- * An Android app often stays in memory, so coming back to it counts as an
- * open too — but only after a real break, not a glance at another app. A
- * fresh start of the app always counts.
+ * Android usually keeps an app in memory, so reopening it from the icon or
+ * the recent-apps list brings it back rather than starting it afresh. That
+ * counts as an open too, once it has been in the background at least this
+ * long — so hopping to WhatsApp to paste a plan and straight back does not.
+ * A fresh start of the app always counts.
  */
-export const RATING_MIN_MS_BETWEEN_OPENS = 30 * 60 * 1000;
+export const RATING_MIN_MS_AWAY = 60 * 1000;
 
 export interface RatingCardState {
   /** Times the app has been opened. */
@@ -44,16 +46,14 @@ export const EMPTY_RATING_STATE: RatingCardState = {
   rated: false,
 };
 
-/**
- * Count an open. Starting the app afresh always counts. Coming back to it
- * while it is still in memory (`resumed`) counts only after a real break,
- * so a quick glance at another app is not an open.
- */
-export function recordOpen(state: RatingCardState, now: number, resumed = false): RatingCardState {
-  if (resumed && state.lastOpenAt !== null && now - state.lastOpenAt < RATING_MIN_MS_BETWEEN_OPENS) {
-    return state;
-  }
+/** Count an open. */
+export function recordOpen(state: RatingCardState, now: number): RatingCardState {
   return { ...state, opens: state.opens + 1, lastOpenAt: now };
+}
+
+/** Does coming back after `awayMs` in the background count as an open? */
+export function countsAsReturn(awayMs: number): boolean {
+  return awayMs >= RATING_MIN_MS_AWAY;
 }
 
 /**

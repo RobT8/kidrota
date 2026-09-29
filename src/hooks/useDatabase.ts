@@ -3,6 +3,7 @@ import { getDb } from '../db/database';
 import { isOnboardingComplete } from '../db/settings';
 import { Capacitor } from '@capacitor/core';
 import { noteLaunchForReview, noteOpenForRating } from '../utils/review';
+import { countsAsReturn } from '../utils/ratingCard';
 
 export interface DatabaseState {
   ready: boolean;
@@ -48,24 +49,35 @@ export function useDatabase(): DatabaseState {
     };
   }, []);
 
-  // Coming back to an app still in memory is an open too; recordOpen ignores
-  // such returns within half an hour, so switching apps briefly does not
-  // count. (A fresh start, above, always counts.)
+  // Android usually keeps the app in memory, so reopening it brings it back
+  // rather than starting it again. Coming back after a real break counts as
+  // an open; a quick hop to another app and back does not.
   useEffect(() => {
     if (!Capacitor.isNativePlatform() || !state.ready) return;
-    let remove: (() => void) | undefined;
+    const removers: (() => void)[] = [];
     let cancelled = false;
+    let wentAwayAt: number | null = null;
     (async () => {
       const { App } = await import('@capacitor/app');
-      const handle = await App.addListener('resume', () => {
-        noteOpenForRating(true).catch(() => {});
-      });
-      if (cancelled) handle.remove();
-      else remove = () => handle.remove();
+      const handles = await Promise.all([
+        App.addListener('pause', () => {
+          wentAwayAt = Date.now();
+        }),
+        App.addListener('resume', () => {
+          if (wentAwayAt !== null && countsAsReturn(Date.now() - wentAwayAt)) {
+            noteOpenForRating().catch(() => {});
+          }
+          wentAwayAt = null;
+        }),
+      ]);
+      for (const handle of handles) {
+        if (cancelled) handle.remove();
+        else removers.push(() => handle.remove());
+      }
     })();
     return () => {
       cancelled = true;
-      remove?.();
+      removers.forEach((remove) => remove());
     };
   }, [state.ready]);
 

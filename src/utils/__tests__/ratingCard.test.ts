@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   EMPTY_RATING_STATE,
-  RATING_MIN_MS_BETWEEN_OPENS,
+  RATING_MIN_MS_AWAY,
+  countsAsReturn,
   dismissRatingCard,
   markRated,
   parseRatingState,
@@ -20,23 +21,25 @@ function openTimes(state: RatingCardState, times: number): RatingCardState {
 }
 
 describe('recordOpen', () => {
-  it('counts each open', () => {
-    expect(openTimes(EMPTY_RATING_STATE, 3).opens).toBe(3);
-  });
-
-  it('does not count switching straight back to the app while it is still running', () => {
-    const once = recordOpen(EMPTY_RATING_STATE, 1_000_000);
-    expect(recordOpen(once, 1_000_000 + RATING_MIN_MS_BETWEEN_OPENS - 1, true).opens).toBe(1);
-    expect(recordOpen(once, 1_000_000 + RATING_MIN_MS_BETWEEN_OPENS, true).opens).toBe(2);
-  });
-
-  it('always counts a fresh start, however soon after the last one', () => {
+  it('counts every open, however soon after the last one', () => {
     // The bug this guards: closing and reopening the app five times in a
     // minute counted as one open, so the card never appeared.
     let state = EMPTY_RATING_STATE;
     for (let i = 0; i < 5; i++) state = recordOpen(state, 1_000_000 + i * 1000);
     expect(state.opens).toBe(5);
     expect(shouldShowRatingCard(state, true)).toBe(true);
+  });
+});
+
+describe('countsAsReturn', () => {
+  it('counts coming back after a minute or more in the background', () => {
+    expect(countsAsReturn(RATING_MIN_MS_AWAY)).toBe(true);
+    expect(countsAsReturn(10 * 60 * 1000)).toBe(true);
+  });
+
+  it('ignores a quick hop to another app and back', () => {
+    expect(countsAsReturn(RATING_MIN_MS_AWAY - 1)).toBe(false);
+    expect(countsAsReturn(5000)).toBe(false);
   });
 });
 

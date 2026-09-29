@@ -12,7 +12,7 @@ import { canAddHoliday, canChangeHolidayDates } from '../utils/freeTier';
 import { countHolidaysEverAdded } from '../db/holidays';
 import { todayISO } from '../utils/dates';
 import { formatGapCount, formatNextBreak, nextBreak } from '../utils/status';
-import { loadRatingState, rateOnPlay, snoozeRatingCard } from '../utils/review';
+import { RATING_CHANGED_EVENT, loadRatingState, rateOnPlay, snoozeRatingCard } from '../utils/review';
 import { shouldShowRatingCard, type RatingCardState } from '../utils/ratingCard';
 
 export default function HomeScreen() {
@@ -25,11 +25,17 @@ export default function HomeScreen() {
   const [rating, setRating] = useState<RatingCardState | null>(null);
 
   useEffect(() => {
-    loadRatingState()
-      .then(setRating)
-      .catch(() => {
-        // No card is the safe answer if the state cannot be read.
-      });
+    const load = () =>
+      loadRatingState()
+        .then(setRating)
+        .catch(() => {
+          // No card is the safe answer if the state cannot be read.
+        });
+    load();
+    // An open counted while Home is already on screen (coming back to the
+    // app) can make the card due, so check again.
+    window.addEventListener(RATING_CHANGED_EVENT, load);
+    return () => window.removeEventListener(RATING_CHANGED_EVENT, load);
   }, []);
 
   // Only once something has been planned — before that the app has not yet
