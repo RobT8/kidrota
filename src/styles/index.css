@@ -1659,7 +1659,7 @@ button {
 .segmented--inline {
   width: auto;
   flex: none;
-  grid-template-columns: repeat(3, auto);
+  grid-template-columns: repeat(2, auto);
 }
 
 .segmented--inline .segmented__option {

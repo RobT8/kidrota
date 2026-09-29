@@ -37,7 +37,6 @@ const REMINDER_KEY = 'reminder_days';
 const THEMES: { value: ThemePreference; label: string }[] = [
   { value: 'light', label: 'Light' },
   { value: 'dark', label: 'Dark' },
-  { value: 'system', label: 'System' },
 ];
 
 

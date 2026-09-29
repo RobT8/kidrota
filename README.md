@@ -105,9 +105,10 @@ sessions but a gap is a gap in the Home screen's totals, not "Not started".
 ## Theming
 
 All colours are CSS custom properties in `src/styles/index.css`. The user's
-preference (light / dark / system) is stored in `localStorage`;
-`src/utils/theme.ts` resolves `system` against the OS and writes the concrete
-theme to `data-theme` on `<html>`, keeping it in sync if the OS setting changes.
+choice (light or dark; light by default) is stored in `localStorage`, and
+`src/utils/theme.ts` writes it to `data-theme` on `<html>`. There is no
+"follow the phone" option: it looked identical to one of the two, so it was
+dropped, and anyone who had it keeps the look they had.
 
 ## Share codes
 
