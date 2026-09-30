@@ -8,6 +8,7 @@
   --text: #1a1a1a;
   --text2: #5f5e5a;
   --accent: #185fa5;
+  --on-accent: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -18,6 +19,7 @@
     --text: #e8e6de;
     --text2: #a8a69e;
     --accent: #85b7eb;
+    --on-accent: #1a1a1a;
   }
 }
 
@@ -109,6 +111,28 @@ li {
 
 a {
   color: var(--accent);
+}
+
+/* Home page: the link to the Play listing. */
+.store {
+  margin: 24px 0 0;
+}
+
+.store-button {
+  display: inline-block;
+  padding: 12px 22px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.store-note {
+  display: block;
+  margin-top: 8px;
+  color: var(--text2);
+  font-size: 14px;
 }
 
 footer {
