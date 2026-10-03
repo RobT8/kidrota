@@ -73,8 +73,7 @@ export const ONBOARDING_COMPLETE_KEY = 'onboarding_complete';
  */
 export const MAX_HOLIDAY_DAYS = 70;
 
-/** Free-tier caps. Lifted by the Pro unlock. */
-export const FREE_TIER_MAX_CHILDREN = 1;
+/** Free-tier cap, lifted by Pro. Children are not capped. */
 /** Counts every holiday ever added, not just those still on the phone. */
 export const FREE_TIER_MAX_HOLIDAYS = 1;
 

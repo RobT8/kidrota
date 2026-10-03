@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  canAddChild,
   canAddHoliday,
   canChangeHolidayDates,
   importBlockedBy,
@@ -9,21 +8,17 @@ import {
   resolvePro,
 } from '../freeTier';
 
-describe('canAddChild / canAddHoliday', () => {
-  it('allows one child and one holiday on the free version', () => {
-    expect(canAddChild(0, false)).toBe(true);
-    expect(canAddChild(1, false)).toBe(false);
+describe('canAddHoliday', () => {
+  it('allows one holiday on the free version', () => {
     expect(canAddHoliday(0, false)).toBe(true);
     expect(canAddHoliday(1, false)).toBe(false);
   });
 
   it('refuses a free user already over the cap, without taking anything away', () => {
-    expect(canAddChild(5, false)).toBe(false);
     expect(canAddHoliday(5, false)).toBe(false);
   });
 
   it('has no cap with Pro', () => {
-    expect(canAddChild(40, true)).toBe(true);
     expect(canAddHoliday(40, true)).toBe(true);
   });
 });
@@ -50,34 +45,21 @@ describe('nameKey', () => {
 });
 
 describe('importBlockedBy', () => {
-  it('lets a plan about the same child in', () => {
-    expect(importBlockedBy(['Ada'], ['ada '], 0, false)).toBeNull();
-  });
-
-  it('refuses a plan that would add a second child', () => {
-    expect(importBlockedBy(['Ada'], ['Ada', 'Ben'], 0, false)).toBe('children');
-  });
-
-  it('counts the same new name only once', () => {
-    expect(importBlockedBy([], ['Ben', 'ben'], 0, false)).toBeNull();
+  it('lets a free user import a plan while the free holiday is unused', () => {
+    expect(importBlockedBy(0, false)).toBeNull();
   });
 
   it('refuses once the free holiday has been used, even if deleted since', () => {
-    expect(importBlockedBy(['Ada'], ['Ada'], 1, false)).toBe('holidays');
-  });
-
-  it('lets an over-cap user import a plan that adds no children', () => {
-    expect(importBlockedBy(['Ada', 'Ben', 'Cleo'], ['Ada'], 0, false)).toBeNull();
+    expect(importBlockedBy(1, false)).toBe('holidays');
   });
 
   it('never blocks with Pro', () => {
-    expect(importBlockedBy([], ['A', 'B', 'C', 'D'], 9, true)).toBeNull();
+    expect(importBlockedBy(9, true)).toBeNull();
   });
 });
 
 describe('limitMessage', () => {
-  it('names the one-child and one-holiday allowance', () => {
-    expect(limitMessage('children')).toContain('one child');
+  it('names the one-holiday allowance', () => {
     expect(limitMessage('holidays')).toContain('one holiday');
     expect(limitMessage('holidays')).toContain('Deleting it does not make room');
   });

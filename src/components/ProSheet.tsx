@@ -18,7 +18,6 @@ interface ProSheetProps {
 type Status = { kind: 'ok' | 'bad'; text: string } | null;
 
 const BENEFITS = [
-  'Plan for as many children as you have',
   'Plan every holiday of the year at once',
   'Pick your own colour for each carer',
 ];

@@ -36,10 +36,10 @@ accounts). Plan childcare across school holidays, AM/PM or timed sessions,
 gaps shown in red, share plans as a pasteable code, backup/restore,
 reminders, feedback by email.
 
-- **Free:** 1 child, 1 holiday *ever* (deleting it does not free the slot;
-  a finished holiday's dates lock). **Pro:** £1.99/year auto-renewing
-  subscription `kidrota_pro_yearly` — unlimited children and holidays,
-  custom carer colours. No lifetime option.
+- **Free:** unlimited children, 1 holiday *ever* (deleting it does not free
+  the slot; a finished holiday's dates lock). The one-child cap was dropped
+  on 3 Oct 2026. **Pro:** £1.99/year auto-renewing subscription
+  `kidrota_pro_yearly` — unlimited holidays, custom carer colours. No lifetime option.
 - Detailed-mode day runs 08:00–18:00; a day is "covered" only with no gaps.
 - Legal pages: `https://t80.dev/kidrota/privacy.html` and `terms.html`
   (source in `docs/`, dated 26 September 2026). Contact `kidrota@t80.dev`.

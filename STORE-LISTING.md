@@ -41,7 +41,7 @@ PRIVATE BY DESIGN
 • Export a backup file whenever you like
 
 KIDROTA PRO
-The free version plans for one child and one holiday. KidRota Pro is an optional yearly subscription that unlocks unlimited children and holidays and custom carer colours. It renews automatically each year until you cancel it in Google Play. If Pro ends, everything you've planned stays on your phone.
+The free version plans one holiday for all your children. KidRota Pro is an optional yearly subscription that unlocks unlimited holidays and custom carer colours. It renews automatically each year until you cancel it in Google Play. If Pro ends, everything you've planned stays on your phone.
 ```
 
 ## Graphics

@@ -213,7 +213,7 @@ navigates back, and only at the first screen does the app exit.
 
 | | Free | Pro |
 |---|---|---|
-| Children | 1 | Unlimited |
+| Children | Unlimited | Unlimited |
 | Holidays | 1, ever — deleting it does not free the slot | Unlimited |
 | Changing a finished holiday's dates | No | Yes |
 | Custom carer colours | — | ✓ |

@@ -1,10 +1,11 @@
-import { FREE_TIER_MAX_CHILDREN, FREE_TIER_MAX_HOLIDAYS } from './constants';
+import { FREE_TIER_MAX_HOLIDAYS } from './constants';
 
 /**
  * What the free version allows, and why an action was refused.
  *
- * The free version is one child and one holiday: enough to try KidRota
- * properly on a real break. The caps only stop something new being added.
+ * The free version plans one holiday, for as many children as the family
+ * has: enough to try KidRota properly on a real break. The cap only stops a
+ * new holiday being added.
  * Anything already on the device stays usable even when it is over the cap —
  * after restoring a backup, importing a plan, or a Pro subscription lapsing —
  * so nobody ever loses a plan by not paying.
@@ -14,14 +15,13 @@ import { FREE_TIER_MAX_CHILDREN, FREE_TIER_MAX_HOLIDAYS } from './constants';
  * or re-dated, to plan every break of the year. With no server this can
  * still be undone by deleting all data or reinstalling — which also throws
  * away every child, carer and plan, so it is a real deterrent.
+ *
+ * Children used to be capped at one as well; that was dropped so a family
+ * can try KidRota with everyone in it.
  */
 
 /** What Pro unlocks, which is also what the upgrade sheet can be opened for. */
-export type ProFeature = 'children' | 'holidays' | 'colours';
-
-export function canAddChild(currentCount: number, pro: boolean): boolean {
-  return pro || currentCount < FREE_TIER_MAX_CHILDREN;
-}
+export type ProFeature = 'holidays' | 'colours';
 
 /** `everAdded` is every holiday ever added on this phone, deleted ones included. */
 export function canAddHoliday(everAdded: number, pro: boolean): boolean {
@@ -44,32 +44,16 @@ export function nameKey(name: string): string {
 }
 
 /**
- * Would adding a shared plan take a free user past a cap?
- *
- * A plan code always adds one holiday, and adds only the children whose names
- * are not already on the device — the same matching the import itself uses —
- * so a code about the same two children never counts against the cap twice.
+ * Would adding a shared plan take a free user past the cap? A plan code
+ * always adds a holiday, so it counts against the one free holiday.
  */
-export function importBlockedBy(
-  existingChildNames: string[],
-  planChildNames: string[],
-  holidaysEverAdded: number,
-  pro: boolean,
-): ProFeature | null {
-  if (pro) return null;
-  if (!canAddHoliday(holidaysEverAdded, false)) return 'holidays';
-
-  const known = new Set(existingChildNames.map(nameKey));
-  const incoming = new Set(planChildNames.map(nameKey).filter((key) => !known.has(key)));
-  if (known.size + incoming.size > FREE_TIER_MAX_CHILDREN && incoming.size > 0) return 'children';
-  return null;
+export function importBlockedBy(holidaysEverAdded: number, pro: boolean): ProFeature | null {
+  return canAddHoliday(holidaysEverAdded, pro) ? null : 'holidays';
 }
 
 /** Why the upgrade sheet opened, in the words the user sees. */
 export function limitMessage(feature: ProFeature): string {
   switch (feature) {
-    case 'children':
-      return 'The free version plans for one child.';
     case 'holidays':
       return 'The free version includes one holiday. Deleting it does not make room for another.';
     case 'colours':

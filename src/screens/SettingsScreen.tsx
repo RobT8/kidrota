@@ -6,7 +6,6 @@ import { ShareCodeError, decodePlan } from '../utils/shareCode';
 import { plural } from '../utils/status';
 import Modal from '../components/Modal';
 import { countHolidaysEverAdded, listHolidays } from '../db/holidays';
-import { listChildren } from '../db/children';
 import { usePro } from '../hooks/usePro';
 import { importBlockedBy } from '../utils/freeTier';
 import { restorePro } from '../utils/billing';
@@ -173,12 +172,7 @@ export default function SettingsScreen() {
       const plan = decodePlan(code);
       // A backup restore is exempt — it brings back what was already yours —
       // but a plan code adds, so it counts against the free-tier caps.
-      const blocked = importBlockedBy(
-        (await listChildren()).map((child) => child.name),
-        plan.children.map((child) => child.name),
-        await countHolidaysEverAdded(),
-        pro,
-      );
+      const blocked = importBlockedBy(await countHolidaysEverAdded(), pro);
       if (blocked) {
         openUpgrade(blocked);
         return;
@@ -397,7 +391,7 @@ export default function SettingsScreen() {
           <span className="setting-row__label">
             {pro ? 'Pro is unlocked' : 'Upgrade to Pro'}
             <span className="setting-row__sub">
-              {pro ? 'Thank you for supporting KidRota' : 'Unlimited children and holidays, custom carer colours'}
+              {pro ? 'Thank you for supporting KidRota' : 'Plan every holiday of the year, custom carer colours'}
             </span>
           </span>
           <span className="setting-row__chevron">›</span>

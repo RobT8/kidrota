@@ -7,20 +7,15 @@ import Modal from '../components/Modal';
 import { countChildAssignments } from '../db/children';
 import type { Child, NewChild } from '../db/types';
 import { useChildren } from '../hooks/useChildren';
-import { usePro } from '../hooks/usePro';
-import { canAddChild } from '../utils/freeTier';
 
 export default function ChildrenScreen() {
   const { children, loading, error, add, edit, remove, move } = useChildren();
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Child | null>(null);
   const [deleting, setDeleting] = useState<{ child: Child; assignments: number } | null>(null);
-  const { pro, openUpgrade } = usePro();
 
-  /** At the free-tier cap, offer Pro instead of an add form that cannot save. */
   function startAdding() {
-    if (canAddChild(children.length, pro)) setAdding(true);
-    else openUpgrade('children');
+    setAdding(true);
   }
 
   async function handleSave(values: Omit<NewChild, 'sort_order'>) {
