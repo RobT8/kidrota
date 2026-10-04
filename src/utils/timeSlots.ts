@@ -43,35 +43,20 @@ export function latestEnd(slots: TimeRange[]): string | null {
 }
 
 /**
- * The one-tap times to offer for the next session.
- *
- * On an empty day that is the whole day or either half of it. Once something
- * is booked, the next session most likely starts where the last one ended —
- * a hand-over — so every choice starts there and only the end differs.
+ * One-tap times for the holes in a partly planned day, alongside the saved
+ * presets: "Fill gap 10:00–13:00", or "Rest of day" after the last session —
+ * the next session is most likely a hand-over. An empty day has none; the
+ * presets cover it.
  */
-export function timeChoices(slots: TimeRange[]): TimeChoice[] {
-  const from = latestEnd(slots);
-  if (from === null) {
-    return [
-      { key: 'morning', label: 'Morning', start: DAY_START, end: '12:00' },
-      { key: 'afternoon', label: 'Afternoon', start: '12:00', end: DAY_END },
-      { key: 'all-day', label: 'All day', start: DAY_START, end: DAY_END },
-    ];
-  }
-
-  // A hole left earlier in the day, e.g. between Gran ending at 15:00 and Mum
-  // starting at 15:30, is the likeliest thing still to fill.
-  const choices: TimeChoice[] = dayGaps(slots)
-    .filter((gap) => gap.end <= from)
-    .map((gap) => ({ key: `gap-${gap.start}`, label: 'Fill gap', start: gap.start, end: gap.end }));
-
-  for (const until of ['12:00', '15:00']) {
-    if (until > from) choices.push({ key: `until-${until}`, label: `Until ${until}`, start: from, end: until });
-  }
-  if (from < DAY_END) {
-    choices.push({ key: 'rest-of-day', label: 'Rest of day', start: from, end: DAY_END });
-  }
-  return choices;
+export function gapChoices(slots: TimeRange[]): TimeChoice[] {
+  const last = latestEnd(slots);
+  if (last === null) return [];
+  return dayGaps(slots).map((gap) => ({
+    key: `gap-${gap.start}`,
+    label: gap.start >= last && gap.end === DAY_END ? 'Rest of day' : 'Fill gap',
+    start: gap.start,
+    end: gap.end,
+  }));
 }
 
 /**
@@ -137,6 +122,18 @@ export function overlapping<T extends TimeRange>(slots: T[], start: string, end:
 /** "08:00–10:00" */
 export function formatRange(start: string | null, end: string | null): string {
   return `${start ?? '?'}–${end ?? '?'}`;
+}
+
+/** "08:00" → "8", "09:30" → "9:30": as short as a time can be and still read. */
+export function formatShortTime(time: string | null): string {
+  if (!isTime(time)) return '?';
+  const [hours, minutes] = time.split(':');
+  return minutes === '00' ? String(Number(hours)) : `${Number(hours)}:${minutes}`;
+}
+
+/** "9–12", "9:30–15" — a range compact enough for a week grid cell. */
+export function formatShortRange(start: string | null, end: string | null): string {
+  return `${formatShortTime(start)}–${formatShortTime(end)}`;
 }
 
 export type TimelineEntry<T> =

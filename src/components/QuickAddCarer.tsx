@@ -1,4 +1,5 @@
 import { CARER_TYPE_LABELS, type CarerType } from '../utils/constants';
+import { MAX_CARER_NAME } from '../utils/status';
 
 /** Add a carer without leaving the day: a name and a type, then assign. */
 export default function QuickAddCarer({
@@ -24,7 +25,7 @@ export default function QuickAddCarer({
         className="field__input"
         value={name}
         placeholder="Name"
-        maxLength={24}
+        maxLength={MAX_CARER_NAME}
         autoFocus
         onChange={(event) => onName(event.target.value)}
       />

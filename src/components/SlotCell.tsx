@@ -3,7 +3,7 @@ import { carerSwatch } from '../utils/colour';
 import { CARER_TYPE_VARS } from '../utils/constants';
 
 interface SlotCellProps {
-  /** "AM", "PM", or a time like "09:00". */
+  /** The times, like "9–12", or empty for a day with nothing booked. */
   label: string;
   carer: Carer | null;
   onClick: () => void;

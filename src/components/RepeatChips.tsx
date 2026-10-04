@@ -1,116 +1,81 @@
 import { useState } from 'react';
 import type { RepeatRule } from '../db/assignments';
-import { dayOfWeek } from '../utils/dates';
-
-const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const PICKABLE = [
-  { day: 1, label: 'Mon' },
-  { day: 2, label: 'Tue' },
-  { day: 3, label: 'Wed' },
-  { day: 4, label: 'Thu' },
-  { day: 5, label: 'Fri' },
-  { day: 6, label: 'Sat' },
-  { day: 0, label: 'Sun' },
-];
+import DayRulePicker from './DayRulePicker';
+import { JUST_THIS_DAY, type DayRule } from '../utils/dayRule';
 
 interface RepeatChipsProps {
   /** The day being copied from. */
   date: string;
+  holidayDates: string[];
   /** Nothing to repeat until something is booked. */
   disabled: boolean;
-  onRepeat: (rule: RepeatRule, customDays?: number[]) => Promise<void>;
+  /** Resolves to the number of days written to. */
+  onRepeat: (rule: RepeatRule, customDays?: number[]) => Promise<number>;
 }
 
 /**
- * Copy this day's plan onto other days.
+ * Copy this day's whole plan, every child, onto other days.
  *
- * The brief's biggest time-saver: most holiday weeks are the same shape every
- * day, so this turns a fortnight of planning into one day plus a tap.
+ * Most holiday weeks are the same shape every day, so this turns a fortnight
+ * of planning into one day plus a tap. Choosing the days only selects them;
+ * Save applies it and says how many days it went to.
  */
-export default function RepeatChips({ date, disabled, onRepeat }: RepeatChipsProps) {
-  const [picking, setPicking] = useState(false);
-  const [days, setDays] = useState<number[]>([]);
+export default function RepeatChips({ date, holidayDates, disabled, onRepeat }: RepeatChipsProps) {
+  const [choice, setChoice] = useState<DayRule>(JUST_THIS_DAY);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
 
-  const weekdayName = WEEKDAY_NAMES[dayOfWeek(date)];
+  const ready = choice.rule !== null && (choice.rule !== 'custom' || choice.days.length > 0);
 
-  async function run(rule: RepeatRule, customDays?: number[]) {
+  async function save() {
+    if (!choice.rule) return;
     setBusy(true);
     setDone(null);
     try {
-      await onRepeat(rule, customDays);
-      setDone('Copied across');
-      setPicking(false);
-      setDays([]);
+      const count = await onRepeat(choice.rule, choice.days);
+      setDone(count === 0 ? 'No other days matched' : `Saved ✓ Copied to ${count} ${count === 1 ? 'day' : 'days'}`);
+      setChoice(JUST_THIS_DAY);
+    } catch {
+      setDone('Could not save. Please try again.');
     } finally {
       setBusy(false);
     }
   }
 
-  function toggleDay(day: number) {
-    setDays((current) =>
-      current.includes(day) ? current.filter((item) => item !== day) : [...current, day],
-    );
-  }
-
   return (
     <section className="repeat card">
-      <h2 className="repeat__title">Apply to more days</h2>
+      <h2 className="repeat__title">Copy this whole day</h2>
       <p className="repeat__hint">
         {disabled
-          ? 'Assign someone above first, then copy this day across.'
-          : 'Copies everyone’s cover on this day to the days you choose.'}
+          ? 'Book someone above first, then copy this day to others.'
+          : 'Copies every child’s plan for this day. It replaces what those days had.'}
       </p>
 
-      <div className="chips">
-        <button type="button" className="chip" disabled={disabled || busy} onClick={() => run('daily')}>
-          Every day
-        </button>
-        <button type="button" className="chip" disabled={disabled || busy} onClick={() => run('weekly')}>
-          Every {weekdayName}
-        </button>
-        <button type="button" className="chip" disabled={disabled || busy} onClick={() => run('weekdays')}>
-          Mon–Fri
-        </button>
-        <button
-          type="button"
-          className={picking ? 'chip chip--selected' : 'chip'}
-          disabled={disabled || busy}
-          aria-pressed={picking}
-          onClick={() => setPicking((current) => !current)}
-        >
-          Pick days
-        </button>
-      </div>
+      <DayRulePicker
+        date={date}
+        holidayDates={holidayDates}
+        value={choice}
+        onChange={(value) => {
+          setDone(null);
+          setChoice(value);
+        }}
+        disabled={disabled || busy}
+      />
 
-      {picking && (
-        <div className="repeat__picker">
-          <div className="chips">
-            {PICKABLE.map((option) => (
-              <button
-                key={option.day}
-                type="button"
-                className={days.includes(option.day) ? 'chip chip--selected' : 'chip'}
-                aria-pressed={days.includes(option.day)}
-                onClick={() => toggleDay(option.day)}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            className="button button--secondary"
-            disabled={days.length === 0 || busy}
-            onClick={() => run('custom', days)}
-          >
-            Copy to {days.length === 0 ? 'selected days' : `${days.length} day${days.length === 1 ? '' : 's'}`}
-          </button>
-        </div>
+      <button
+        type="button"
+        className="button button--primary"
+        disabled={disabled || busy || !ready}
+        onClick={save}
+      >
+        {busy ? 'Saving…' : 'Save'}
+      </button>
+
+      {done && (
+        <p className="save-confirm" role="status">
+          {done}
+        </p>
       )}
-
-      {done && <p className="repeat__done">{done}</p>}
     </section>
   );
 }

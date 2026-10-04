@@ -5,9 +5,8 @@ import Loading from '../components/Loading';
 import WeekGrid from '../components/WeekGrid';
 import { useAssignments } from '../hooks/useAssignments';
 import Modal from '../components/Modal';
-import { buildPlanCode } from '../db/exportPlan';
-import { isShareCancelled, shareElementAsImage, sharePlanCode } from '../utils/share';
-import { todayISO } from '../utils/dates';
+import { isShareCancelled, shareElementsAsImages } from '../utils/share';
+import { formatDateRange, todayISO } from '../utils/dates';
 import { getHolidayCoverage } from '../db/coverage';
 import { maybeAskForReview } from '../utils/review';
 
@@ -41,8 +40,9 @@ export default function WeeklyPlannerScreen() {
     setViewState(next);
   }
 
-  // The element captured for the image — the grid itself, not the whole screen.
-  const shareable = useRef<HTMLDivElement>(null);
+  // The weeks being drawn off screen for the picture, or null when not sharing.
+  const [picturing, setPicturing] = useState<number[] | null>(null);
+  const pictures = useRef<HTMLDivElement>(null);
 
   // Open on the week containing today, so a holiday already under way does not
   // start the parent on a week that has been and gone.
@@ -89,43 +89,68 @@ export default function WeeklyPlannerScreen() {
   }
 
   const week = weeks[weekIndex] ?? [];
-  const openDay = (date: string) => navigate(`/holiday/${id}/day/${date}`);
+  /** Open a day, scrolled to the child whose cell was tapped. */
+  const openDay = (date: string, childId?: number) =>
+    navigate(`/holiday/${id}/day/${date}${childId === undefined ? '' : `?child=${childId}`}`);
 
-  async function shareImage() {
-    // The picture is of the week grid, which List view does not render.
-    if (view !== 'week') {
-      setView('week');
-      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    }
-    if (!shareable.current) return;
+  /**
+   * Share whole weeks as pictures. They are drawn off screen at full width
+   * rather than captured from the screen, where a week wider than the phone
+   * would be cut off at the edge.
+   */
+  async function sharePictures(weekIndexes: number[]) {
     setBusy(true);
     setShareStatus(null);
+    setPicturing(weekIndexes);
     try {
-      const result = await shareElementAsImage(shareable.current, holiday!.name);
+      // Let React draw the off-screen weeks before capturing them.
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const pages = [...(pictures.current?.querySelectorAll<HTMLElement>('.share-page') ?? [])];
+      if (pages.length === 0) throw new Error('nothing to draw');
+      const result = await shareElementsAsImages(pages, holiday!.name);
       setShareStatus(result.shared ? null : `Saved ${result.filename}`);
       if (result.shared) setSharing(false);
     } catch (error) {
-      if (!isShareCancelled(error)) setShareStatus(`Could not create the image: ${(error as Error).message}`);
+      if (!isShareCancelled(error)) setShareStatus(`Could not create the picture: ${(error as Error).message}`);
     } finally {
+      setPicturing(null);
       setBusy(false);
     }
   }
 
-  async function shareCode() {
-    setBusy(true);
-    setShareStatus(null);
-    try {
-      const built = await buildPlanCode(id);
-      if (!built) throw new Error('that holiday could not be found');
-      const how = await sharePlanCode(built.code, built.name);
-      setShareStatus(how === 'copied' ? 'Plan copied to the clipboard.' : null);
-      if (how === 'shared') setSharing(false);
-    } catch (error) {
-      if (!isShareCancelled(error)) setShareStatus(`Could not share the plan: ${(error as Error).message}`);
-    } finally {
-      setBusy(false);
-    }
-  }
+  const weekNav =
+    weeks.length > 1 ? (
+      <nav className="week-nav" aria-label="Weeks">
+        <button
+          type="button"
+          className="week-nav__arrow"
+          disabled={weekIndex === 0}
+          onClick={() => setChosenWeek(Math.max(0, weekIndex - 1))}
+        >
+          <span aria-hidden="true">‹</span> Prev
+        </button>
+        <span className="week-nav__dots">
+          {weeks.map((weekDates, i) => (
+            <button
+              key={weekDates[0]}
+              type="button"
+              className={i === weekIndex ? 'dot dot--active' : 'dot'}
+              aria-label={`Week ${i + 1}`}
+              aria-current={i === weekIndex}
+              onClick={() => setChosenWeek(i)}
+            />
+          ))}
+        </span>
+        <button
+          type="button"
+          className="week-nav__arrow"
+          disabled={weekIndex >= weeks.length - 1}
+          onClick={() => setChosenWeek(Math.min(weeks.length - 1, weekIndex + 1))}
+        >
+          Next <span aria-hidden="true">›</span>
+        </button>
+      </nav>
+    ) : null;
 
   return (
     <div className="screen">
@@ -187,101 +212,88 @@ export default function WeeklyPlannerScreen() {
         </div>
       ) : view === 'week' ? (
         <>
-          <div ref={shareable} className="shareable">
-            <p className="shareable__caption">
-              {holiday.name} · Week {weekIndex + 1} of {weeks.length}
-            </p>
-            <WeekGrid
+          {weekNav}
+          <WeekGrid
             dates={week}
             childList={children}
-            mode={holiday.mode}
             byDayAndChild={byDayAndChild}
             carersById={carersById}
-              onSelect={openDay}
-            />
-          </div>
-
-          {weeks.length > 1 && (
-            <nav className="week-nav">
-              <button
-                type="button"
-                className="link-button"
-                disabled={weekIndex === 0}
-                onClick={() => setChosenWeek(Math.max(0, weekIndex - 1))}
-              >
-                ← Prev
-              </button>
-              <span className="week-nav__dots">
-                {weeks.map((weekDates, i) => (
-                  <button
-                    key={weekDates[0]}
-                    type="button"
-                    className={i === weekIndex ? 'dot dot--active' : 'dot'}
-                    aria-label={`Week ${i + 1}`}
-                    aria-current={i === weekIndex}
-                    onClick={() => setChosenWeek(i)}
-                  />
-                ))}
-              </span>
-              <button
-                type="button"
-                className="link-button"
-                disabled={weekIndex >= weeks.length - 1}
-                onClick={() => setChosenWeek(Math.min(weeks.length - 1, weekIndex + 1))}
-              >
-                Next →
-              </button>
-            </nav>
-          )}
+            onSelect={openDay}
+          />
+          {weekNav}
         </>
       ) : (
         <DayList
           dates={dates}
           childList={children}
-          mode={holiday.mode}
           byDayAndChild={byDayAndChild}
           carersById={carersById}
           onSelect={openDay}
         />
       )}
       {sharing && (
-        <Modal title="Share this plan" onClose={() => setSharing(false)}>
+        <Modal title="Share as a picture" onClose={() => setSharing(false)}>
+          <p className="paste-hint">
+            A picture of the plan, ready for WhatsApp or a message. Every day of the week is
+            included.
+          </p>
           <button
             type="button"
             className="setting-row setting-row--action"
             disabled={busy}
-            onClick={shareImage}
+            onClick={() => sharePictures([weekIndex])}
           >
             <span className="setting-row__label">
-              Share as a picture
-              <span className="setting-row__sub">
-                This week's grid, ready for WhatsApp or a message
-              </span>
+              {weeks.length > 1 ? `Week ${weekIndex + 1}` : 'This week'}
+              <span className="setting-row__sub">{formatDateRange(week[0], week[week.length - 1])}</span>
             </span>
             <span className="setting-row__chevron">›</span>
           </button>
 
-          <button
-            type="button"
-            className="setting-row setting-row--action"
-            disabled={busy}
-            onClick={shareCode}
-          >
-            <span className="setting-row__label">
-              Send the whole plan
-              <span className="setting-row__sub">
-                A code the other parent pastes into their own KidRota
+          {weeks.length > 1 && (
+            <button
+              type="button"
+              className="setting-row setting-row--action"
+              disabled={busy}
+              onClick={() => sharePictures(weeks.map((_, i) => i))}
+            >
+              <span className="setting-row__label">
+                The whole holiday
+                <span className="setting-row__sub">One picture per week, {weeks.length} in all</span>
               </span>
-            </span>
-            <span className="setting-row__chevron">›</span>
-          </button>
+              <span className="setting-row__chevron">›</span>
+            </button>
+          )}
 
+          {busy && <p className="paste-hint">Drawing the picture…</p>}
           {shareStatus && (
             <p className="form-success share-status" role="status">
               {shareStatus}
             </p>
           )}
         </Modal>
+      )}
+
+      {picturing && (
+        // Off screen, never seen: just something for the capture to draw.
+        <div ref={pictures} className="share-pages" aria-hidden="true">
+          {picturing.map((index) => (
+            <div className="share-page" key={index}>
+              <p className="share-page__caption">
+                {holiday.name}
+                {weeks.length > 1 ? ` · Week ${index + 1} of ${weeks.length}` : ''}
+              </p>
+              <WeekGrid
+                dates={weeks[index]}
+                childList={children}
+                byDayAndChild={byDayAndChild}
+                carersById={carersById}
+                onSelect={() => {}}
+                picture
+              />
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

@@ -1,17 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { BackupError, backupDate, exportData, importData, validateBackup, wipeAllData, type BackupFile } from '../db/backup';
-import { importSharedPlan } from '../db/importPlan';
-import { ShareCodeError, decodePlan } from '../utils/shareCode';
 import { plural } from '../utils/status';
 import Modal from '../components/Modal';
-import { countHolidaysEverAdded, listHolidays } from '../db/holidays';
+import { listHolidays } from '../db/holidays';
 import { usePro } from '../hooks/usePro';
-import { importBlockedBy } from '../utils/freeTier';
 import { restorePro } from '../utils/billing';
-import { buildPlanCode } from '../db/exportPlan';
-import { formatDateRange } from '../utils/dates';
-import type { Holiday } from '../db/types';
 import { FEEDBACK_KINDS, FEEDBACK_MAX_LENGTH, feedbackMailto, type FeedbackKind } from '../utils/feedback';
 import { getSetting, setSetting } from '../db/settings';
 import {
@@ -30,7 +24,7 @@ import {
   TERMS_URL,
 } from '../utils/constants';
 import { rateOnPlay } from '../utils/review';
-import { downloadBackup, isShareCancelled, sharePlanCode } from '../utils/share';
+import { downloadBackup, isShareCancelled } from '../utils/share';
 
 const REMINDER_KEY = 'reminder_days';
 const THEMES: { value: ThemePreference; label: string }[] = [
@@ -46,13 +40,9 @@ export default function SettingsScreen() {
   const [confirmWipe, setConfirmWipe] = useState(false);
   // A backup that has been read and checked, waiting for "Replace everything".
   const [pendingRestore, setPendingRestore] = useState<BackupFile | null>(null);
-  const [pasting, setPasting] = useState(false);
-  const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const { pro, openUpgrade } = usePro();
-  // The holidays offered by "Send a plan", or null while that sheet is shut.
-  const [sendHolidays, setSendHolidays] = useState<Holiday[] | null>(null);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackKind, setFeedbackKind] = useState<FeedbackKind>('idea');
   // Kept when the sheet closes by accident, so a half-written message survives.
@@ -160,64 +150,6 @@ export default function SettingsScreen() {
             ? error.message
             : 'That backup could not be restored. Your plans are unchanged.',
       });
-      setBusy(false);
-    }
-  }
-
-  /** Take a plan code from the other parent and add it to this device. */
-  async function handlePasteCode() {
-    setBusy(true);
-    setStatus(null);
-    try {
-      const plan = decodePlan(code);
-      // A backup restore is exempt — it brings back what was already yours —
-      // but a plan code adds, so it counts against the free-tier caps.
-      const blocked = importBlockedBy(await countHolidaysEverAdded(), pro);
-      if (blocked) {
-        openUpgrade(blocked);
-        return;
-      }
-      const result = await importSharedPlan(plan);
-      const people = [
-        result.childrenAdded > 0 ? `${plural(result.childrenAdded, 'child', 'children')}` : null,
-        result.carersAdded > 0 ? `${plural(result.carersAdded, 'carer', 'carers')}` : null,
-      ].filter(Boolean);
-      setStatus({
-        kind: 'ok',
-        text: `Added “${result.holidayName}” with ${plural(result.assignments, 'slot', 'slots')}${
-          people.length ? `, plus ${people.join(' and ')}` : ''
-        }.`,
-      });
-      setPasting(false);
-      setCode('');
-    } catch (error) {
-      setStatus({
-        kind: 'bad',
-        text: error instanceof ShareCodeError ? error.message : 'That code could not be read.',
-      });
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function openSendPlan() {
-    setStatus(null);
-    setSendHolidays(await listHolidays());
-  }
-
-  /** Send one holiday's plan through the share sheet. */
-  async function sendPlan(holidayId: number) {
-    setBusy(true);
-    try {
-      const built = await buildPlanCode(holidayId);
-      if (!built) throw new Error('that holiday could not be found');
-      const how = await sharePlanCode(built.code, built.name);
-      setSendHolidays(null);
-      if (how === 'copied') setStatus({ kind: 'ok', text: 'Plan copied — paste it into a message.' });
-    } catch (error) {
-      setSendHolidays(null);
-      if (!isShareCancelled(error)) setStatus({ kind: 'bad', text: `Could not send the plan: ${(error as Error).message}` });
-    } finally {
       setBusy(false);
     }
   }
@@ -347,41 +279,6 @@ export default function SettingsScreen() {
       </section>
 
       <section className="settings-group">
-        <h2 className="settings-group__title">Shared plans</h2>
-        <button
-          type="button"
-          className="setting-row setting-row--action"
-          disabled={busy}
-          onClick={openSendPlan}
-        >
-          <span className="setting-row__label">
-            Send a plan to someone
-            <span className="setting-row__sub">
-              A message they paste into their own KidRota
-            </span>
-          </span>
-          <span className="setting-row__chevron">›</span>
-        </button>
-        <button
-          type="button"
-          className="setting-row setting-row--action"
-          disabled={busy}
-          onClick={() => {
-            setStatus(null);
-            setPasting(true);
-          }}
-        >
-          <span className="setting-row__label">
-            Add a plan someone sent you
-            <span className="setting-row__sub">
-              Paste their code — it adds to your plans, it does not replace them
-            </span>
-          </span>
-          <span className="setting-row__chevron">›</span>
-        </button>
-      </section>
-
-      <section className="settings-group">
         <h2 className="settings-group__title">KidRota Pro</h2>
         <button
           type="button"
@@ -460,47 +357,6 @@ export default function SettingsScreen() {
         </button>
       </section>
 
-      {pasting && (
-        <Modal title="Add a shared plan" onClose={() => setPasting(false)}>
-          <label className="field">
-            <span className="field__label">Paste the message they sent you</span>
-            <textarea
-              className="field__input code-input"
-              value={code}
-              rows={5}
-              placeholder="Paste the whole message — KidRota finds the plan in it"
-              autoFocus
-              onChange={(event) => setCode(event.target.value)}
-            />
-          </label>
-          <p className="paste-hint">
-            No need to trim it: paste the whole message, and KidRota picks out the part starting
-            “KIDROTA1:”.
-            {code && (
-              <>
-                {' '}
-                <button type="button" className="link-button paste-hint__clear" onClick={() => setCode('')}>
-                  Clear
-                </button>
-              </>
-            )}
-          </p>
-          <div className="holiday-form__actions">
-            <button type="button" className="button button--secondary" onClick={() => setPasting(false)}>
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="button button--primary"
-              disabled={!code.trim() || busy}
-              onClick={handlePasteCode}
-            >
-              {busy ? 'Adding…' : 'Add plan'}
-            </button>
-          </div>
-        </Modal>
-      )}
-
       {feedbackOpen && (
         <Modal title="Send feedback" onClose={() => setFeedbackOpen(false)}>
           <fieldset className="field">
@@ -555,35 +411,6 @@ export default function SettingsScreen() {
               Open email
             </button>
           </div>
-        </Modal>
-      )}
-
-      {sendHolidays && (
-        <Modal title="Send a plan" onClose={() => setSendHolidays(null)}>
-          {sendHolidays.length === 0 ? (
-            <p className="placeholder-note">Add a holiday first, then you can send its plan.</p>
-          ) : (
-            <>
-              <p className="paste-hint">Which holiday? It opens your share sheet — WhatsApp, Messages, email.</p>
-              {sendHolidays.map((holiday) => (
-                <button
-                  type="button"
-                  key={holiday.id}
-                  className="setting-row setting-row--action"
-                  disabled={busy}
-                  onClick={() => sendPlan(holiday.id)}
-                >
-                  <span className="setting-row__label">
-                    {holiday.name}
-                    <span className="setting-row__sub">
-                      {formatDateRange(holiday.start_date, holiday.end_date)}
-                    </span>
-                  </span>
-                  <span className="setting-row__chevron">›</span>
-                </button>
-              ))}
-            </>
-          )}
         </Modal>
       )}
 

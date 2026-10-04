@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Carer, NewCarer } from '../db/types';
 import { usePro } from '../hooks/usePro';
 import { CARER_COLOURS, CARER_TYPE_LABELS, CARER_TYPE_VARS, type CarerType } from '../utils/constants';
-import { MAX_SHORT_NAME, suggestShortName } from '../utils/status';
+import { MAX_CARER_NAME, MAX_SHORT_NAME, suggestShortName } from '../utils/status';
 
 interface CarerFormProps {
   carer?: Carer;
@@ -11,7 +11,6 @@ interface CarerFormProps {
   onCancel: () => void;
 }
 
-const MAX_NAME_LENGTH = 24;
 const TYPES = Object.keys(CARER_TYPE_LABELS) as CarerType[];
 
 export default function CarerForm({ carer, onSave, onDelete, onCancel }: CarerFormProps) {
@@ -76,7 +75,7 @@ export default function CarerForm({ carer, onSave, onDelete, onCancel }: CarerFo
         <input
           className="field__input"
           value={name}
-          maxLength={MAX_NAME_LENGTH}
+          maxLength={MAX_CARER_NAME}
           placeholder="e.g. Grandma"
           autoFocus
           onChange={(event) => handleName(event.target.value)}

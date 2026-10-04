@@ -8,6 +8,10 @@ export interface Holiday {
   start_date: string;
   /** ISO date, YYYY-MM-DD, inclusive. */
   end_date: string;
+  /**
+   * Always 'detailed' (set times) since Oct 2026. Kept so older backups still
+   * read; migration v3 converted every 'simple' holiday.
+   */
   mode: HolidayMode;
   /** SQLite has no boolean; 0 or 1. */
   exclude_weekends: number;
@@ -38,9 +42,9 @@ export interface Carer {
 /**
  * One planned block of cover.
  *
- * Two shapes share this table, distinguished by `period`:
- * - Simple mode: `period` is 'am' | 'pm' | 'all_day', times are NULL.
- * - Detailed mode: `period` is NULL, `start_time`/`end_time` carry HH:MM.
+ * A carer looking after a child from `start_time` to `end_time` (HH:MM).
+ * `period` ('am' | 'pm' | 'all_day') is from the retired Morning/Afternoon
+ * mode: migration v3 turned those rows into times, so it is always NULL now.
  */
 export interface Assignment {
   id: number;
@@ -57,7 +61,7 @@ export interface Assignment {
 }
 
 /** Input for creating a holiday; the DB fills id and timestamps. */
-export type NewHoliday = Omit<Holiday, 'id' | 'created_at' | 'updated_at'>;
+export type NewHoliday = Omit<Holiday, 'id' | 'mode' | 'created_at' | 'updated_at'>;
 export type NewChild = Omit<Child, 'id'>;
 export type NewCarer = Omit<Carer, 'id'>;
 export type NewAssignment = Omit<Assignment, 'id'>;

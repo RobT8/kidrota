@@ -2,9 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   canAddHoliday,
   canChangeHolidayDates,
-  importBlockedBy,
   limitMessage,
-  nameKey,
   resolvePro,
 } from '../freeTier';
 
@@ -35,26 +33,6 @@ describe('canChangeHolidayDates', () => {
 
   it('never freezes with Pro', () => {
     expect(canChangeHolidayDates('2020-01-01', '2026-10-31', true)).toBe(true);
-  });
-});
-
-describe('nameKey', () => {
-  it('ignores case and surrounding spaces', () => {
-    expect(nameKey('  Grandma ')).toBe(nameKey('grandma'));
-  });
-});
-
-describe('importBlockedBy', () => {
-  it('lets a free user import a plan while the free holiday is unused', () => {
-    expect(importBlockedBy(0, false)).toBeNull();
-  });
-
-  it('refuses once the free holiday has been used, even if deleted since', () => {
-    expect(importBlockedBy(1, false)).toBe('holidays');
-  });
-
-  it('never blocks with Pro', () => {
-    expect(importBlockedBy(9, true)).toBeNull();
   });
 });
 

@@ -7,10 +7,12 @@ interface ProgressBarProps {
 }
 
 /**
- * One segment per day of the holiday: green covered, red gap.
+ * One segment per day of the holiday: green complete, amber part-planned,
+ * red nothing booked.
  *
- * Deliberately two-tone. Carer-type colours live in the weekly grid; on the
- * home screen the only question is "is this day sorted or not".
+ * Carer-type colours live in the weekly grid; on the home screen the only
+ * question is "is this day sorted or not" — amber shows the work already
+ * done on days not yet finished.
  */
 export default function ProgressBar({ days, empty }: ProgressBarProps) {
   return (
@@ -23,7 +25,9 @@ export default function ProgressBar({ days, empty }: ProgressBarProps) {
               ? 'progress__seg'
               : day.covered
                 ? 'progress__seg progress__seg--covered'
-                : 'progress__seg progress__seg--gap'
+                : day.booked
+                  ? 'progress__seg progress__seg--partial'
+                  : 'progress__seg progress__seg--gap'
           }
         />
       ))}

@@ -28,12 +28,17 @@ export function formatNextBreak(next: NextBreak): string {
   }
 }
 
-/** Holiday card summary: "Not started yet", "All covered", or "7 covered · 3 gaps". */
+/**
+ * Holiday card summary: "Not started yet", "All days complete", or
+ * "3 days incomplete · 7 complete". A day is complete only when every child
+ * is covered all day, so a day with some cover booked still counts as
+ * incomplete — the progress bar shows those part-planned days in amber.
+ */
 export function coverageSummary(coverage: HolidayCoverage): string {
   if (coverage.empty) return 'Not started yet';
-  if (coverage.gapDays === 0) return 'All covered';
-  const gaps = coverage.gapDays === 1 ? '1 gap' : `${coverage.gapDays} gaps`;
-  return `${coverage.coveredDays} covered · ${gaps}`;
+  if (coverage.gapDays === 0) return 'All days complete';
+  const incomplete = `${plural(coverage.gapDays, 'day', 'days')} incomplete`;
+  return coverage.coveredDays > 0 ? `${incomplete} · ${coverage.coveredDays} complete` : incomplete;
 }
 
 /** "3 days" / "1 day", for the gaps stat card. */
@@ -41,8 +46,14 @@ export function formatGapCount(slots: number): string {
   return slots === 1 ? '1 slot' : `${slots} slots`;
 }
 
-/** Longest short name that still fits a weekly grid cell. */
-export const MAX_SHORT_NAME = 8;
+/**
+ * Longest short name that fits a weekly grid cell with five days across a
+ * phone (measured at 360px wide, the narrowest common Android width).
+ */
+export const MAX_SHORT_NAME = 7;
+
+/** Longest carer name: fits the two-across carer picker without cutting off. */
+export const MAX_CARER_NAME = 20;
 
 /**
  * Suggest a grid-sized short name from a full one.

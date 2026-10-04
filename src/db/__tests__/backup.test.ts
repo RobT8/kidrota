@@ -7,7 +7,7 @@ import { SCHEMA_VERSION } from '../schema';
 import { createChild, listChildren } from '../children';
 import { createCarer, listCarers } from '../carers';
 import { createHoliday, listHolidays } from '../holidays';
-import { addTimeSlot, listAssignments, setSlotAssignment } from '../assignments';
+import { addTimeSlot, listAssignments } from '../assignments';
 import { getDayNote, setDayNote } from '../dayNotes';
 import { getSetting, setOnboardingComplete, setSetting } from '../settings';
 
@@ -24,20 +24,21 @@ async function seed() {
 
   const simple = await createHoliday({
     name: 'October half term', start_date: '2026-10-19', end_date: '2026-10-23',
-    mode: 'simple', exclude_weekends: 1,
+    exclude_weekends: 1,
   });
   const detailed = await createHoliday({
     name: 'Summer', start_date: '2027-07-26', end_date: '2027-07-30',
-    mode: 'detailed', exclude_weekends: 0,
+    exclude_weekends: 0,
   });
 
-  await setSlotAssignment({
-    holiday_id: simple, child_id: ada, carer_id: gran, date: '2026-10-19', period: 'am',
-    notes: 'swimming', cost: 12.5,
-  });
-  await setSlotAssignment({
-    holiday_id: simple, child_id: bo, carer_id: club, date: '2026-10-19', period: 'pm',
-  });
+  // Morning/afternoon cover as the app stored it before set times became the
+  // only way to plan — what a backup from 1.0.0 holds.
+  await db.run("UPDATE holidays SET mode = 'simple' WHERE id = ?", [simple]);
+  await db.run(
+    `INSERT INTO assignments (holiday_id, child_id, carer_id, date, period, notes, cost)
+     VALUES (?, ?, ?, '2026-10-19', 'am', 'swimming', 12.5), (?, ?, ?, '2026-10-19', 'pm', NULL, NULL)`,
+    [simple, ada, gran, simple, bo, club],
+  );
   await addTimeSlot({
     holiday_id: detailed, child_id: ada, carer_id: gran, date: '2027-07-26',
     start_time: '09:00', end_time: '12:00',
@@ -159,14 +160,27 @@ describe('importData', () => {
     await importData(JSON.parse(JSON.stringify(file)));
 
     const assignments = await listAssignments(seeded.simple);
-    const morning = assignments.find((a) => a.period === 'am')!;
+    const morning = assignments.find((a) => a.child_id === seeded.ada)!;
     expect(morning.child_id).toBe(seeded.ada);
     expect(morning.carer_id).toBe(seeded.gran);
     expect(morning.notes).toBe('swimming');
     expect(morning.cost).toBe(12.5);
   });
 
-  it('preserves detailed-mode time slots', async () => {
+  it('turns morning/afternoon cover from an older backup into set times', async () => {
+    const seeded = await seed();
+    const file = await exportData();
+    await importData(JSON.parse(JSON.stringify(file)));
+
+    const slots = await listAssignments(seeded.simple);
+    expect(slots.map((a) => [a.period, a.start_time, a.end_time])).toEqual([
+      [null, '08:00', '12:00'],
+      [null, '12:00', '18:00'],
+    ]);
+    expect((await listHolidays()).every((h) => h.mode === 'detailed')).toBe(true);
+  });
+
+  it('preserves time slots', async () => {
     const seeded = await seed();
     const file = await exportData();
     await importData(JSON.parse(JSON.stringify(file)));

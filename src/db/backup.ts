@@ -1,5 +1,5 @@
 import { getDb } from './database';
-import { SCHEMA_VERSION } from './schema';
+import { CONVERT_PERIODS_TO_TIMES, SCHEMA_VERSION } from './schema';
 import type { Assignment, Carer, Child, Holiday } from './types';
 import type { DbExecutor } from './executor';
 import {
@@ -291,6 +291,9 @@ export async function importData(data: unknown): Promise<BackupFile> {
       for (const [key, value] of Object.entries(file.settings)) {
         await db.run('INSERT INTO app_settings (key, value) VALUES (?, ?)', [key, value]);
       }
+
+      // A backup from before set times became the only way to plan.
+      for (const statement of CONVERT_PERIODS_TO_TIMES) await db.run(statement);
     });
   } catch (error) {
     // Rolled back: the device still has exactly what it had before.

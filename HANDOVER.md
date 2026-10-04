@@ -5,7 +5,7 @@ Where the project stands, for anyone (person or AI session) picking it up.
 the *state of play*: what is done, what is unproven, what is still open.
 Keep it current — update it at the end of every working session.
 
-**Last updated:** 4 October 2026
+**Last updated:** 4 October 2026 (1.0.1 changes)
 **Working branch:** `claude/eloquent-brahmagupta-f1d5v1` — *all* current
 work is here; `main` is well behind. Check this branch out before doing
 anything.
@@ -29,22 +29,60 @@ anything.
   themes; keep pure logic in `src/utils/` with unit tests; never change the
   package ID `com.kidrota.app`.
 
-## What the app is today (version 1.0.0)
+## What the app is today (version 1.0.1, not yet uploaded)
 
 Local-first Android app (Capacitor 8 + React 19 + SQLite, no server, no
-accounts). Plan childcare across school holidays, AM/PM or timed sessions,
-gaps shown in red, share plans as a pasteable code, backup/restore,
-reminders, feedback by email.
+accounts). Plan childcare across school holidays with timed sessions (one
+carer per child at a time), gaps shown in red, share week pictures,
+backup/restore, reminders, feedback by email.
+
+**1.0.1 = the owner's internal-test feedback (4 Oct 2026), all done in code
+and checked in the browser at phone size; none of it seen on the phone yet:**
+
+- 12 child colours (was 6).
+- Onboarding carers: "Au pair" gone, "Grandma"/"Grandad" merged into
+  "Grandparents" (grid name "Grands"); suggestions and the parent's own
+  carers share one list — tap to tick/untick, Edit to rename/retype/remove.
+- **AM/PM mode removed.** Set times only; Morning/Afternoon/All day are
+  one-tap presets. Migration **v3** converts old AM/PM rows to times
+  (AM 08:00–12:00, PM 12:00–18:00, all day 08:00–18:00), also on restoring
+  an old backup.
+- Saved times: tick "Save these times for next time" on typed times; "Edit
+  saved times" renames/retimes/removes any preset, defaults included.
+- Session form: who, when, **Also for** (other children) and **Which days**
+  (just this day / every day / every Tuesday / Mon–Fri / pick days), for
+  adding *and* editing; editing pre-ticks children who have the same session.
+- **One carer per child at a time:** overlapping times on the day are refused
+  with the clash named; on other days chosen, the new session replaces what
+  overlaps (`applySession` in `db/assignments.ts`).
+- "Pick days" fixed: selected days are now filled blue with a tick (they
+  barely changed before), and Sat/Sun only show when the holiday has weekends.
+- Save buttons + "Saved ✓" for copying a day, for sessions across days, and
+  for the day's note (the note no longer saves on every keystroke).
+- Tapping a child's cell in the week opens that day scrolled to that child,
+  outlined.
+- Week view: Prev/Next at the top and bottom, bigger arrows everywhere; each
+  cell shows from–to times ("9–12 Mum"); short names max 7 characters, so
+  five days fit at 360px wide without scrolling.
+- Home: "3 days incomplete · 7 complete" instead of "covered/gaps"; the bar
+  is green complete / amber part-planned / red nothing; "Gaps to fill" stays.
+- **Sharing is pictures only.** Share codes, "Send a plan to someone" and
+  "Add a plan someone sent you" are removed (owner's decision: keep it
+  simple, family don't need the app or Pro). Share offers this week or the
+  whole holiday (one picture per week); every day of the week is always in
+  the picture. Privacy policy wording updated (`docs/privacy.html`, dated
+  4 Oct 2026) — **re-upload it to t80.dev**. Store listing and website
+  bullets updated to match.
 
 - **Free:** unlimited children, 1 holiday *ever* (deleting it does not free
   the slot; a finished holiday's dates lock). The one-child cap was dropped
   on 3 Oct 2026. **Pro:** £1.99/year auto-renewing subscription
   `kidrota_pro_yearly` — unlimited holidays, custom carer colours. No lifetime option.
-- Detailed-mode day runs 08:00–18:00; a day is "covered" only with no gaps.
+- The day runs 08:00–18:00; a day is complete only when every child has no gap.
 - Legal pages: `https://t80.dev/kidrota/privacy.html` and `terms.html`
   (source in `docs/`, dated 26 September 2026). Contact `kidrota@t80.dev`.
 - Icon "AB1" (calendar + grown-up + child); source `design/icon/`.
-- 325 tests pass; `npm run lint` and `npm run build` clean (as of this file).
+- 291 tests pass; `npm run lint` and `npm run build` clean (as of this file).
 - **Pre-release review done 27 Sep 2026 — `PRE-RELEASE-REVIEW.md`.** The
   owner approved B1-B2 and S1-S12 (keep `allowBackup` on); all are fixed and
   listed in the report's "Fix status" table. The N-list (nice to have) is
@@ -54,8 +92,8 @@ reminders, feedback by email.
   and it's gone; tapping Rate (card or Settings) retires it. See README
   "Home rating card". Not yet seen on the phone.
 - Reminders default **Off**; every holiday is at most **10 weeks**
-  (`MAX_HOLIDAY_DAYS`); backup restore and plan import are validated and
-  all-or-nothing; restore asks for confirmation.
+  (`MAX_HOLIDAY_DAYS`); backup restore is validated and all-or-nothing, and
+  asks for confirmation.
 
 ## Verified on the phone vs not
 
@@ -64,9 +102,10 @@ See the README's **Tested on hardware** table for the detail. In short:
 - ✓ Billing connects to Play, free-tier limits, Rate-this-app link, share
   sheet, backup export, database survives uninstall + reinstall, new icon.
 - **Fixed but not re-confirmed on the phone:** backup *restore*; navigation
-  buttons readable over white sheets; splash screen; typing in the plan-code
-  box; the full import of a pasted WhatsApp message; Settings showing
-  version 1.0.0 (first build since `build.gradle` reads `package.json`).
+  buttons readable over white sheets; splash screen; Settings showing the
+  version (first build since `build.gradle` reads `package.json`).
+- **All of 1.0.1 (list above)** — especially the v3 migration running over
+  the AM/PM data already on the phone, and week pictures arriving in WhatsApp.
 - **Never seen:** a reminder notification actually arriving; the feedback
   form opening the email app (`mailto:`); a real purchase, restore, cancel
   or refund; the in-app review card. The last three need a Play testing
@@ -89,7 +128,7 @@ report are still to do.
 | 🔴 B1 | Privacy policy/terms say data is never backed up; auto-backup is on | `docs/privacy.html:53`, `AndroidManifest.xml:5` |
 | 🔴 B2 | Reminders bounce to "Alarms & reminders" on Android 14+ | `utils/notifications.ts:62-70` |
 | 🟠 S1 | Backup restore: one bad row wipes everything; no confirm | `db/backup.ts:234` |
-| 🟠 S2 | Share codes not validated (bad carer type breaks Carers screen) | `utils/shareCode.ts:159` |
+| 🟠 S2 | Share codes not validated (bad carer type breaks Carers screen) — share codes since removed (1.0.1) | was `utils/shareCode.ts:159` |
 | 🟠 S3 | One free holiday can span a whole year | `components/HolidayForm.tsx:41` |
 | 🟠 S4-S12 | Reminder default, policy gaps, pending purchase msg, mode switch, share-cancel error, 48 dp targets, one contrast fail, licences page, README | see report |
 
@@ -105,12 +144,14 @@ secrets in git, contrast elsewhere in both themes, 200 % font layout.
 - ✅ Upload key created (`C:\Users\robta\KidRota-keys\kidrota-upload.jks`,
   alias `upload`) and a signed `app-release.aab` (1.0.0, versionCode 10000)
   built from commit `f19ce6f`.
-- ✅ Uploaded to **internal testing** with a tester list "Me".
-- ⏳ **Open issue:** the opt-in link's "Download it on Google Play" shows
-  "Item not found". Usual causes: release still propagating (can take
-  hours), release left in Draft, or the phone's Play Store on a different
-  Google account from the tester list. Check Internal testing → Releases
-  says "Available to internal testers".
+- ✅ Uploaded to **internal testing** with a tester list "Me". "Item not
+  found" on the opt-in link cleared once the release showed "Available to
+  internal testers"; installed and tested on the phone.
+- ✅ Owner's test notes turned into **1.0.1** (see "What the app is today").
+- ⏳ **Next:** build a signed `.aab` of 1.0.1 (versionCode 10001) from this
+  branch and upload it as a new internal testing release; re-test on the
+  phone (the update installs over 1.0.0, so the v3 migration runs on real
+  data). Re-upload `privacy.html`.
 - Not yet: website deploy to Cloudflare (zip: `docs/` files inside a
   `kidrota/` folder — rebuild it from `docs/`), payments profile,
   `kidrota_pro_yearly` subscription, App content forms (answers in

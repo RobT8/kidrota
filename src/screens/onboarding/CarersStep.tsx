@@ -1,206 +1,256 @@
 import { useEffect, useState } from 'react';
+import CarerIcon from '../../components/CarerIcon';
 import Loading from '../../components/Loading';
-import { createCarer, deleteCarer, listCarers } from '../../db/carers';
-import type { Carer } from '../../db/types';
+import { createCarer, deleteCarer, listCarers, updateCarer } from '../../db/carers';
 import {
   CARER_TYPE_LABELS,
   CARER_TYPE_VARS,
   DEFAULT_CARERS,
   type CarerType,
 } from '../../utils/constants';
+import { MAX_CARER_NAME, suggestShortName } from '../../utils/status';
 
-const MAX_NAME_LENGTH = 24;
 const CARER_TYPES = Object.keys(CARER_TYPE_LABELS) as CarerType[];
+
+/** A suggestion keeps its hand-picked grid name ("Grands", not "Grandpa"). */
+function shortNameFor(name: string): string {
+  const preset = DEFAULT_CARERS.find((item) => item.name.toLowerCase() === name.trim().toLowerCase());
+  return preset ? preset.short_name : suggestShortName(name);
+}
 
 interface CarersStepProps {
   onDone: () => void;
   busy: boolean;
 }
 
+/** One line in the list: a suggested carer, or one already saved. */
+interface Row {
+  key: string;
+  name: string;
+  type: CarerType;
+  /** The saved carer, or null while unticked. */
+  carerId: number | null;
+}
+
 /**
  * Pick who helps with childcare.
  *
- * Presets are toggles backed directly by the database: tapping one adds that
- * carer, tapping it again removes them. Reopening the step therefore shows the
- * right ticks without any separate draft state to keep in sync.
+ * The suggestions and the parent's own carers share one list and behave the
+ * same: tap to tick or untick, Edit to rename, change the type or remove.
+ * Ticking saves the carer straight away and unticking deletes it, so what is
+ * ticked is exactly what the app will have.
  */
 export default function CarersStep({ onDone, busy }: CarersStepProps) {
-  const [carers, setCarers] = useState<Carer[]>([]);
+  const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCustom, setShowCustom] = useState(false);
-  const [customName, setCustomName] = useState('');
-  const [customType, setCustomType] = useState<CarerType>('other');
+  // The row being edited, or "new" for the add form.
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [name, setName] = useState('');
+  const [type, setType] = useState<CarerType>('other');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    listCarers().then((existing) => {
-      setCarers(existing);
+    listCarers().then((saved) => {
+      const savedNames = new Set(saved.map((carer) => carer.name.trim().toLowerCase()));
+      setRows([
+        ...saved.map((carer) => ({ key: `c${carer.id}`, name: carer.name, type: carer.type, carerId: carer.id })),
+        // Suggestions not already saved, unticked.
+        ...DEFAULT_CARERS.filter((preset) => !savedNames.has(preset.name.toLowerCase())).map((preset) => ({
+          key: `d-${preset.name}`,
+          name: preset.name,
+          type: preset.type,
+          carerId: null,
+        })),
+      ]);
       setLoading(false);
     });
   }, []);
 
-  async function refresh() {
-    setCarers(await listCarers());
-  }
-
-  async function togglePreset(preset: (typeof DEFAULT_CARERS)[number]) {
-    const existing = carers.find(
-      (carer) => carer.name === preset.name && carer.type === preset.type,
+  function replaceRow(key: string, next: Row | null) {
+    setRows((current) =>
+      next ? current.map((row) => (row.key === key ? next : row)) : current.filter((row) => row.key !== key),
     );
-    if (existing) {
-      await deleteCarer(existing.id);
-    } else {
-      await createCarer(preset);
+  }
+
+  async function toggle(row: Row) {
+    setError(null);
+    try {
+      if (row.carerId !== null) {
+        await deleteCarer(row.carerId);
+        replaceRow(row.key, { ...row, carerId: null });
+      } else {
+        const carerId = await createCarer({ name: row.name, short_name: shortNameFor(row.name), type: row.type });
+        replaceRow(row.key, { ...row, carerId });
+      }
+    } catch {
+      setError('Could not save. Please try again.');
     }
-    await refresh();
   }
 
-  /** Save a typed custom carer. Shared by the add button and the final button. */
-  async function commitCustom() {
-    const trimmed = customName.trim();
-    if (!trimmed) return;
-
-    await createCarer({
-      name: trimmed,
-      // Short names drive the tight weekly grid cells; trim long custom ones.
-      short_name: trimmed.length > 8 ? `${trimmed.slice(0, 7)}…` : trimmed,
-      type: customType,
-    });
-    await refresh();
-    setCustomName('');
-    setCustomType('other');
-    setShowCustom(false);
+  function startEditing(row: Row | null) {
+    setEditingKey(row ? row.key : 'new');
+    setName(row?.name ?? '');
+    setType(row?.type ?? 'other');
+    setError(null);
   }
 
-  async function addCustom(event: React.FormEvent) {
+  /** Save the open form. Returns false when there is nothing to save. */
+  async function commit(): Promise<boolean> {
+    const trimmed = name.trim();
+    if (!editingKey || !trimmed) return false;
+    const values = { name: trimmed, short_name: shortNameFor(trimmed), type };
+    if (editingKey === 'new') {
+      // A carer typed in is clearly wanted, so it is added ticked.
+      const carerId = await createCarer(values);
+      setRows((current) => [...current, { key: `c${carerId}`, name: trimmed, type, carerId }]);
+    } else {
+      const row = rows.find((item) => item.key === editingKey);
+      if (!row) return false;
+      if (row.carerId !== null) await updateCarer(row.carerId, values);
+      replaceRow(row.key, { ...row, name: trimmed, type });
+    }
+    setEditingKey(null);
+    setName('');
+    return true;
+  }
+
+  async function save(event: React.FormEvent) {
     event.preventDefault();
-    await commitCustom();
+    try {
+      await commit();
+    } catch {
+      setError('Could not save. Please try again.');
+    }
+  }
+
+  async function remove(row: Row) {
+    if (row.carerId !== null) await deleteCarer(row.carerId);
+    replaceRow(row.key, null);
+    setEditingKey(null);
   }
 
   /**
-   * Same trap as the children step: a half-typed custom carer would otherwise
-   * be discarded in silence when the user taps the button that finishes setup.
+   * A half-typed new carer would otherwise be thrown away in silence when the
+   * user taps the button that finishes setup.
    */
   async function handleDone() {
-    await commitCustom();
+    if (editingKey === 'new') await commit();
     onDone();
   }
 
-  /** Carers the user typed in, as opposed to the presets shown as chips. */
-  const custom = carers.filter(
-    (carer) =>
-      !DEFAULT_CARERS.some((preset) => preset.name === carer.name && preset.type === carer.type),
-  );
-
   if (loading) return <Loading />;
+
+  const ticked = rows.filter((row) => row.carerId !== null).length;
+
+  const form = (row: Row | null) => (
+    <form className="card add-form" onSubmit={save}>
+      <label className="field">
+        <span className="field__label">Name</span>
+        <input
+          className="field__input"
+          value={name}
+          maxLength={MAX_CARER_NAME}
+          placeholder="e.g. Auntie Jo"
+          autoFocus
+          onChange={(event) => setName(event.target.value)}
+        />
+      </label>
+
+      <label className="field">
+        <span className="field__label">Type — sets the colour</span>
+        <select
+          className="field__input"
+          value={type}
+          onChange={(event) => setType(event.target.value as CarerType)}
+        >
+          {CARER_TYPES.map((option) => (
+            <option key={option} value={option}>
+              {CARER_TYPE_LABELS[option]}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <div className="add-form__actions">
+        <button type="submit" className="button button--primary" disabled={!name.trim()}>
+          {row ? 'Save' : 'Add carer'}
+        </button>
+        <button type="button" className="link-button" onClick={() => setEditingKey(null)}>
+          Cancel
+        </button>
+        {row && (
+          <button type="button" className="link-button link-button--danger" onClick={() => remove(row)}>
+            Remove
+          </button>
+        )}
+      </div>
+    </form>
+  );
 
   return (
     <div className="step">
       <header className="step__header">
         <h1 className="step__title">Who helps with childcare?</h1>
-        <p className="step__subtitle">Tap to add, or create your own</p>
+        <p className="step__subtitle">Tap to tick everyone who helps. Edit to rename or remove.</p>
       </header>
 
-      <div className="chips">
-        {DEFAULT_CARERS.map((preset) => {
-          const selected = carers.some(
-            (carer) => carer.name === preset.name && carer.type === preset.type,
-          );
-          return (
-            <button
-              key={preset.name}
-              type="button"
-              className={selected ? 'chip chip--selected' : 'chip'}
-              aria-pressed={selected}
-              style={{
-                background: selected ? CARER_TYPE_VARS[preset.type].bg : undefined,
-                color: selected ? CARER_TYPE_VARS[preset.type].text : undefined,
-              }}
-              onClick={() => togglePreset(preset)}
-            >
-              <span className="chip__tick" aria-hidden="true">
-                {selected ? '✓' : '+'}
-              </span>
-              {preset.name}
-            </button>
-          );
-        })}
-      </div>
-
-      {custom.length > 0 && (
-        <ul className="entity-list">
-          {custom.map((carer) => (
-            <li className="entity-row" key={carer.id}>
-              <span
-                className="type-dot"
-                style={{ background: CARER_TYPE_VARS[carer.type].bg }}
-                aria-hidden="true"
-              />
-              <span className="entity-row__name">{carer.name}</span>
-              <span className="entity-row__meta">{CARER_TYPE_LABELS[carer.type]}</span>
+      <ul className="pick-list">
+        {rows.map((row) =>
+          editingKey === row.key ? (
+            <li key={row.key}>{form(row)}</li>
+          ) : (
+            <li className="pick-row" key={row.key}>
               <button
                 type="button"
-                className="icon-button icon-button--danger"
-                aria-label={`Remove ${carer.name}`}
-                onClick={async () => {
-                  await deleteCarer(carer.id);
-                  await refresh();
-                }}
+                className={row.carerId !== null ? 'pick-row__toggle pick-row__toggle--on' : 'pick-row__toggle'}
+                aria-pressed={row.carerId !== null}
+                onClick={() => toggle(row)}
               >
-                Remove
+                <span
+                  className="carer-card__icon"
+                  style={{ background: CARER_TYPE_VARS[row.type].bg, color: CARER_TYPE_VARS[row.type].text }}
+                >
+                  <CarerIcon type={row.type} />
+                </span>
+                <span className="pick-row__text">
+                  <span className="pick-row__name">{row.name}</span>
+                  <span className="pick-row__meta">{CARER_TYPE_LABELS[row.type]}</span>
+                </span>
+                <span className="pick-row__tick" aria-hidden="true">
+                  {row.carerId !== null ? '✓' : ''}
+                </span>
+              </button>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label={`Edit ${row.name}`}
+                onClick={() => startEditing(row)}
+              >
+                Edit
               </button>
             </li>
-          ))}
-        </ul>
+          ),
+        )}
+      </ul>
+
+      {editingKey === 'new' ? (
+        form(null)
+      ) : (
+        <button type="button" className="dashed-button" onClick={() => startEditing(null)}>
+          + Add someone else
+        </button>
       )}
 
-      {showCustom ? (
-        <form className="card add-form" onSubmit={addCustom}>
-          <label className="field">
-            <span className="field__label">Name</span>
-            <input
-              className="field__input"
-              value={customName}
-              maxLength={MAX_NAME_LENGTH}
-              placeholder="e.g. Auntie Jo"
-              autoFocus
-              onChange={(event) => setCustomName(event.target.value)}
-            />
-          </label>
-
-          <label className="field">
-            <span className="field__label">Type</span>
-            <select
-              className="field__input"
-              value={customType}
-              onChange={(event) => setCustomType(event.target.value as CarerType)}
-            >
-              {CARER_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {CARER_TYPE_LABELS[type]}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div className="add-form__actions">
-            <button type="submit" className="button button--secondary" disabled={!customName.trim()}>
-              Add carer
-            </button>
-            <button type="button" className="link-button" onClick={() => setShowCustom(false)}>
-              Cancel
-            </button>
-          </div>
-        </form>
-      ) : (
-        <button type="button" className="dashed-button" onClick={() => setShowCustom(true)}>
-          + Add custom carer
-        </button>
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
       )}
 
       <button
         type="button"
         className="button button--primary"
-        disabled={(carers.length === 0 && !customName.trim()) || busy}
+        disabled={(ticked === 0 && !(editingKey === 'new' && name.trim())) || busy}
         onClick={handleDone}
       >
         {busy ? 'Setting up…' : 'Start planning'}

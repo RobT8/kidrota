@@ -1,6 +1,5 @@
 import { Capacitor } from '@capacitor/core';
 import type { BackupFile } from '../db/backup';
-import { planMessage } from './shareCode';
 
 /**
  * Did the user simply close the share sheet? Android reports that as an
@@ -74,81 +73,77 @@ export async function downloadBackup(file: BackupFile): Promise<SaveResult> {
   return { filename, shared: false };
 }
 
-function pngFilename(holidayName: string): string {
+function pngFilename(holidayName: string, suffix: string): string {
   const slug = holidayName
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
     .slice(0, 40);
-  return `kidrota-${slug || 'plan'}.png`;
+  return `kidrota-${slug || 'plan'}${suffix}.png`;
 }
 
 /**
- * Turn part of the screen into a PNG and hand it to the share sheet.
+ * Turn each element into a PNG and hand them all to the share sheet at once,
+ * so a whole holiday goes to WhatsApp as one message of pictures.
  *
- * Rendered at twice the screen scale, because the grid's carer labels are 10px
- * and a 1x capture of them is unreadable once WhatsApp has compressed it.
+ * Rendered at twice the screen scale, because the grid's carer labels are
+ * small and a 1x capture of them is unreadable once WhatsApp has compressed
+ * it. Each element is captured at its full width, so a week wider than the
+ * screen still shares every day.
  */
-export async function shareElementAsImage(
-  element: HTMLElement,
+export async function shareElementsAsImages(
+  elements: HTMLElement[],
   holidayName: string,
 ): Promise<SaveResult> {
   const { toPng } = await import('html-to-image');
-  const filename = pngFilename(holidayName);
+  // The capture has no page behind it, so it needs its own background.
+  const backgroundColor = getComputedStyle(document.body).backgroundColor;
 
-  const dataUrl = await toPng(element, {
-    pixelRatio: 2,
-    // The capture has no page behind it, so it needs its own background.
-    backgroundColor: getComputedStyle(document.body).backgroundColor,
-    // A horizontally scrolled grid should share the whole week, not the
-    // portion that happens to be on screen.
-    width: element.scrollWidth,
-    style: { overflow: 'visible' },
-  });
+  const images: { filename: string; dataUrl: string }[] = [];
+  for (const [index, element] of elements.entries()) {
+    const dataUrl = await toPng(element, {
+      pixelRatio: 2,
+      backgroundColor,
+      width: element.scrollWidth,
+      height: element.scrollHeight,
+    });
+    const suffix = elements.length > 1 ? `-week-${index + 1}` : '';
+    images.push({ filename: pngFilename(holidayName, suffix), dataUrl });
+  }
 
   if (Capacitor.isNativePlatform()) {
     const { Filesystem, Directory } = await import('@capacitor/filesystem');
     const { Share } = await import('@capacitor/share');
 
-    const written = await Filesystem.writeFile({
-      path: filename,
-      // writeFile wants base64 without the data-URL prefix.
-      data: dataUrl.split(',')[1],
-      directory: Directory.Cache,
-    });
+    const files: string[] = [];
+    for (const image of images) {
+      const written = await Filesystem.writeFile({
+        path: image.filename,
+        // writeFile wants base64 without the data-URL prefix.
+        data: image.dataUrl.split(',')[1],
+        directory: Directory.Cache,
+      });
+      files.push(written.uri);
+    }
 
     await Share.share({
       title: holidayName,
       text: `${holidayName} — who has the kids`,
-      url: written.uri,
-      dialogTitle: 'Share this week',
+      files,
+      dialogTitle: 'Share the plan',
     });
 
-    return { filename, shared: true };
+    return { filename: images[0]?.filename ?? '', shared: true };
   }
 
-  const link = document.createElement('a');
-  link.href = dataUrl;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-
-  return { filename, shared: false };
-}
-
-/** Share a plan code as plain text, or copy it when there is no share sheet. */
-export async function sharePlanCode(code: string, holidayName: string): Promise<'shared' | 'copied'> {
-  if (Capacitor.isNativePlatform()) {
-    const { Share } = await import('@capacitor/share');
-    await Share.share({
-      title: holidayName,
-      text: planMessage(holidayName, code),
-      dialogTitle: 'Send the plan',
-    });
-    return 'shared';
+  for (const image of images) {
+    const link = document.createElement('a');
+    link.href = image.dataUrl;
+    link.download = image.filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   }
 
-  await navigator.clipboard.writeText(planMessage(holidayName, code));
-  return 'copied';
+  return { filename: images.map((image) => image.filename).join(', '), shared: false };
 }

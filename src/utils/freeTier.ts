@@ -7,7 +7,7 @@ import { FREE_TIER_MAX_HOLIDAYS } from './constants';
  * has: enough to try KidRota properly on a real break. The cap only stops a
  * new holiday being added.
  * Anything already on the device stays usable even when it is over the cap —
- * after restoring a backup, importing a plan, or a Pro subscription lapsing —
+ * after restoring a backup or a Pro subscription lapsing —
  * so nobody ever loses a plan by not paying.
  *
  * The holiday cap counts every holiday ever added, and a finished holiday's
@@ -36,19 +36,6 @@ export function canAddHoliday(everAdded: number, pro: boolean): boolean {
  */
 export function canChangeHolidayDates(endDate: string, today: string, pro: boolean): boolean {
   return pro || endDate >= today;
-}
-
-/** Names match loosely, so "Grandma" and "grandma " are the same person. */
-export function nameKey(name: string): string {
-  return name.trim().toLowerCase();
-}
-
-/**
- * Would adding a shared plan take a free user past the cap? A plan code
- * always adds a holiday, so it counts against the one free holiday.
- */
-export function importBlockedBy(holidaysEverAdded: number, pro: boolean): ProFeature | null {
-  return canAddHoliday(holidaysEverAdded, pro) ? null : 'holidays';
 }
 
 /** Why the upgrade sheet opened, in the words the user sees. */

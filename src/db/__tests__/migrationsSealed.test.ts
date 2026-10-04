@@ -20,6 +20,8 @@ const SHIPPED = [
   'c754e20594c2ec9171c7fd382e686dcb34d3d74b8aee6044d262bd988bf3dd68',
   // v2 (KidRota 1.0.0)
   '39ae2f97e32447d70cd7317e70a1caf700ffdc0a65f38d5ab4427dfb763712de',
+  // v3 — Morning/Afternoon cover converted to set times (KidRota 1.0.1)
+  'ccf0e518df73e817b655cf2c88894bbc7db5dbaae27d69988ac5265c8f7f98d2',
 ];
 
 function fingerprint(sql: string): string {

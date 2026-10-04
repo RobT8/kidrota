@@ -1,16 +1,15 @@
 import ChildAvatar from './ChildAvatar';
 import type { Assignment, Carer, Child } from '../db/types';
 import { carerSwatch } from '../utils/colour';
-import { CARER_TYPE_VARS, type HolidayMode } from '../utils/constants';
-import { dayKey, slotIn, timeSlotsIn } from '../hooks/useAssignments';
+import { CARER_TYPE_VARS } from '../utils/constants';
+import { dayKey, timeSlotsIn } from '../hooks/useAssignments';
 import { formatLongDate } from '../utils/dates';
-import { dayTimeline } from '../utils/timeSlots';
+import { dayTimeline, formatShortRange } from '../utils/timeSlots';
 
 interface DayListProps {
   dates: string[];
   /** Named childList: `children` is reserved by React for JSX content. */
   childList: Child[];
-  mode: HolidayMode;
   byDayAndChild: Map<string, Assignment[]>;
   carersById: Map<number, Carer>;
   onSelect: (date: string) => void;
@@ -25,7 +24,6 @@ interface DayListProps {
 export default function DayList({
   dates,
   childList,
-  mode,
   byDayAndChild,
   carersById,
   onSelect,
@@ -37,28 +35,19 @@ export default function DayList({
           <span className="day-list__date">{formatLongDate(date)}</span>
 
           {childList.map((child) => {
-            const assignments = byDayAndChild.get(dayKey(date, child.id));
+            const slots = timeSlotsIn(byDayAndChild.get(dayKey(date, child.id)));
             const entries =
-              mode === 'simple'
-                ? (['am', 'pm'] as const).map((period) => {
-                    const assignment = slotIn(assignments, period);
-                    return {
-                      key: period,
-                      label: period.toUpperCase(),
-                      carer: assignment ? (carersById.get(assignment.carer_id) ?? null) : null,
-                    };
-                  })
-                : timeSlotsIn(assignments).length === 0
-                  ? []
-                  : dayTimeline(timeSlotsIn(assignments)).map((entry) =>
-                      entry.kind === 'gap'
-                        ? { key: `gap-${entry.start}`, label: `${entry.start}–${entry.end}`, carer: null }
-                        : {
-                            key: String(entry.slot.id),
-                            label: `${entry.slot.start_time}–${entry.slot.end_time}`,
-                            carer: carersById.get(entry.slot.carer_id) ?? null,
-                          },
-                    );
+              slots.length === 0
+                ? []
+                : dayTimeline(slots).map((entry) =>
+                    entry.kind === 'gap'
+                      ? { key: `gap-${entry.start}`, label: formatShortRange(entry.start, entry.end), carer: null }
+                      : {
+                          key: String(entry.slot.id),
+                          label: formatShortRange(entry.slot.start_time, entry.slot.end_time),
+                          carer: carersById.get(entry.slot.carer_id) ?? null,
+                        },
+                  );
 
             return (
               <span className="day-list__child" key={child.id}>

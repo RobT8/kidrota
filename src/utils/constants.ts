@@ -26,19 +26,24 @@ export const CARER_TYPE_LABELS: Record<CarerType, string> = {
   other: 'Other',
 };
 
-/** Tappable presets offered during onboarding. */
+/**
+ * The carers offered during onboarding. They start unticked and can be
+ * renamed or removed there like any carer the parent types in.
+ */
 export const DEFAULT_CARERS: { name: string; short_name: string; type: CarerType }[] = [
   { name: 'Mum', short_name: 'Mum', type: 'parent' },
   { name: 'Dad', short_name: 'Dad', type: 'parent' },
-  { name: 'Grandma', short_name: 'Gran', type: 'family' },
-  { name: 'Grandad', short_name: 'Gramps', type: 'family' },
+  { name: 'Grandparents', short_name: 'Grands', type: 'family' },
   { name: 'Holiday club', short_name: 'Club', type: 'club' },
   { name: 'Playdate', short_name: 'Play', type: 'playdate' },
   { name: 'Childminder', short_name: 'CM', type: 'other' },
-  { name: 'Au pair', short_name: 'Au pair', type: 'other' },
 ];
 
-/** Colour choices offered when adding a child. */
+/**
+ * Colour choices offered when adding a child: twelve, so a big family never
+ * has to share. Each carries an initial at 4.5:1 or better (colour.test.ts),
+ * and none is the red the grid keeps for gaps.
+ */
 export const CHILD_COLOURS = [
   '#378ADD',
   '#E2725B',
@@ -46,6 +51,12 @@ export const CHILD_COLOURS = [
   '#B266C9',
   '#E8A33D',
   '#3FA9A0',
+  '#1F4E9C',
+  '#E07BB0',
+  '#9BBF3B',
+  '#A0522D',
+  '#F2C14E',
+  '#5D6D7E',
 ];
 
 /**

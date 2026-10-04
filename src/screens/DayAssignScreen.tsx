@@ -1,58 +1,59 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import CarerPicker from '../components/CarerPicker';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import ChildAvatar from '../components/ChildAvatar';
 import Loading from '../components/Loading';
+import Modal from '../components/Modal';
 import RepeatChips from '../components/RepeatChips';
+import TimePresetManager from '../components/TimePresetManager';
 import TimeSlotEditor from '../components/TimeSlotEditor';
-import QuickAddCarer from '../components/QuickAddCarer';
-import {
-  clearSlotAssignment,
-  repeatAssignments,
-  setSlotAssignment,
-  type RepeatRule,
-} from '../db/assignments';
-import { createCarer } from '../db/carers';
+import { repeatAssignments, type RepeatRule } from '../db/assignments';
 import { getDayNote, setDayNote } from '../db/dayNotes';
-import type { Assignment, Child } from '../db/types';
-import { dayKey, slotIn, timeSlotsIn, useAssignments } from '../hooks/useAssignments';
-import {
-  type CarerType,
-  type HolidayMode,
-  type Period,
-} from '../utils/constants';
+import { listTimePresets, saveTimePresets } from '../db/timePresets';
+import type { Assignment } from '../db/types';
+import { dayKey, timeSlotsIn, useAssignments } from '../hooks/useAssignments';
 import { formatLongDate } from '../utils/dates';
+import { upsertPreset, type TimePreset } from '../utils/timePresets';
 import { dayGaps, formatRange } from '../utils/timeSlots';
-
-/** Which slot's picker is open, e.g. "3:am". Only one is expanded at a time. */
-type OpenSlot = string | null;
 
 export default function DayAssignScreen() {
   const { holidayId, date = '' } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const id = Number(holidayId);
+  // The child whose cell was tapped in the week, brought into view.
+  const focusChild = Number(searchParams.get('child')) || null;
 
-  const { holiday, children, carers, carersById, byDayAndChild, loading, error, reload } =
+  const { holiday, children, carers, carersById, dates, byDayAndChild, loading, error, reload } =
     useAssignments(id);
 
-  const [openSlot, setOpenSlot] = useState<OpenSlot>(null);
   const [note, setNote] = useState('');
+  const [savedNote, setSavedNote] = useState('');
   const [noteLoaded, setNoteLoaded] = useState(false);
-  const [addingCarer, setAddingCarer] = useState<OpenSlot>(null);
-  const [newCarerName, setNewCarerName] = useState('');
-  const [newCarerType, setNewCarerType] = useState<CarerType>('other');
+  const [noteStatus, setNoteStatus] = useState<string | null>(null);
+  const [presets, setPresets] = useState<TimePreset[]>([]);
+  const [managingPresets, setManagingPresets] = useState(false);
+  const focused = useRef<HTMLElement>(null);
 
   useEffect(() => {
     let cancelled = false;
     getDayNote(id, date).then((saved) => {
       if (cancelled) return;
       setNote(saved);
+      setSavedNote(saved);
       setNoteLoaded(true);
     });
     return () => {
       cancelled = true;
     };
   }, [id, date]);
+
+  useEffect(() => {
+    listTimePresets().then(setPresets);
+  }, []);
+
+  useEffect(() => {
+    if (!loading) focused.current?.scrollIntoView({ block: 'start' });
+  }, [loading]);
 
   if (loading) {
     return (
@@ -77,60 +78,33 @@ export default function DayAssignScreen() {
 
   const back = () => navigate(`/holiday/${id}`);
 
-  /** Book a carer into a simple-mode slot, or clear it by tapping them again. */
-  async function assign(child: Child, period: Period, carerId: number) {
-    const existing = slotIn(byDayAndChild.get(dayKey(date, child.id)), period);
-    if (existing?.carer_id === carerId) {
-      await clearSlotAssignment(id, child.id, date, period);
-    } else {
-      await setSlotAssignment({
-        holiday_id: id,
-        child_id: child.id,
-        carer_id: carerId,
-        date,
-        period,
-      });
+  async function handleRepeat(rule: RepeatRule, customDays?: number[]): Promise<number> {
+    const written = await repeatAssignments(id, date, rule, customDays);
+    await reload();
+    return written.length;
+  }
+
+  async function saveNote() {
+    setNoteStatus(null);
+    try {
+      await setDayNote(id, date, note);
+      setSavedNote(note.trim());
+      setNote(note.trim());
+      setNoteStatus('Saved ✓');
+    } catch {
+      setNoteStatus('Could not save. Please try again.');
     }
-    await reload();
-    setOpenSlot(null);
   }
 
-  /** Quick-add a carer from inside the picker and book them straight in. */
-  async function addCarerAndAssign(child: Child, period: Period) {
-    const trimmed = newCarerName.trim();
-    if (!trimmed) return;
-    const carerId = await createCarer({
-      name: trimmed,
-      short_name: trimmed.length > 8 ? `${trimmed.slice(0, 7)}…` : trimmed,
-      type: newCarerType,
-    });
-    await setSlotAssignment({
-      holiday_id: id,
-      child_id: child.id,
-      carer_id: carerId,
-      date,
-      period,
-    });
-    await reload();
-    setNewCarerName('');
-    setNewCarerType('other');
-    setAddingCarer(null);
-    setOpenSlot(null);
-  }
-
-  async function handleRepeat(rule: RepeatRule, customDays?: number[]) {
-    await repeatAssignments(id, date, rule, customDays);
-    await reload();
-  }
-
-  async function saveNote(value: string) {
-    setNote(value);
-    await setDayNote(id, date, value);
+  async function storePresets(next: TimePreset[]) {
+    await saveTimePresets(next);
+    setPresets(await listTimePresets());
   }
 
   const dayHasCover = children.some(
     (child) => (byDayAndChild.get(dayKey(date, child.id)) ?? []).length > 0,
   );
+  const noteChanged = note.trim() !== savedNote;
 
   return (
     <div className="screen">
@@ -148,8 +122,7 @@ export default function DayAssignScreen() {
         <div className="empty-state card">
           <p className="empty-state__title">No carers yet</p>
           <p className="empty-state__body">
-            Add the people and clubs who help, then you can assign them to a morning or
-            afternoon.
+            Add the people and clubs who help, then you can book them in.
           </p>
           <button type="button" className="button button--primary" onClick={() => navigate('/carers')}>
             Add a carer
@@ -159,117 +132,89 @@ export default function DayAssignScreen() {
 
       {children.map((child) => {
         const assignments = byDayAndChild.get(dayKey(date, child.id));
+        const isFocus = child.id === focusChild;
         return (
-          <section className="child-card card" key={child.id}>
+          <section
+            className={isFocus ? 'child-card card child-card--focus' : 'child-card card'}
+            key={child.id}
+            ref={isFocus ? focused : undefined}
+          >
             <header className="child-card__head">
               <ChildAvatar name={child.name} colour={child.colour} size={28} />
               <span className="child-card__name">{child.name}</span>
-              <StatusBadge mode={holiday.mode} assignments={assignments} />
+              <StatusBadge assignments={assignments} />
             </header>
 
-            {holiday.mode === 'simple' ? (
-              (['am', 'pm'] as const).map((period) => {
-                const key = `${child.id}:${period}`;
-                const assignment = slotIn(assignments, period);
-                const carer = assignment ? (carersById.get(assignment.carer_id) ?? null) : null;
-                const expanded = openSlot === key || carer === null;
-
-                return (
-                  <div className="slot-section" key={period}>
-                    <div className="slot-section__head">
-                      <h3 className="slot-section__label">
-                        {period === 'am' ? 'Morning' : 'Afternoon'}
-                      </h3>
-                      {carer && (
-                        <button
-                          type="button"
-                          className="link-button"
-                          onClick={() => setOpenSlot(expanded ? null : key)}
-                        >
-                          {expanded ? 'Done' : 'Change'}
-                        </button>
-                      )}
-                    </div>
-
-                    {carer && !expanded ? (
-                      <p className="slot-section__assigned">{carer.name}</p>
-                    ) : (
-                      <>
-                        <CarerPicker
-                          carers={carers}
-                          selectedId={carer?.id ?? null}
-                          onSelect={(carerId) => assign(child, period, carerId)}
-                          onAddOther={() => setAddingCarer(key)}
-                        />
-                        {addingCarer === key && (
-                          <QuickAddCarer
-                            name={newCarerName}
-                            type={newCarerType}
-                            onName={setNewCarerName}
-                            onType={setNewCarerType}
-                            onCancel={() => setAddingCarer(null)}
-                            onAdd={() => addCarerAndAssign(child, period)}
-                          />
-                        )}
-                      </>
-                    )}
-                  </div>
-                );
-              })
-            ) : (
-              <TimeSlotEditor
-                holidayId={id}
-                child={child}
-                date={date}
-                slots={timeSlotsIn(assignments)}
-                carers={carers}
-                carersById={carersById}
-                siblings={children
-                  .filter((other) => other.id !== child.id)
-                  .map((other) => ({
-                    child: other,
-                    slots: timeSlotsIn(byDayAndChild.get(dayKey(date, other.id))),
-                  }))}
-                onChanged={reload}
-              />
-            )}
+            <TimeSlotEditor
+              holidayId={id}
+              holidayDates={dates}
+              child={child}
+              date={date}
+              slots={timeSlotsIn(assignments)}
+              carers={carers}
+              carersById={carersById}
+              siblings={children
+                .filter((other) => other.id !== child.id)
+                .map((other) => ({
+                  child: other,
+                  slots: timeSlotsIn(byDayAndChild.get(dayKey(date, other.id))),
+                }))}
+              presets={presets}
+              onAddPreset={(preset) => storePresets(upsertPreset(presets, preset))}
+              onManagePresets={() => setManagingPresets(true)}
+              onChanged={reload}
+            />
           </section>
         );
       })}
 
-      <RepeatChips date={date} disabled={!dayHasCover} onRepeat={handleRepeat} />
+      <RepeatChips date={date} holidayDates={dates} disabled={!dayHasCover} onRepeat={handleRepeat} />
 
-      <label className="field note-field">
-        <span className="field__label">Notes for this day</span>
-        <input
-          className="field__input"
-          value={note}
-          placeholder="e.g. pack swimming kit"
-          maxLength={200}
-          disabled={!noteLoaded}
-          onChange={(event) => saveNote(event.target.value)}
-        />
-      </label>
+      <section className="card note-card">
+        <label className="field note-field">
+          <span className="field__label">Notes for this day</span>
+          <input
+            className="field__input"
+            value={note}
+            placeholder="e.g. pack swimming kit"
+            maxLength={200}
+            disabled={!noteLoaded}
+            onChange={(event) => {
+              setNote(event.target.value);
+              setNoteStatus(null);
+            }}
+          />
+        </label>
+        <button
+          type="button"
+          className="button button--primary"
+          disabled={!noteLoaded || !noteChanged}
+          onClick={saveNote}
+        >
+          Save note
+        </button>
+        {noteStatus && (
+          <p className="save-confirm" role="status">
+            {noteStatus}
+          </p>
+        )}
+      </section>
+
+      {managingPresets && (
+        <Modal title="Saved times" onClose={() => setManagingPresets(false)}>
+          <TimePresetManager
+            presets={presets}
+            onSave={storePresets}
+            onClose={() => setManagingPresets(false)}
+          />
+        </Modal>
+      )}
     </div>
   );
 }
 
-/** "Needs cover" / "AM gap" / "Covered", so the state reads without counting cells. */
-function StatusBadge({
-  mode,
-  assignments,
-}: {
-  mode: HolidayMode;
-  assignments: Assignment[] | undefined;
-}) {
-  if (mode === 'simple') {
-    const am = slotIn(assignments, 'am');
-    const pm = slotIn(assignments, 'pm');
-    if (am && pm) return <span className="badge badge--ok">Covered</span>;
-    if (!am && !pm) return <span className="badge badge--gap">Needs cover</span>;
-    return <span className="badge badge--gap">{am ? 'PM gap' : 'AM gap'}</span>;
-  }
-
+/** "Needs cover" / "Gap 12–15" / "Covered", so the state reads without counting cells. */
+function StatusBadge({ assignments }: { assignments: Assignment[] | undefined }) {
   const slots = timeSlotsIn(assignments);
   if (slots.length === 0) return <span className="badge badge--gap">Needs cover</span>;
   const gaps = dayGaps(slots);

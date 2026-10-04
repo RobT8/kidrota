@@ -51,6 +51,34 @@ describe('migrations', () => {
     old.close();
   });
 
+  it('turns morning/afternoon cover into set times when upgrading from 1.0.0', async () => {
+    const old = createTestExecutor();
+    await old.executeScript(MIGRATIONS[0]);
+    await old.executeScript(MIGRATIONS[1]);
+    await old.executeScript('PRAGMA user_version = 2');
+    await old.run("INSERT INTO holidays (id, name, start_date, end_date, mode) VALUES (1, 'H', '2026-10-19', '2026-10-23', 'simple')");
+    await old.run("INSERT INTO children (id, name, colour) VALUES (1, 'Ada', '#378ADD')");
+    await old.run("INSERT INTO carers (id, name, short_name, type) VALUES (1, 'Gran', 'Gran', 'family')");
+    await old.run(
+      `INSERT INTO assignments (holiday_id, child_id, carer_id, date, period) VALUES
+       (1, 1, 1, '2026-10-19', 'am'), (1, 1, 1, '2026-10-20', 'pm'), (1, 1, 1, '2026-10-21', 'all_day')`,
+    );
+
+    await migrate(old);
+
+    const rows = await old.query<{ date: string; period: string | null; start_time: string; end_time: string }>(
+      'SELECT date, period, start_time, end_time FROM assignments ORDER BY date',
+    );
+    expect(rows).toEqual([
+      { date: '2026-10-19', period: null, start_time: '08:00', end_time: '12:00' },
+      { date: '2026-10-20', period: null, start_time: '12:00', end_time: '18:00' },
+      { date: '2026-10-21', period: null, start_time: '08:00', end_time: '18:00' },
+    ]);
+    const holidays = await old.query<{ mode: string }>('SELECT mode FROM holidays');
+    expect(holidays[0].mode).toBe('detailed');
+    old.close();
+  });
+
   it('runs every migration on a fresh database', async () => {
     const fresh = createTestExecutor();
     const before = await fresh.query<{ user_version: number }>('PRAGMA user_version');

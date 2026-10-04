@@ -52,12 +52,11 @@ export async function createHoliday(holiday: NewHoliday): Promise<number> {
   const db = await getDb();
   const result = await db.run(
     `INSERT INTO holidays (name, start_date, end_date, mode, exclude_weekends)
-     VALUES (?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, 'detailed', ?)`,
     [
       holiday.name,
       holiday.start_date,
       holiday.end_date,
-      holiday.mode,
       holiday.exclude_weekends,
     ],
   );
@@ -67,7 +66,7 @@ export async function createHoliday(holiday: NewHoliday): Promise<number> {
 
 export async function updateHoliday(id: number, changes: Partial<NewHoliday>): Promise<void> {
   const update = buildSetClause(changes, [
-    'name', 'start_date', 'end_date', 'mode', 'exclude_weekends',
+    'name', 'start_date', 'end_date', 'exclude_weekends',
   ]);
   if (!update) return;
 

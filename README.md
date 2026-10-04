@@ -83,24 +83,45 @@ Migrations live in `src/db/schema.ts` and are tracked with SQLite's
 `user_version`. A shipped migration is never edited — add a new one to the end
 of the array instead.
 
-Assignments carry two shapes in one table: simple-mode rows set `period`
-('am' / 'pm' / 'all_day') and leave the times null, while detailed-mode rows
-set `start_time`/`end_time` and leave `period` null. A partial unique index
-enforces one carer per simple-mode slot without restricting how many time
-slots a detailed day can hold.
+Every assignment is a session: a carer looking after a child from
+`start_time` to `end_time`. A child's day is a run of them — Dad 08:00–10:00,
+Gran 10:00–15:00, Mum 15:00–18:00 — and the day runs 08:00–18:00
+(`DAY_START` / `DAY_END` in `utils/timeSlots.ts`). There used to be a second,
+Morning/Afternoon mode storing `period` ('am' / 'pm' / 'all_day') instead of
+times; it was dropped in 1.0.1 and migration v3 turned those rows into
+08:00–12:00, 12:00–18:00 and 08:00–18:00 (`CONVERT_PERIODS_TO_TIMES`, also
+applied when restoring an older backup). The `period` column and the
+holidays' `mode` column stay so old backups still read.
 
-In detailed mode a child's day is a run of sessions — Dad 08:00–10:00, Gran
-10:00–15:00, Mum 15:00–18:00. Adding one is "who, then when": the one-tap
-times start where the day's last session ends, so a day of hand-overs only
-needs the hand-over times typed. The day runs 08:00–18:00 (`DAY_START` /
-`DAY_END` in `utils/timeSlots.ts`). Overlaps are warned about but allowed,
-since an overlap at a hand-over can be deliberate.
+**One carer at a time.** On the day being edited, times that overlap another
+of that child's sessions are refused, with the clash named. Touching end to
+start is a hand-over, not an overlap. Another child can share a carer at the
+same time (Gran has both).
 
-A detailed day counts as covered only when a child's sessions leave no gap
-between 08:00 and 18:00 (`dayGaps` / `coversWholeDay`). Gaps show as a red "?"
-where they fall in the grid and list, the day's badge names the gap ("Gap
-15:00–15:30"), and adding a session offers "Fill gap" first. A day with
-sessions but a gap is a gap in the Home screen's totals, not "Not started".
+**Saving a session** asks who, when, also for which other children, and on
+which days (just this one, every day, every Tuesday, Mon–Fri, or picked
+weekdays). `applySession` in `db/assignments.ts` writes it in one
+transaction: on each chosen day and child it replaces whatever overlaps the
+new times and, when editing, the same session as it was (same carer and
+times), so changing Gran from 10–15 to 13–18 moves her everywhere she was
+copied. Opening an existing session pre-ticks the other children who have
+that same session today. Remove works across the same choices.
+
+**Time presets** are the one-tap times — Morning 08:00–12:00, Afternoon
+12:00–18:00, All day 08:00–18:00 to start — stored as JSON in `app_settings`
+(`time_presets`, so backups carry them; `utils/timePresets.ts`). Typed times
+can be saved as a new one with a tick box, and "Edit saved times" renames,
+retimes or removes any of them, the starting three included. On a partly
+planned day "Fill gap" / "Rest of day" choices are added for the holes,
+unless a preset already has those exact times.
+
+A day counts as covered for a child only when their sessions leave no gap
+between 08:00 and 18:00 (`dayGaps` / `coversWholeDay`), and a day is
+complete only when every child is. Gaps show as a red "?" where they fall in
+the grid and list, and the day's badge names the gap ("Gap 15:00–15:30"). On
+Home a holiday reads "3 days incomplete · 7 complete", and its bar shows each
+day green (complete), amber (something booked, not complete) or red
+(nothing); "Gaps to fill" counts child-days still to cover.
 
 ## Theming
 
@@ -110,31 +131,22 @@ choice (light or dark; light by default) is stored in `localStorage`, and
 "follow the phone" option: it looked identical to one of the two, so it was
 dropped, and anyone who had it keeps the look they had.
 
-## Share codes
+## Sharing
 
-A whole holiday travels as one pasteable string, because there is no server
-between the two parents. Children and carers become indices and dates become
-day offsets from the holiday's start, and trailing nulls are trimmed from each
-assignment — together that takes a planned fortnight for two children from
-about 6KB of plain JSON to roughly 1KB, which is the difference between a code
-that pastes into a message and one that does not.
+A plan is shared as a picture only — no codes and no importing into another
+phone, which keeps things simple and means a family member never needs the
+app (or Pro) to see the plan. The holiday's Share button offers the week on
+screen or the whole holiday, one picture per week, handed to the share sheet
+together (`shareElementsAsImages` in `utils/share.ts`).
 
-A plan is sent from the holiday's Share button or Settings → "Send a plan to
-someone". It travels as a message: instructions first (where to paste it),
-then the code on its own line (`planMessage`). The recipient pastes the whole
-message; `extractShareCode` finds the `KIDROTA1:` code inside it, so nothing
-needs trimming by hand.
+The pictures are not screenshots of the screen: the chosen weeks are drawn
+off screen (`.share-pages`) with every day at a fixed column width
+(`WeekGrid`'s `picture` prop), then captured with `html-to-image` at 2× so
+the small cell text survives WhatsApp's compression. A seven-day week that
+scrolls sideways on the phone is therefore always whole in the picture.
 
-A code is outside input too. `decodePlan` checks every field against what
-`encodePlan` writes (`utils/validate.ts`) and refuses anything else before a
-row is added — an unknown carer type or a colour that is not a hex colour
-would otherwise be stored and break a screen, or, as a CSS `url(…)`, make the
-app fetch a stranger's address. The import itself runs in one transaction.
-
-Importing a code *adds* to the device rather than replacing it, unlike a backup
-restore: the code arrives while the recipient already has their own children
-and carers set up. People are matched by name, case and spacing ignored, so an
-import does not leave you with two of everyone.
+Share codes (`KIDROTA1:…`) and "Add a plan someone sent you" existed in
+1.0.0 and were removed in 1.0.1.
 
 ## Backup files
 
@@ -260,9 +272,8 @@ deterrent.
 
 The caps only stop new things being added (`utils/freeTier.ts`). Anything
 already on the phone — from a backup restore, or from before Pro lapsed —
-stays visible and editable. A plan code counts against the caps, because it
-adds; a backup restore does not, because it brings back what was already
-yours. When a cap is hit, the screen opens the upgrade sheet
+stays visible and editable. A backup restore does not count against the
+caps, because it brings back what was already yours. When a cap is hit, the screen opens the upgrade sheet
 (`components/ProSheet.tsx`) in place, with the reason.
 
 In a browser there is no Play, so Pro is whatever `localStorage['kidrota.pro']`
@@ -354,7 +365,7 @@ from an Android Studio build:
 | Play Billing connects (Restore purchases gets Play's answer) | ✓ |
 | Free-tier limits and the Pro sheet | ✓ |
 | "Rate this app" opens the Play Store app | ✓ |
-| Share sheet for plan codes | ✓ |
+| Share sheet (backups; plan codes in 1.0.0) | ✓ — sharing week pictures to WhatsApp not yet seen |
 | Database after uninstall + reinstall | ✓ after `androidIsEncryption: false` in `capacitor.config.ts` (it failed with "CapacitorSQLitePlugin: null" before) |
 | New launcher icon | ✓ — splash screen not yet confirmed |
 | Android navigation buttons follow the app's theme (`SystemBars` in `utils/theme.ts`) | Fixed — re-test |
@@ -373,5 +384,5 @@ from an Android Studio build:
 - [x] 6. Day assignment — carer picker, slot assignment, repeat logic
 - [x] 7. Children & Carers screens — full CRUD
 - [x] 8. Settings — theme, backup/restore, delete all data
-- [x] 9. Sharing — screenshot share, share code export/import
+- [x] 9. Sharing — week pictures (share codes removed in 1.0.1)
 - [x] 10. Polish — animations, loading/empty states, error handling

@@ -1,4 +1,19 @@
 /**
+ * Turns Morning/Afternoon ("simple" mode) cover into set times: AM becomes
+ * 08:00–12:00, PM 12:00–18:00 and a whole day 08:00–18:00 — the same times as
+ * the Morning, Afternoon and All day presets. Used by migration v3 and again
+ * after restoring a backup made before it.
+ */
+export const CONVERT_PERIODS_TO_TIMES = [
+  `UPDATE assignments
+   SET start_time = CASE period WHEN 'pm' THEN '12:00' ELSE '08:00' END,
+       end_time = CASE period WHEN 'am' THEN '12:00' ELSE '18:00' END,
+       period = NULL
+   WHERE period IS NOT NULL`,
+  `UPDATE holidays SET mode = 'detailed' WHERE mode <> 'detailed'`,
+];
+
+/**
  * Schema migrations, applied in order and tracked with SQLite's `user_version`.
  *
  * Never edit a migration that has shipped — a user's device has already run it.
@@ -81,6 +96,11 @@ export const MIGRATIONS: string[] = [
     FOREIGN KEY (holiday_id) REFERENCES holidays(id) ON DELETE CASCADE
   );
   `,
+
+  // v3 — one way of planning. The Morning/Afternoon mode was dropped (Oct
+  // 2026): set times already offer Morning and Afternoon as one-tap choices,
+  // so existing AM/PM cover is converted to those times.
+  CONVERT_PERIODS_TO_TIMES.map((statement) => `${statement};`).join('\n'),
 ];
 
 /** Schema version this build of the app expects. */

@@ -4,7 +4,6 @@ import { listCarers } from '../db/carers';
 import { listChildren } from '../db/children';
 import { getHoliday } from '../db/holidays';
 import type { Assignment, Carer, Child, Holiday } from '../db/types';
-import type { Period } from '../utils/constants';
 import { getHolidayDates, groupIntoWeeks } from '../utils/dates';
 
 export interface PlannerData {
@@ -27,12 +26,7 @@ export function dayKey(date: string, childId: number): string {
   return `${date}:${childId}`;
 }
 
-/** The one assignment in a simple-mode slot, if any. */
-export function slotIn(assignments: Assignment[] | undefined, period: Period): Assignment | null {
-  return assignments?.find((item) => item.period === period) ?? null;
-}
-
-/** Detailed-mode time slots, earliest first. */
+/** A child's sessions, earliest first. */
 export function timeSlotsIn(assignments: Assignment[] | undefined): Assignment[] {
   return (assignments ?? [])
     .filter((item) => item.period === null)

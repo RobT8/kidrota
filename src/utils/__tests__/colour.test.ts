@@ -27,6 +27,10 @@ describe('textOn', () => {
     }
   });
 
+  it('offers twelve different child colours', () => {
+    expect(new Set(CHILD_COLOURS.map((colour) => colour.toUpperCase())).size).toBe(12);
+  });
+
   it('handles shorthand hex', () => {
     expect(textOn('#fff')).toBe('#1A1A1A');
     expect(textOn('#000')).toBe('#FFFFFF');

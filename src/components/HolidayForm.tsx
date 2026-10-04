@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Holiday, NewHoliday } from '../db/types';
 import { getHolidayDates } from '../utils/dates';
-import { MAX_HOLIDAY_DAYS, type HolidayMode } from '../utils/constants';
+import { MAX_HOLIDAY_DAYS } from '../utils/constants';
 import { holidayDatesProblem, holidayLength } from '../utils/validate';
 
 interface HolidayFormProps {
@@ -12,8 +12,6 @@ interface HolidayFormProps {
   onCancel: () => void;
   /** A finished holiday on the free version keeps its dates. */
   datesLocked?: boolean;
-  /** Anything is already planned for this holiday, in its current mode. */
-  hasPlan?: boolean;
 }
 
 const MAX_NAME_LENGTH = 40;
@@ -24,12 +22,10 @@ export default function HolidayForm({
   onDelete,
   onCancel,
   datesLocked = false,
-  hasPlan = false,
 }: HolidayFormProps) {
   const [name, setName] = useState(holiday?.name ?? '');
   const [startDate, setStartDate] = useState(holiday?.start_date ?? '');
   const [endDate, setEndDate] = useState(holiday?.end_date ?? '');
-  const [mode, setMode] = useState<HolidayMode>(holiday?.mode ?? 'simple');
   const [excludeWeekends, setExcludeWeekends] = useState(holiday?.exclude_weekends !== 0);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -65,7 +61,6 @@ export default function HolidayForm({
         name: trimmedName,
         start_date: startDate,
         end_date: endDate,
-        mode,
         exclude_weekends: excludeWeekends ? 1 : 0,
       });
     } catch {
@@ -121,35 +116,6 @@ export default function HolidayForm({
           every holiday of the year.
         </p>
       )}
-
-      <fieldset className="field">
-        <legend className="field__label">Planning detail</legend>
-        <div className="segmented">
-          <button
-            type="button"
-            className={mode === 'simple' ? 'segmented__option segmented__option--active' : 'segmented__option'}
-            aria-pressed={mode === 'simple'}
-            onClick={() => setMode('simple')}
-          >
-            Morning / afternoon
-          </button>
-          <button
-            type="button"
-            className={mode === 'detailed' ? 'segmented__option segmented__option--active' : 'segmented__option'}
-            aria-pressed={mode === 'detailed'}
-            onClick={() => setMode('detailed')}
-          >
-            Set times
-          </button>
-        </div>
-        {holiday && hasPlan && mode !== holiday.mode && (
-          <p className="field-note" role="status">
-            {holiday.mode === 'simple'
-              ? 'The morning / afternoon plan for this holiday will be hidden, not deleted. Switch back to see it again.'
-              : 'The timed plan for this holiday will be hidden, not deleted. Switch back to see it again.'}
-          </p>
-        )}
-      </fieldset>
 
       <label className="toggle-row">
         <span className="toggle-row__label">Weekdays only</span>

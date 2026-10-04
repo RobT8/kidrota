@@ -13,7 +13,7 @@ beforeEach(async () => {
   setDbExecutor(db);
   holidayId = await createHoliday({
     name: 'October half term', start_date: '2026-10-19', end_date: '2026-10-23',
-    mode: 'simple', exclude_weekends: 1,
+    exclude_weekends: 1,
   });
 });
 afterEach(() => {

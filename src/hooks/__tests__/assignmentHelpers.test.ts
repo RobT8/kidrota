@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dayKey, slotIn, timeSlotsIn } from '../useAssignments';
+import { dayKey, timeSlotsIn } from '../useAssignments';
 import type { Assignment } from '../../db/types';
 
 const base: Omit<Assignment, 'id' | 'period' | 'start_time' | 'end_time'> = {
@@ -24,35 +24,13 @@ describe('dayKey', () => {
   });
 });
 
-describe('slotIn', () => {
-  const day = [simple(1, 'am'), simple(2, 'pm')];
-
-  it('finds the assignment for a period', () => {
-    expect(slotIn(day, 'am')?.id).toBe(1);
-    expect(slotIn(day, 'pm')?.id).toBe(2);
-  });
-
-  it('returns null for an unfilled period', () => {
-    expect(slotIn([simple(1, 'am')], 'pm')).toBeNull();
-  });
-
-  it('returns null for a day with nothing on it', () => {
-    expect(slotIn(undefined, 'am')).toBeNull();
-    expect(slotIn([], 'am')).toBeNull();
-  });
-
-  it('ignores detailed-mode rows, which carry no period', () => {
-    expect(slotIn([timed(1, '09:00', '12:00')], 'am')).toBeNull();
-  });
-});
-
 describe('timeSlotsIn', () => {
   it('returns slots earliest first, whatever order they arrive in', () => {
     const slots = timeSlotsIn([timed(1, '13:00', '17:00'), timed(2, '09:00', '12:00')]);
     expect(slots.map((slot) => slot.start_time)).toEqual(['09:00', '13:00']);
   });
 
-  it('ignores simple-mode rows', () => {
+  it('ignores rows left from the retired morning/afternoon mode', () => {
     expect(timeSlotsIn([simple(1, 'am'), timed(2, '09:00', '12:00')])).toHaveLength(1);
   });
 

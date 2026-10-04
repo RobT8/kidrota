@@ -84,7 +84,6 @@ describe('children', () => {
       name: 'October half term',
       start_date: '2026-10-19',
       end_date: '2026-10-23',
-      mode: 'simple',
       exclude_weekends: 1,
     });
     const child = await createChild({ name: 'Ada', colour: '#378ADD' });
@@ -130,9 +129,9 @@ describe('carers', () => {
     await createCarers(DEFAULT_CARERS);
     const grouped = await listCarersByType();
     expect(grouped.parent.map((c) => c.name)).toEqual(['Mum', 'Dad']);
-    expect(grouped.family.map((c) => c.name)).toEqual(['Grandma', 'Grandad']);
+    expect(grouped.family.map((c) => c.name)).toEqual(['Grandparents']);
     expect(grouped.club).toHaveLength(1);
-    expect(grouped.other.map((c) => c.name)).toEqual(['Childminder', 'Au pair']);
+    expect(grouped.other.map((c) => c.name)).toEqual(['Childminder']);
   });
 
   it('counts assignments so deletion can warn first', async () => {
@@ -140,7 +139,6 @@ describe('carers', () => {
       name: 'October half term',
       start_date: '2026-10-19',
       end_date: '2026-10-23',
-      mode: 'simple',
       exclude_weekends: 1,
     });
     const child = await createChild({ name: 'Ada', colour: '#378ADD' });
@@ -167,7 +165,6 @@ describe('holidays', () => {
     name: 'October half term',
     start_date: '2026-10-19',
     end_date: '2026-10-23',
-    mode: 'simple' as const,
     exclude_weekends: 1,
   };
 

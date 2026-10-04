@@ -1,30 +1,32 @@
 import { useState } from 'react';
-import { addTimeSlot, deleteAssignment, updateAssignment } from '../db/assignments';
+import { applySession, removeSession, repeatTargets, type SessionShape } from '../db/assignments';
 import { createCarer } from '../db/carers';
 import type { Assignment, Carer, Child } from '../db/types';
 import { carerSwatch } from '../utils/colour';
 import type { CarerType } from '../utils/constants';
 import { suggestShortName } from '../utils/status';
-import {
-  defaultRange,
-  formatRange,
-  isValidRange,
-  overlapping,
-  timeChoices,
-  type TimeChoice,
-} from '../utils/timeSlots';
+import { MAX_PRESET_LABEL, newPresetId, type TimePreset } from '../utils/timePresets';
+import { defaultRange, formatRange, gapChoices, isValidRange, overlapping } from '../utils/timeSlots';
 import CarerPicker from './CarerPicker';
+import DayRulePicker from './DayRulePicker';
+import { JUST_THIS_DAY, type DayRule } from '../utils/dayRule';
 import QuickAddCarer from './QuickAddCarer';
 
 interface TimeSlotEditorProps {
   holidayId: number;
+  /** Every date in the holiday, for "Which days?". */
+  holidayDates: string[];
   child: Child;
   date: string;
   slots: Assignment[];
   carers: Carer[];
   carersById: Map<number, Carer>;
-  /** The other children and their sessions today, for "Same for …". */
+  /** The other children and their sessions today, for "Also for …". */
   siblings: { child: Child; slots: Assignment[] }[];
+  presets: TimePreset[];
+  /** Save a new one-tap time from typed times. */
+  onAddPreset: (preset: TimePreset) => Promise<void>;
+  onManagePresets: () => void;
   onChanged: () => Promise<void>;
 }
 
@@ -34,22 +36,38 @@ type Editing = { kind: 'add' } | { kind: 'edit'; slot: Assignment } | null;
 /** The chosen one-tap time, or "custom" for typed From/To times. */
 const CUSTOM = 'custom';
 
+function shapeOf(slot: Assignment): SessionShape {
+  return { carer_id: slot.carer_id, start_time: slot.start_time ?? '', end_time: slot.end_time ?? '' };
+}
+
+function sameSession(slot: Assignment, shape: SessionShape): boolean {
+  return (
+    slot.carer_id === shape.carer_id && slot.start_time === shape.start_time && slot.end_time === shape.end_time
+  );
+}
+
 /**
- * Detailed-mode cover: a day of sessions, each with a carer — Dad 08:00–10:00,
+ * One child's day: a run of sessions, each with a carer — Dad 08:00–10:00,
  * Gran 10:00–15:00, Mum 15:00–18:00.
  *
- * Adding one is two taps, matching the Morning/Afternoon mode: who, then when.
- * Each new session starts where the last one ended, so building a day of
- * hand-overs means typing only the hand-over times.
+ * Adding or changing a session asks who, when, for which children and on
+ * which days, so "Gran 10–3 for both, every weekday" is one save. A child has
+ * one carer at a time: times that overlap another of today's sessions are
+ * refused, and on the other days chosen the new session replaces whatever
+ * was booked at that time.
  */
 export default function TimeSlotEditor({
   holidayId,
+  holidayDates,
   child,
   date,
   slots,
   carers,
   carersById,
   siblings,
+  presets,
+  onAddPreset,
+  onManagePresets,
   onChanged,
 }: TimeSlotEditorProps) {
   const [editing, setEditing] = useState<Editing>(null);
@@ -58,34 +76,60 @@ export default function TimeSlotEditor({
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
   const [alsoFor, setAlsoFor] = useState<Set<number>>(new Set());
+  const [days, setDays] = useState<DayRule>(JUST_THIS_DAY);
+  const [savePreset, setSavePreset] = useState(false);
+  const [presetLabel, setPresetLabel] = useState('');
   const [addingCarer, setAddingCarer] = useState(false);
   const [newCarerName, setNewCarerName] = useState('');
   const [newCarerType, setNewCarerType] = useState<CarerType>('other');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState<string | null>(null);
 
-  const choices = timeChoices(slots);
+  const editingSlot = editing?.kind === 'edit' ? editing.slot : null;
+  const original = editingSlot ? shapeOf(editingSlot) : null;
+  // A gap with exactly a saved time's times is already offered by that preset.
+  const gaps = gapChoices(slots.filter((slot) => slot.id !== editingSlot?.id)).filter(
+    (gap) => !presets.some((preset) => preset.start === gap.start && preset.end === gap.end),
+  );
+
+  function open(next: Editing) {
+    setEditing(next);
+    setAlsoFor(new Set());
+    setDays(JUST_THIS_DAY);
+    setSavePreset(false);
+    setPresetLabel('');
+    setAddingCarer(false);
+    setError(null);
+    setSaved(null);
+  }
 
   function startAdding() {
     const range = defaultRange(slots);
-    setEditing({ kind: 'add' });
+    open({ kind: 'add' });
     setCarerId(null);
-    // Nothing one-tap left (the day is booked to its end): go straight to times.
-    setChoice(choices.length === 0 ? CUSTOM : null);
+    setChoice(null);
     setStart(range.start);
     setEnd(range.end);
-    setAlsoFor(new Set());
-    setError(null);
   }
 
   function startEditing(slot: Assignment) {
-    setEditing({ kind: 'edit', slot });
+    open({ kind: 'edit', slot });
     setCarerId(slot.carer_id);
-    setChoice(CUSTOM);
+    const preset = presets.find((item) => item.start === slot.start_time && item.end === slot.end_time);
+    setChoice(preset ? preset.id : CUSTOM);
     setStart(slot.start_time ?? '');
     setEnd(slot.end_time ?? '');
-    setAlsoFor(new Set());
-    setError(null);
+    // Children who have this same session today were most likely booked
+    // together, so a change to one goes to them too unless unticked.
+    const shape = shapeOf(slot);
+    setAlsoFor(
+      new Set(
+        siblings
+          .filter((sibling) => sibling.slots.some((other) => sameSession(other, shape)))
+          .map((sibling) => sibling.child.id),
+      ),
+    );
   }
 
   function close() {
@@ -94,10 +138,10 @@ export default function TimeSlotEditor({
     setError(null);
   }
 
-  function pickChoice(option: TimeChoice) {
-    setChoice(option.key);
-    setStart(option.start);
-    setEnd(option.end);
+  function pick(key: string, range: { start: string; end: string }) {
+    setChoice(key);
+    setStart(range.start);
+    setEnd(range.end);
   }
 
   function toggleSibling(id: number) {
@@ -122,47 +166,59 @@ export default function TimeSlotEditor({
     setNewCarerType('other');
   }
 
-  const editingSlot = editing?.kind === 'edit' ? editing.slot : null;
   const carer = carerId !== null ? (carersById.get(carerId) ?? null) : null;
-  const ready = carer !== null && choice !== null && isValidRange(start, end);
+  const timesChosen = choice !== null && isValidRange(start, end);
 
-  // Clashes are shown but not blocked: an overlap at a hand-over can be
-  // deliberate, and the parent knows their day better than the app does.
-  const clashes = ready
+  // One carer at a time: today's other sessions for this child, and for any
+  // child ticked under "Also for", must not overlap. The session being edited
+  // (and its twins on the ticked children) are about to move, so they don't count.
+  const clashes = timesChosen
     ? [
         ...overlapping(
           slots.filter((slot) => slot.id !== editingSlot?.id),
           start,
           end,
-        ).map((slot) => ({ who: null as string | null, slot })),
+        ).map((slot) => ({ who: child.name, slot })),
         ...siblings
           .filter((sibling) => alsoFor.has(sibling.child.id))
           .flatMap((sibling) =>
-            overlapping(sibling.slots, start, end).map((slot) => ({ who: sibling.child.name, slot })),
+            overlapping(
+              sibling.slots.filter((slot) => !original || !sameSession(slot, original)),
+              start,
+              end,
+            ).map((slot) => ({ who: sibling.child.name, slot })),
           ),
       ]
     : [];
+
+  const daysReady = days.rule !== 'custom' || days.days.length > 0;
+  const ready = carer !== null && timesChosen && clashes.length === 0 && daysReady;
+
+  function scope() {
+    const extraDays = days.rule ? repeatTargets(holidayDates, date, days.rule, days.days) : [];
+    return { childIds: [child.id, ...alsoFor], dates: [date, ...extraDays] };
+  }
+
+  function describe(childCount: number, dayCount: number): string {
+    const parts = [
+      childCount > 1 ? `${childCount} children` : null,
+      dayCount > 1 ? `${dayCount} days` : null,
+    ].filter(Boolean);
+    return parts.length ? ` for ${parts.join(', ')}` : '';
+  }
 
   async function save() {
     if (!ready || carerId === null) return;
     setSaving(true);
     setError(null);
     try {
-      if (editingSlot) {
-        await updateAssignment(editingSlot.id, { carer_id: carerId, start_time: start, end_time: end });
-      } else {
-        for (const childId of [child.id, ...alsoFor]) {
-          await addTimeSlot({
-            holiday_id: holidayId,
-            child_id: childId,
-            carer_id: carerId,
-            date,
-            start_time: start,
-            end_time: end,
-          });
-        }
+      const { childIds, dates } = scope();
+      await applySession({ holidayId, childIds, dates, carerId, start, end, replaces: original });
+      if (choice === CUSTOM && savePreset) {
+        await onAddPreset({ id: newPresetId(), label: presetLabel, start, end });
       }
       await onChanged();
+      setSaved(`Saved ✓ ${carer?.name ?? ''} ${formatRange(start, end)}${describe(childIds.length, dates.length)}`);
       close();
     } catch {
       setError('Could not save. Please try again.');
@@ -172,17 +228,26 @@ export default function TimeSlotEditor({
   }
 
   async function remove() {
-    if (!editingSlot) return;
-    await deleteAssignment(editingSlot.id);
-    await onChanged();
-    close();
+    if (!original) return;
+    setSaving(true);
+    try {
+      const { childIds, dates } = scope();
+      await removeSession({ holidayId, childIds, dates, session: original });
+      await onChanged();
+      setSaved(`Removed ✓${describe(childIds.length, dates.length)}`);
+      close();
+    } catch {
+      setError('Could not remove. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   const saveLabel = !carer
     ? `Choose who is looking after ${child.name}`
-    : !ready
+    : !timesChosen
       ? 'Choose when'
-      : `${editingSlot ? 'Save' : 'Add'} ${carer.name}, ${formatRange(start, end)}`;
+      : `Save ${carer.name}, ${formatRange(start, end)}`;
 
   return (
     <div className="slot-section">
@@ -236,87 +301,136 @@ export default function TimeSlotEditor({
             />
           )}
 
-          <h3 className="session-form__question">When?</h3>
-          {!editingSlot && choices.length > 0 && (
-            <div className="time-choices">
-              {choices.map((option) => (
-                <button
-                  key={option.key}
-                  type="button"
-                  className={choice === option.key ? 'time-choice time-choice--selected' : 'time-choice'}
-                  aria-pressed={choice === option.key}
-                  onClick={() => pickChoice(option)}
-                >
-                  <span className="time-choice__label">{option.label}</span>
-                  <span className="time-choice__range">{formatRange(option.start, option.end)}</span>
-                </button>
-              ))}
-              <button
-                type="button"
-                className={choice === CUSTOM ? 'time-choice time-choice--selected' : 'time-choice'}
-                aria-pressed={choice === CUSTOM}
-                onClick={() => setChoice(CUSTOM)}
-              >
-                <span className="time-choice__label">Set times…</span>
-                <span className="time-choice__range">From / To</span>
-              </button>
-            </div>
-          )}
+          <div className="session-form__heading">
+            <h3 className="session-form__question">When?</h3>
+            <button type="button" className="link-button" onClick={onManagePresets}>
+              Edit saved times
+            </button>
+          </div>
+          <div className="time-choices">
+            {gaps.map((option) => (
+              <TimeChoiceButton
+                key={option.key}
+                label={option.label}
+                start={option.start}
+                end={option.end}
+                selected={choice === option.key}
+                onClick={() => pick(option.key, option)}
+              />
+            ))}
+            {presets.map((preset) => (
+              <TimeChoiceButton
+                key={preset.id}
+                label={preset.label}
+                start={preset.start}
+                end={preset.end}
+                selected={choice === preset.id}
+                onClick={() => pick(preset.id, preset)}
+              />
+            ))}
+            <button
+              type="button"
+              className={choice === CUSTOM ? 'time-choice time-choice--selected' : 'time-choice'}
+              aria-pressed={choice === CUSTOM}
+              onClick={() => setChoice(CUSTOM)}
+            >
+              <span className="time-choice__label">Other times…</span>
+              <span className="time-choice__range">From / To</span>
+            </button>
+          </div>
 
           {choice === CUSTOM && (
-            <div className="session-form__times">
-              <label className="field">
-                <span className="field__label">From</span>
+            <>
+              <div className="session-form__times">
+                <label className="field">
+                  <span className="field__label">From</span>
+                  <input
+                    type="time"
+                    className="field__input"
+                    value={start}
+                    onChange={(event) => setStart(event.target.value)}
+                  />
+                </label>
+                <label className="field">
+                  <span className="field__label">To</span>
+                  <input
+                    type="time"
+                    className="field__input"
+                    value={end}
+                    onChange={(event) => setEnd(event.target.value)}
+                  />
+                </label>
+              </div>
+              {start && end && !isValidRange(start, end) && (
+                <p className="form-error" role="alert">
+                  The end time must be after the start time.
+                </p>
+              )}
+              <label className="checkbox">
                 <input
-                  type="time"
-                  className="field__input"
-                  value={start}
-                  onChange={(event) => setStart(event.target.value)}
+                  type="checkbox"
+                  checked={savePreset}
+                  onChange={(event) => setSavePreset(event.target.checked)}
                 />
+                Save these times for next time
               </label>
-              <label className="field">
-                <span className="field__label">To</span>
+              {savePreset && (
                 <input
-                  type="time"
                   className="field__input"
-                  value={end}
-                  onChange={(event) => setEnd(event.target.value)}
+                  value={presetLabel}
+                  maxLength={MAX_PRESET_LABEL}
+                  placeholder="Name, e.g. School club"
+                  aria-label="Name for these times"
+                  onChange={(event) => setPresetLabel(event.target.value)}
                 />
-              </label>
-            </div>
+              )}
+            </>
           )}
 
-          {choice === CUSTOM && start && end && !isValidRange(start, end) && (
-            <p className="form-error" role="alert">
-              The end time must be after the start time.
+          {siblings.length > 0 && (
+            <>
+              <h3 className="session-form__question">Also for</h3>
+              <div className="session-form__siblings">
+                {siblings.map((sibling) => (
+                  <label className="checkbox" key={sibling.child.id}>
+                    <input
+                      type="checkbox"
+                      checked={alsoFor.has(sibling.child.id)}
+                      onChange={() => toggleSibling(sibling.child.id)}
+                    />
+                    {sibling.child.name}
+                  </label>
+                ))}
+              </div>
+            </>
+          )}
+
+          <h3 className="session-form__question">Which days?</h3>
+          <DayRulePicker
+            date={date}
+            holidayDates={holidayDates}
+            value={days}
+            onChange={setDays}
+            allowJustThisDay
+          />
+          {days.rule && (
+            <p className="field-note">
+              {editingSlot
+                ? 'On those days this replaces the same session, and anything booked at the new times.'
+                : 'On those days this replaces anything already booked at these times.'}
             </p>
           )}
 
-          {!editingSlot && siblings.length > 0 && (
-            <div className="session-form__siblings">
-              {siblings.map((sibling) => (
-                <label className="checkbox" key={sibling.child.id}>
-                  <input
-                    type="checkbox"
-                    checked={alsoFor.has(sibling.child.id)}
-                    onChange={() => toggleSibling(sibling.child.id)}
-                  />
-                  Same for {sibling.child.name}
-                </label>
-              ))}
-            </div>
-          )}
-
           {clashes.length > 0 && (
-            <p className="session-form__clash" role="status">
-              Overlaps{' '}
+            <p className="form-error" role="alert">
+              One carer at a time:{' '}
               {clashes
                 .map(({ who, slot }) => {
-                  const name = carersById.get(slot.carer_id)?.name ?? 'another session';
-                  return `${who ? `${who}’s ` : ''}${name} ${formatRange(slot.start_time, slot.end_time)}`;
+                  const name = carersById.get(slot.carer_id)?.name ?? 'someone';
+                  return `${who} already has ${name} ${formatRange(slot.start_time, slot.end_time)}`;
                 })
-                .join(', ')}
-              .
+                .join('; ')}
+              . Change the times, or change that session first.
             </p>
           )}
 
@@ -331,8 +445,13 @@ export default function TimeSlotEditor({
           </button>
           <div className="session-form__secondary">
             {editingSlot && (
-              <button type="button" className="link-button link-button--danger" onClick={remove}>
-                Remove
+              <button
+                type="button"
+                className="link-button link-button--danger"
+                disabled={saving || !daysReady}
+                onClick={remove}
+              >
+                Remove{editingSlot ? describe(scope().childIds.length, scope().dates.length) : ''}
               </button>
             )}
             <button type="button" className="link-button" onClick={close}>
@@ -341,10 +460,43 @@ export default function TimeSlotEditor({
           </div>
         </div>
       ) : (
-        <button type="button" className="button button--secondary" onClick={startAdding}>
-          {slots.length === 0 ? `+ Who’s looking after ${child.name}?` : '+ Add another carer'}
-        </button>
+        <>
+          {saved && (
+            <p className="save-confirm" role="status">
+              {saved}
+            </p>
+          )}
+          <button type="button" className="button button--secondary" onClick={startAdding}>
+            {slots.length === 0 ? `+ Who’s looking after ${child.name}?` : '+ Add another carer'}
+          </button>
+        </>
       )}
     </div>
+  );
+}
+
+function TimeChoiceButton({
+  label,
+  start,
+  end,
+  selected,
+  onClick,
+}: {
+  label: string;
+  start: string;
+  end: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={selected ? 'time-choice time-choice--selected' : 'time-choice'}
+      aria-pressed={selected}
+      onClick={onClick}
+    >
+      <span className="time-choice__label">{label}</span>
+      <span className="time-choice__range">{formatRange(start, end)}</span>
+    </button>
   );
 }

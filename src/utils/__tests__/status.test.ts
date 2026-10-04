@@ -14,7 +14,7 @@ import type { HolidayCoverage } from '../../db/coverage';
 
 const holiday = (start: string, end: string): Holiday => ({
   id: 1, name: 'October half term', start_date: start, end_date: end,
-  mode: 'simple', exclude_weekends: 1, created_at: '', updated_at: '',
+  mode: 'detailed', exclude_weekends: 1, created_at: '', updated_at: '',
 });
 
 const coverage = (over: Partial<HolidayCoverage>): HolidayCoverage => ({
@@ -66,15 +66,19 @@ describe('coverageSummary', () => {
   });
 
   it('reports a fully planned holiday', () => {
-    expect(coverageSummary(coverage({ coveredDays: 5, gapDays: 0 }))).toBe('All covered');
+    expect(coverageSummary(coverage({ coveredDays: 5, gapDays: 0 }))).toBe('All days complete');
   });
 
-  it('reports a partly planned holiday', () => {
-    expect(coverageSummary(coverage({ coveredDays: 7, gapDays: 3 }))).toBe('7 covered · 3 gaps');
+  it('reports a partly planned holiday by days still incomplete', () => {
+    expect(coverageSummary(coverage({ coveredDays: 7, gapDays: 3 }))).toBe('3 days incomplete · 7 complete');
   });
 
-  it('uses the singular for one gap', () => {
-    expect(coverageSummary(coverage({ coveredDays: 9, gapDays: 1 }))).toBe('9 covered · 1 gap');
+  it('leaves out "0 complete"', () => {
+    expect(coverageSummary(coverage({ coveredDays: 0, gapDays: 10 }))).toBe('10 days incomplete');
+  });
+
+  it('uses the singular for one day', () => {
+    expect(coverageSummary(coverage({ coveredDays: 9, gapDays: 1 }))).toBe('1 day incomplete · 9 complete');
   });
 });
 
@@ -98,7 +102,7 @@ describe('suggestShortName', () => {
   });
 
   it('truncates when even the first word is too long', () => {
-    expect(suggestShortName('Grandmother')).toBe('Grandmot');
+    expect(suggestShortName('Grandmother')).toBe('Grandmo');
   });
 
   it('trims surrounding whitespace', () => {

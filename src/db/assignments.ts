@@ -1,4 +1,3 @@
-import type { Period } from '../utils/constants';
 import { dayOfWeek, getHolidayDates } from '../utils/dates';
 import { getDb } from './database';
 import { getHoliday } from './holidays';
@@ -43,76 +42,7 @@ export async function listAssignmentsForDate(
   );
 }
 
-/** The carer booked into one simple-mode slot, if any. */
-export async function getSlotAssignment(
-  holidayId: number,
-  childId: number,
-  date: string,
-  period: Period,
-): Promise<Assignment | null> {
-  const db = await getDb();
-  const rows = await db.query<Assignment>(
-    `SELECT * FROM assignments
-     WHERE holiday_id = ? AND child_id = ? AND date = ? AND period = ?`,
-    [holidayId, childId, date, period],
-  );
-  return rows[0] ?? null;
-}
-
-/**
- * Book a carer into a simple-mode slot, replacing whoever was there.
- *
- * The unique index on (holiday, child, date, period) makes this an upsert, so
- * tapping a second carer for the same morning swaps them rather than
- * double-booking the child.
- */
-export async function setSlotAssignment(input: {
-  holiday_id: number;
-  child_id: number;
-  carer_id: number;
-  date: string;
-  period: Period;
-  notes?: string | null;
-  cost?: number | null;
-}): Promise<void> {
-  const db = await getDb();
-  await db.run(
-    `INSERT INTO assignments (holiday_id, child_id, carer_id, date, period, notes, cost)
-     VALUES (?, ?, ?, ?, ?, ?, ?)
-     ON CONFLICT(holiday_id, child_id, date, period) WHERE period IS NOT NULL
-       DO UPDATE SET carer_id = excluded.carer_id,
-                     notes = excluded.notes,
-                     cost = excluded.cost`,
-    [
-      input.holiday_id,
-      input.child_id,
-      input.carer_id,
-      input.date,
-      input.period,
-      input.notes ?? null,
-      input.cost ?? null,
-    ],
-  );
-}
-
-/** Clear a simple-mode slot, turning it back into a gap. */
-export async function clearSlotAssignment(
-  holidayId: number,
-  childId: number,
-  date: string,
-  period: Period,
-): Promise<void> {
-  const db = await getDb();
-  await db.run(
-    'DELETE FROM assignments WHERE holiday_id = ? AND child_id = ? AND date = ? AND period = ?',
-    [holidayId, childId, date, period],
-  );
-}
-
-/**
- * Add a detailed-mode time slot. These carry `period = NULL`, which keeps them
- * out of the simple-mode unique index so a child can have several in a day.
- */
+/** Add a session: a carer looking after a child from start to end time. */
 export async function addTimeSlot(input: {
   holiday_id: number;
   child_id: number;
@@ -181,8 +111,25 @@ export async function repeatAssignments(
   const holiday = await getHoliday(holidayId);
   if (!holiday) return [];
 
+  const targets = repeatTargets(getHolidayDates(holiday), sourceDate, rule, customDays);
+  for (const date of targets) await copyDay(holidayId, sourceDate, date);
+  return targets;
+}
+
+/**
+ * The other days of a holiday a rule picks out, never the source day itself.
+ *
+ * @param dates The holiday's dates, as getHolidayDates gives them.
+ * @param customDays Day numbers for the 'custom' rule. 0 = Sunday … 6 = Saturday.
+ */
+export function repeatTargets(
+  dates: string[],
+  sourceDate: string,
+  rule: RepeatRule,
+  customDays?: number[],
+): string[] {
   const sourceDayOfWeek = dayOfWeek(sourceDate);
-  const targets = getHolidayDates(holiday).filter((date) => {
+  return dates.filter((date) => {
     if (date === sourceDate) return false;
     const dow = dayOfWeek(date);
     switch (rule) {
@@ -196,9 +143,102 @@ export async function repeatAssignments(
         return customDays?.includes(dow) ?? false;
     }
   });
+}
 
-  for (const date of targets) await copyDay(holidayId, sourceDate, date);
-  return targets;
+/** A session as it was before an edit, so the same one can be found elsewhere. */
+export interface SessionShape {
+  carer_id: number;
+  start_time: string;
+  end_time: string;
+}
+
+/**
+ * Save one session for several children across several days, in one go —
+ * "Gran 10:00–15:00 for Ada and Bo, every weekday".
+ *
+ * A child has one carer at a time, so on each day anything of that child's
+ * that overlaps the new times is replaced. When editing, `replaces` is the
+ * session as it was: the same session on the other days and children (same
+ * carer, same times) is replaced too, even where the new times no longer
+ * overlap it, so moving Gran from 10–15 to 13–18 moves her everywhere.
+ *
+ * Touching end to start is a hand-over, not an overlap: Dad until 10:00 and
+ * Gran from 10:00 both stay.
+ *
+ * @returns How many sessions were written.
+ */
+export async function applySession(input: {
+  holidayId: number;
+  childIds: number[];
+  dates: string[];
+  carerId: number;
+  start: string;
+  end: string;
+  replaces?: SessionShape | null;
+}): Promise<number> {
+  const { holidayId, childIds, dates, carerId, start, end, replaces } = input;
+  const db = await getDb();
+  return db.transaction(async () => {
+    let written = 0;
+    for (const date of new Set(dates)) {
+      for (const childId of new Set(childIds)) {
+        await db.run(
+          `DELETE FROM assignments
+           WHERE holiday_id = ? AND child_id = ? AND date = ?
+             AND (
+               (start_time < ? AND ? < end_time)
+               OR (carer_id = ? AND start_time = ? AND end_time = ?)
+             )`,
+          [
+            holidayId,
+            childId,
+            date,
+            end,
+            start,
+            replaces?.carer_id ?? -1,
+            replaces?.start_time ?? '',
+            replaces?.end_time ?? '',
+          ],
+        );
+        await addTimeSlot({
+          holiday_id: holidayId,
+          child_id: childId,
+          carer_id: carerId,
+          date,
+          start_time: start,
+          end_time: end,
+        });
+        written++;
+      }
+    }
+    return written;
+  });
+}
+
+/**
+ * Remove a session, and — when asked — the same session (same carer and
+ * times) for other children and on other days.
+ */
+export async function removeSession(input: {
+  holidayId: number;
+  childIds: number[];
+  dates: string[];
+  session: SessionShape;
+}): Promise<void> {
+  const { holidayId, childIds, dates, session } = input;
+  const db = await getDb();
+  await db.transaction(async () => {
+    for (const date of new Set(dates)) {
+      for (const childId of new Set(childIds)) {
+        await db.run(
+          `DELETE FROM assignments
+           WHERE holiday_id = ? AND child_id = ? AND date = ?
+             AND carer_id = ? AND start_time = ? AND end_time = ?`,
+          [holidayId, childId, date, session.carer_id, session.start_time, session.end_time],
+        );
+      }
+    }
+  });
 }
 
 /**

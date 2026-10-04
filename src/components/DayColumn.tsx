@@ -1,66 +1,31 @@
 import type { Assignment, Carer, Child } from '../db/types';
-import type { HolidayMode } from '../utils/constants';
 import { formatColumnHeader } from '../utils/dates';
-import { slotIn, timeSlotsIn } from '../hooks/useAssignments';
-import { dayTimeline } from '../utils/timeSlots';
+import { timeSlotsIn } from '../hooks/useAssignments';
+import { dayTimeline, formatShortRange } from '../utils/timeSlots';
 import SlotCell from './SlotCell';
 
 interface DayColumnProps {
   date: string;
   child: Child;
-  mode: HolidayMode;
   assignments: Assignment[] | undefined;
   carersById: Map<number, Carer>;
-  onSelect: (date: string) => void;
+  /** Opens this child's day. */
+  onSelect: () => void;
 }
 
-/** One child's cover on one day: AM/PM in simple mode, time slots in detailed. */
-export default function DayColumn({
-  date,
-  child,
-  mode,
-  assignments,
-  carersById,
-  onSelect,
-}: DayColumnProps) {
+/** One child's sessions on one day, with any gaps where they fall. */
+export default function DayColumn({ date, child, assignments, carersById, onSelect }: DayColumnProps) {
   const heading = formatColumnHeader(date);
-
-  if (mode === 'simple') {
-    return (
-      <div className="day-col">
-        {(['am', 'pm'] as const).map((period) => {
-          const assignment = slotIn(assignments, period);
-          const carer = assignment ? (carersById.get(assignment.carer_id) ?? null) : null;
-          const label = period.toUpperCase();
-          return (
-            <SlotCell
-              key={period}
-              label={label}
-              carer={carer}
-              onClick={() => onSelect(date)}
-              accessibleLabel={
-                carer
-                  ? `${child.name}, ${heading} ${label}: ${carer.name}`
-                  : `${child.name}, ${heading} ${label}: no cover`
-              }
-            />
-          );
-        })}
-      </div>
-    );
-  }
-
   const slots = timeSlotsIn(assignments);
 
   return (
     <div className="day-col">
       {slots.length === 0 ? (
         <SlotCell
-          // No period label: a detailed-mode day with no slots has no time to
-          // show, and a placeholder dash just competes with the "?".
+          // No time: a day with nothing booked is simply a gap.
           label=""
           carer={null}
-          onClick={() => onSelect(date)}
+          onClick={onSelect}
           accessibleLabel={`${child.name}, ${heading}: no cover`}
         />
       ) : (
@@ -70,9 +35,9 @@ export default function DayColumn({
             return (
               <SlotCell
                 key={`gap-${entry.start}`}
-                label={entry.start}
+                label={formatShortRange(entry.start, entry.end)}
                 carer={null}
-                onClick={() => onSelect(date)}
+                onClick={onSelect}
                 accessibleLabel={`${child.name}, ${heading} ${entry.start}–${entry.end}: no cover`}
               />
             );
@@ -82,9 +47,9 @@ export default function DayColumn({
           return (
             <SlotCell
               key={slot.id}
-              label={slot.start_time ?? '—'}
+              label={formatShortRange(slot.start_time, slot.end_time)}
               carer={carer}
-              onClick={() => onSelect(date)}
+              onClick={onSelect}
               accessibleLabel={
                 carer
                   ? `${child.name}, ${heading} ${slot.start_time}–${slot.end_time}: ${carer.name}`
@@ -94,14 +59,6 @@ export default function DayColumn({
           );
         })
       )}
-      <button
-        type="button"
-        className="day-col__add"
-        aria-label={`Add a time slot for ${child.name} on ${heading}`}
-        onClick={() => onSelect(date)}
-      >
-        +
-      </button>
     </div>
   );
 }

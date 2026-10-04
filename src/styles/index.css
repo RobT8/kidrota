@@ -18,6 +18,7 @@
      a hard-coded white would drop to ~2:1 on dark mode's light blue. */
   --accent-text: #FFFFFF;
   --green: #97C459;
+  --amber: #EFB959;
   --red: #F09595;
   /* Red used as FOREGROUND text; it must invert for dark mode. */
   --red-text: #A32D2D;
@@ -461,20 +462,102 @@ button {
   color: var(--text2);
 }
 
+.entity-row__main--static {
+  min-height: 0;
+}
+
+.preset-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Onboarding carers: every row ticks on or off and has its own Edit. */
+.pick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pick-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pick-row__toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  min-height: 56px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--text);
+  text-align: left;
+}
+
+.pick-row__toggle--on {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.pick-row__text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.pick-row__name {
+  font-size: 15px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pick-row__meta {
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.pick-row__toggle--on .pick-row__meta {
+  color: var(--text);
+}
+
+/* An empty ring when unticked, a filled tick when ticked. */
+.pick-row__tick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.pick-row__toggle--on .pick-row__tick {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
 .child-avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   font-weight: 600;
-  flex: none;
-}
-
-.type-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 0.5px solid var(--border);
   flex: none;
 }
 
@@ -544,14 +627,13 @@ button {
   font-weight: 600;
 }
 
+.chip--choice {
+  border-width: 1.5px;
+}
+
 .feedback-input {
   resize: vertical;
   font-family: inherit;
-}
-
-.chip__tick {
-  font-size: 12px;
-  opacity: 0.8;
 }
 
 /* Push the step's primary action to the bottom of the screen. */
@@ -660,6 +742,11 @@ button {
   color: var(--red-text);
 }
 
+.holiday-card__cta span {
+  font-size: 20px;
+  line-height: 0.8;
+}
+
 .holiday-card__cta {
   align-self: flex-start;
   margin-top: 4px;
@@ -707,7 +794,7 @@ button {
   gap: 10px;
 }
 
-/* Two-tone coverage bar: one segment per day of the holiday. */
+/* Coverage bar: one segment per day — complete, part-planned or empty. */
 .progress {
   display: flex;
   gap: 2px;
@@ -722,6 +809,10 @@ button {
 
 .progress__seg--covered {
   background: var(--green);
+}
+
+.progress__seg--partial {
+  background: var(--amber);
 }
 
 .progress__seg--gap {
@@ -908,10 +999,6 @@ button {
   color: var(--text2);
 }
 
-.paste-hint__clear {
-  padding: 0 4px;
-}
-
 .share-button {
   flex: none;
   padding: 8px 14px;
@@ -1002,6 +1089,7 @@ button {
 }
 
 .slot__period {
+  white-space: nowrap;
   /* Full strength: dimmed, "AM" measured 4.3–4.4:1 on the carer colours,
      just under WCAG AA's 4.5:1. The lighter weight still sets it apart from
      the carer's name below it. */
@@ -1020,32 +1108,42 @@ button {
   white-space: nowrap;
 }
 
-.day-col__add {
-  min-height: 24px;
-  border: 1px dashed var(--border);
-  border-radius: 6px;
-  background: none;
-  color: var(--text2);
-  font-size: 13px;
-  line-height: 1;
-}
-
 .week-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-top: 4px;
+  margin: 0 0 12px;
+}
+
+/* Prev / Next: big arrows, a full 48px target, at the top and the bottom. */
+.week-nav__arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 0.5px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.week-nav__arrow span {
+  font-size: 30px;
+  line-height: 0.8;
+  margin-top: -3px;
+}
+
+.week-nav__arrow:disabled {
+  opacity: 0.35;
 }
 
 .week-nav__dots {
   display: flex;
   gap: 6px;
-}
-
-.week-nav .link-button:disabled {
-  opacity: 0.35;
-  text-decoration: none;
 }
 
 /* ============================================================
@@ -1150,27 +1248,6 @@ button {
   margin-top: 16px;
   padding-top: 14px;
   border-top: 0.5px solid var(--border);
-}
-
-.slot-section__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.slot-section__label {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text2);
-  margin: 0;
-}
-
-.slot-section__assigned {
-  font-size: 15px;
-  margin: 0;
 }
 
 /* Tap-grid of carers: two columns, one tap to assign. */
@@ -1283,6 +1360,11 @@ button {
   font-variant-numeric: tabular-nums;
 }
 
+.session__chevron {
+  font-size: 24px;
+  line-height: 0.8;
+}
+
 .session-form {
   display: flex;
   flex-direction: column;
@@ -1348,6 +1430,17 @@ button {
   margin: 0;
 }
 
+.session-form__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.session-form__heading .link-button {
+  font-size: 13px;
+}
+
 .session-form__siblings {
   display: flex;
   flex-direction: column;
@@ -1411,19 +1504,78 @@ button {
   opacity: 0.4;
 }
 
-.repeat__picker {
+.repeat .button,
+.note-card .button {
   margin-top: 12px;
-  padding-top: 12px;
-  border-top: 0.5px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  width: 100%;
 }
 
-.repeat__done {
+/* "Saved ✓": what a Save button did, in the same green as a covered day. */
+.save-confirm {
   margin: 10px 0 0;
-  font-size: 12px;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  background: var(--carer-family-bg);
   color: var(--carer-family-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.slot-section .save-confirm {
+  margin: 0 0 10px;
+}
+
+/* Which days: options as chips, then weekdays as big tick boxes. */
+.day-rule {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.day-rule__days {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 8px;
+}
+
+.day-pick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+
+/* Picked: filled in the accent colour with a tick, as obvious as a chosen carer. */
+.day-pick--selected {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 700;
+}
+
+.day-pick__tick:empty {
+  display: none;
+}
+
+.note-card {
+  margin-bottom: 12px;
+}
+
+.note-card .note-field {
+  margin-bottom: 0;
+}
+
+/* The child whose cell was tapped in the week. */
+.child-card--focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  scroll-margin-top: 12px;
 }
 
 .note-field {
@@ -1644,7 +1796,7 @@ button {
 
 .setting-row__chevron {
   color: var(--text2);
-  font-size: 17px;
+  font-size: 26px;
   line-height: 1;
   flex: none;
 }
@@ -1832,7 +1984,8 @@ button {
   border: 0;
   background: none;
   color: var(--text);
-  font-size: 30px;
+  font-size: 36px;
+  font-weight: 600;
   line-height: 1;
   flex: none;
   border-radius: 50%;
@@ -1847,29 +2000,35 @@ button {
    Sharing
    ============================================================ */
 
-/* The region captured when sharing the week as a picture. */
-.shareable {
-  background: var(--bg);
+/* Weeks drawn for a shared picture: off screen, never seen. */
+.share-pages {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  pointer-events: none;
 }
 
-.shareable__caption {
-  margin: 0 0 10px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text2);
+.share-page {
+  width: max-content;
+  padding: 16px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.share-page__caption {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Nothing scrolled out of the picture. */
+.week-grid--picture .week-grid__scroll {
+  overflow: visible;
 }
 
 .share-status {
   margin-top: 14px;
   margin-bottom: 0;
-}
-
-.code-input {
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-size: 12px;
-  line-height: 1.5;
-  resize: vertical;
-  word-break: break-all;
 }
 
 /* ============================================================
