@@ -5,7 +5,7 @@ Where the project stands, for anyone (person or AI session) picking it up.
 the *state of play*: what is done, what is unproven, what is still open.
 Keep it current — update it at the end of every working session.
 
-**Last updated:** 27 September 2026
+**Last updated:** 4 October 2026
 **Working branch:** `claude/eloquent-brahmagupta-f1d5v1` — *all* current
 work is here; `main` is well behind. Check this branch out before doing
 anything.
@@ -96,6 +96,31 @@ report are still to do.
 Verified good: Billing Library 9.0.0, acknowledgement, lapse/refund
 handling, 16 KB-aligned native libs, release WebView debugging off, no
 secrets in git, contrast elsewhere in both themes, 200 % font layout.
+
+## Play Store progress (4 October 2026)
+
+- ✅ Play Console personal account created; **identity verified**.
+- ✅ App created in Play Console: "KidRota School Holiday Planner", package
+  `com.kidrota.app`, Free.
+- ✅ Upload key created (`C:\Users\robta\KidRota-keys\kidrota-upload.jks`,
+  alias `upload`) and a signed `app-release.aab` (1.0.0, versionCode 10000)
+  built from commit `f19ce6f`.
+- ✅ Uploaded to **internal testing** with a tester list "Me".
+- ⏳ **Open issue:** the opt-in link's "Download it on Google Play" shows
+  "Item not found". Usual causes: release still propagating (can take
+  hours), release left in Draft, or the phone's Play Store on a different
+  Google account from the tester list. Check Internal testing → Releases
+  says "Available to internal testers".
+- Not yet: website deploy to Cloudflare (zip: `docs/` files inside a
+  `kidrota/` folder — rebuild it from `docs/`), payments profile,
+  `kidrota_pro_yearly` subscription, App content forms (answers in
+  `PRE-RELEASE-REVIEW.md` → "Play Console answers"), store listing
+  (`STORE-LISTING.md`), screenshots, feature graphic, closed test (15+
+  testers, 14 days), production.
+- Decided: free version = unlimited children, 1 holiday ever; theme is
+  Light/Dark only; Home ⭐ rating card (5th open, "Not now" = 10 opens, 3
+  strikes); keep `allowBackup` on. Marketing video prompts were written
+  for Kling (Higgsfield); not in the repo.
 
 ## Waiting on the owner (outside the code)
 
