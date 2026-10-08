@@ -29,7 +29,7 @@ anything.
   themes; keep pure logic in `src/utils/` with unit tests; never change the
   package ID `com.kidrota.app`.
 
-## What the app is today (version 1.0.1, not yet uploaded)
+## What the app is today (version 1.0.1, on internal testing)
 
 Local-first Android app (Capacitor 8 + React 19 + SQLite, no server, no
 accounts). Plan childcare across school holidays with timed sessions (one
@@ -148,10 +148,12 @@ secrets in git, contrast elsewhere in both themes, 200 % font layout.
   found" on the opt-in link cleared once the release showed "Available to
   internal testers"; installed and tested on the phone.
 - ✅ Owner's test notes turned into **1.0.1** (see "What the app is today").
-- ⏳ **Next:** build a signed `.aab` of 1.0.1 (versionCode 10001) from this
-  branch and upload it as a new internal testing release; re-test on the
-  phone (the update installs over 1.0.0, so the v3 migration runs on real
-  data). Re-upload `privacy.html`.
+- ✅ 1.0.1 (versionCode 10001) built, signed and uploaded to internal
+  testing (4 Oct 2026).
+- ⏳ **Next:** update the phone from Play and re-test (the update installs
+  over 1.0.0, so the v3 migration runs on real data — AM/PM plans should
+  show as 8–12 / 12–18); re-upload `privacy.html`; set up **closed
+  testing** and recruit 12+ testers for the 14 days.
 - Not yet: website deploy to Cloudflare (zip: `docs/` files inside a
   `kidrota/` folder — rebuild it from `docs/`), payments profile,
   `kidrota_pro_yearly` subscription, App content forms (answers in
