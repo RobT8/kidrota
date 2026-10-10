@@ -49,7 +49,7 @@ The free version plans one holiday for all your children. KidRota Pro is an opti
 | Asset | Size | Source |
 |---|---|---|
 | App icon | 512 × 512 PNG | `design/icon/play-store-icon-512.png` |
-| Feature graphic | 1024 × 500 PNG/JPG | still to make |
+| Feature graphic | 1024 × 500 PNG | `design/store/feature-graphic-1024x500.png` |
 | Phone screenshots | 2–8, e.g. 1080 × 2340 | take on the phone: Home, week grid, a day, list view, Settings |
 
 ## Contact details
