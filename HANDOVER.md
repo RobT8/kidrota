@@ -150,6 +150,14 @@ secrets in git, contrast elsewhere in both themes, 200 % font layout.
 - ✅ Owner's test notes turned into **1.0.1** (see "What the app is today").
 - ✅ 1.0.1 (versionCode 10001) built, signed and uploaded to internal
   testing (4 Oct 2026).
+- ✅ App content forms done (PEGI 3, 18+ only, no data collected, no
+  sign-in), store listing (feature graphic `design/store/`), store
+  settings. **Closed testing – Alpha** set up (177 countries, testers from
+  a paid testing service + "Me") with 1.0.1, and all 14 changes submitted
+  for Google review (11–14 Oct 2026). Once "Available to testers": give the
+  opt-in link to the testing service; the 14 days start when 12+ opt in.
+- ⏳ Payments profile → `kidrota_pro_yearly` → licence testers, during the
+  14 days (the Subscribe button is greyed out until the product exists).
 - ⏳ **Next:** update the phone from Play and re-test (the update installs
   over 1.0.0, so the v3 migration runs on real data — AM/PM plans should
   show as 8–12 / 12–18); re-upload `privacy.html`; set up **closed
