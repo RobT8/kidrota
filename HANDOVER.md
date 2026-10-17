@@ -156,8 +156,11 @@ secrets in git, contrast elsewhere in both themes, 200 % font layout.
   a paid testing service + "Me") with 1.0.1, and all 14 changes submitted
   for Google review (11–14 Oct 2026). Once "Available to testers": give the
   opt-in link to the testing service; the 14 days start when 12+ opt in.
-- ⏳ Payments profile → `kidrota_pro_yearly` → licence testers, during the
-  14 days (the Subscribe button is greyed out until the product exists).
+- ✅ Payments profile (individual, UK) with a verified bank account;
+  subscription `kidrota_pro_yearly` ("KidRota Pro") created with base plan
+  `yearly`, auto-renewing, £1.99 (other countries converted), active.
+- ⏳ Licence testing, then a test purchase / restore / cancel on the phone
+  (review P6-P10). Trader status (public address) still to decide.
 - ⏳ **Next:** update the phone from Play and re-test (the update installs
   over 1.0.0, so the v3 migration runs on real data — AM/PM plans should
   show as 8–12 / 12–18); re-upload `privacy.html`; set up **closed
