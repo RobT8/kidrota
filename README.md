@@ -351,7 +351,14 @@ database and the WebView's settings). Keep it that way:
    (`kidrota`), the WebView's origin (Capacitor's default), or turn the SQLite
    plugin's `androidIsEncryption` back on.
 4. `npm test`, `npm run lint`, `npm run build`, then `npx cap sync android`.
-5. Upload to the **internal testing** track first and let your own phone update
+5. **Upload** — either by hand (Android Studio → Generate Signed App Bundle,
+   then Play Console), or from GitHub: **Actions → Release to Google Play →
+   Run workflow**, choosing the branch and track (`internal`, or `alpha` for
+   closed testing). `.github/workflows/release.yml` runs the tests, builds,
+   signs with the upload key and uploads; it needs the four repository
+   secrets listed at the top of that file. `android/app/build.gradle` only
+   signs when those variables are set, so Android Studio builds are
+   unaffected. Upload to the **internal testing** track first and let your own phone update
    over real data from Play before promoting; use a staged rollout for
    production.
 

@@ -1,0 +1,108 @@
+# Build KidRota's signed app bundle and upload it to Google Play.
+#
+# Run it from GitHub: Actions → "Release to Google Play" → Run workflow, pick
+# the branch and the track. Bump the version first (`npm version patch
+# --no-git-tag-version`, commit, push): Play refuses a versionCode it already has.
+#
+# Needs these repository secrets (Settings → Secrets and variables → Actions):
+#   KIDROTA_UPLOAD_KEYSTORE_BASE64   the upload key (.jks), base64-encoded
+#   KIDROTA_UPLOAD_STORE_PASSWORD    its key store password
+#   KIDROTA_UPLOAD_KEY_PASSWORD      the password of the "upload" key inside it
+#   PLAY_SERVICE_ACCOUNT_JSON        a Google Cloud service account key with
+#                                    "Release apps to testing tracks" in Play Console
+name: Release to Google Play
+
+on:
+  workflow_dispatch:
+    inputs:
+      track:
+        description: Play track to upload to
+        type: choice
+        options:
+          - internal
+          - alpha
+        default: internal
+      status:
+        description: completed rolls out to testers; draft waits for you in Play Console
+        type: choice
+        options:
+          - completed
+          - draft
+        default: completed
+
+concurrency:
+  group: play-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Test and lint
+        run: |
+          npm test
+          npm run lint
+
+      - name: Build the web app and copy it into Android
+        run: |
+          npm run build
+          npx cap sync android
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Read the version
+        id: version
+        run: |
+          version=$(node -p "require('./package.json').version")
+          echo "name=$version" >> "$GITHUB_OUTPUT"
+          echo "Releasing KidRota $version to ${{ inputs.track }}"
+
+      - name: Build the signed app bundle
+        working-directory: android
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KIDROTA_UPLOAD_KEYSTORE_BASE64 }}
+          KIDROTA_UPLOAD_STORE_PASSWORD: ${{ secrets.KIDROTA_UPLOAD_STORE_PASSWORD }}
+          KIDROTA_UPLOAD_KEY_PASSWORD: ${{ secrets.KIDROTA_UPLOAD_KEY_PASSWORD }}
+          KIDROTA_UPLOAD_KEY_ALIAS: upload
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::The KIDROTA_UPLOAD_KEYSTORE_BASE64 secret is missing."
+            exit 1
+          fi
+          export KIDROTA_UPLOAD_KEYSTORE="$RUNNER_TEMP/kidrota-upload.jks"
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$KIDROTA_UPLOAD_KEYSTORE"
+          chmod +x gradlew
+          ./gradlew bundleRelease --no-daemon
+          rm -f "$KIDROTA_UPLOAD_KEYSTORE"
+
+      - name: Upload to Google Play
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.kidrota.app
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          track: ${{ inputs.track }}
+          status: ${{ inputs.status }}
+          releaseName: ${{ steps.version.outputs.name }}
+
+      - name: Keep the bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: kidrota-${{ steps.version.outputs.name }}.aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30

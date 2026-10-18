@@ -10,6 +10,13 @@ apply plugin: 'com.android.application'
 def appVersion = new groovy.json.JsonSlurper().parse(file('../../package.json')).version
 def (vMajor, vMinor, vPatch) = appVersion.tokenize('.').collect { it as int }
 
+// Release signing for the GitHub Actions release workflow
+// (.github/workflows/release.yml), which supplies the upload key through
+// these environment variables. Without them — an Android Studio build — no
+// signing is configured here, and Build > Generate Signed App Bundle signs
+// the bundle exactly as before.
+def uploadKeystore = System.getenv('KIDROTA_UPLOAD_KEYSTORE')
+
 android {
     namespace = "com.kidrota.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -26,8 +33,19 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    if (uploadKeystore) {
+        signingConfigs {
+            upload {
+                storeFile file(uploadKeystore)
+                storePassword System.getenv('KIDROTA_UPLOAD_STORE_PASSWORD')
+                keyAlias System.getenv('KIDROTA_UPLOAD_KEY_ALIAS')
+                keyPassword System.getenv('KIDROTA_UPLOAD_KEY_PASSWORD')
+            }
+        }
+    }
     buildTypes {
         release {
+            if (uploadKeystore) signingConfig signingConfigs.upload
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
