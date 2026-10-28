@@ -20,6 +20,7 @@ signature.
   │        │                                            │
   │        ▼                                            │
   │  Drafts the week ─► queue/2026-W45.md               │
+  │  + Higgsfield clips for last week's approved posts │
   │        │                                            │
   │        ▼                                            │
   │  Opens a pull request "Marketing: week of …"        │
@@ -51,6 +52,17 @@ got saved and shared most.
 | `AGENT.md` | The agent's standing instructions, plus "Lessons" it records | The agent (you can too) |
 | `queue/` | One file of drafts per week | The agent drafts, you approve |
 | `log.md` | What actually got posted and how it did | You |
+
+## Higgsfield videos
+
+The agent writes a `Higgsfield prompt` for each video post: a short AI-made
+scene for the *feeling* (the 9pm kitchen-table scramble), which you put in
+front of a real screen recording of the app. It never generates the app
+itself, because an AI version would show screens KidRota doesn't have.
+
+Clips are only made for posts you've ticked `[x] approved`, on the next
+weekly run, and never more than `higgsfield.max_credits_per_week` in
+`config.json`. It never buys credits and never posts.
 
 ## The day the app goes live
 

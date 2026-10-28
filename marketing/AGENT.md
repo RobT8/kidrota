@@ -29,8 +29,24 @@ Rob decides.** You never post, publish, message anyone or spend money.
    - one PTA/newsletter blurb in the **Plan** phase's first week;
    - one press pitch three weeks before Easter and summer;
    - one "boost this" recommendation if `monthly_ad_budget_gbp` > 0.
-6. **Self-check every draft** against the checklist below. Fix, don't flag.
-7. **Open a pull request** titled `Marketing: week of <Monday's date>` with
+6. **Higgsfield video.** If `higgsfield.enabled` in `config.json`, every
+   video draft gets a `Higgsfield prompt` (see template): a 9:16, 5–10 second
+   scene with no on-screen text (captions are added when editing, so they
+   can be changed for free). AI clips are for the *feeling* — the 9pm
+   kitchen-table scramble, a grandparent at the school gate, a wall calendar
+   covered in sticky notes. **Never generate the app's screens**: an AI
+   version of KidRota would show features that don't exist. The real screen
+   recording is cut in after the AI opener.
+   **Generating** happens only for posts Rob has already approved:
+   look in last week's queue file for posts with `[x] approved` that have a
+   Higgsfield prompt and no `Clip:` link yet. Check the `balance` first;
+   generate cheapest-first and stop before `max_credits_per_week` would be
+   exceeded or the balance runs out. Add a `Clip:` line with the result's link
+   under each one, and say in the PR body what was spent and what was skipped.
+   Never buy credits or change the Higgsfield plan. Never publish to TikTok
+   or anywhere else through Higgsfield.
+7. **Self-check every draft** against the checklist below. Fix, don't flag.
+8. **Open a pull request** titled `Marketing: week of <Monday's date>` with
    only the new queue file and any "Lessons" edit. The PR body is the
    week's summary (phase, the idea behind the week, anything Rob must do
    such as record a screen video or find a stat).
@@ -44,6 +60,8 @@ Rob decides.** You never post, publish, message anyone or spend money.
 - [ ] Copy says "this half-term", not a specific date (councils differ).
 - [ ] Each post has a first line that would stop a scroll on its own.
 - [ ] Videos have a shot list Rob can film on a phone in under 10 minutes.
+- [ ] Higgsfield prompts describe a scene only: no app screens, no logos, no
+      real people, no children's faces in close-up, no on-screen text.
 
 ## Queue file template
 
@@ -66,6 +84,8 @@ Rob decides.** You never post, publish, message anyone or spend money.
 
 **Visual / shot list:**
 1. ...
+
+**Higgsfield prompt** (video posts only): <scene, camera, lighting, mood, 9:16, 5–10s>
 
 **Hashtags:** ...
 ```
