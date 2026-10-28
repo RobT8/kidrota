@@ -20,7 +20,7 @@ signature.
   │        │                                            │
   │        ▼                                            │
   │  Drafts the week ─► queue/2026-W45.md               │
-  │  + Higgsfield clips for last week's approved posts │
+  │  + Higgsfield clips for last week's approved posts  │
   │        │                                            │
   │        ▼                                            │
   │  Opens a pull request "Marketing: week of …"        │
