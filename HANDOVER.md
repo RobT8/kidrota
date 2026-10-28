@@ -159,7 +159,18 @@ secrets in git, contrast elsewhere in both themes, 200 % font layout.
 - ✅ Payments profile (individual, UK) with a verified bank account;
   subscription `kidrota_pro_yearly` ("KidRota Pro") created with base plan
   `yearly`, auto-renewing, £1.99 (other countries converted), active.
-- ⏳ Licence testing, then a test purchase / restore / cancel on the phone
+- ✅ Testing service report (25 Oct 2026): no crashes or bugs. Acted on:
+  keyword-rich description, new coral-style captioned screenshots and
+  feature graphic (`design/store/`), all uploaded to the listing (28 Oct).
+  Still to do from it, in 1.0.2: a short "How it works" page and a privacy
+  line on the welcome page. The rest (rate button, feedback, sharing)
+  already exists.
+- ⏳ GitHub Actions release workflow (`.github/workflows/release.yml`) is
+  written but not yet usable: it must be merged to `main`, and needs four
+  secrets plus a Play service account.
+- ⏳ Licence testing (Settings → License testing → email list "Me") is set,
+  but a test purchase still showed a real charge on 23 Oct — check the
+  phone's Play account matches the list. Then a test purchase / restore / cancel on the phone
   (review P6-P10). Trader status (public address) still to decide.
 - ⏳ **Next:** update the phone from Play and re-test (the update installs
   over 1.0.0, so the v3 migration runs on real data — AM/PM plans should
