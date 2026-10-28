@@ -15,29 +15,41 @@ KidRota School Holiday Planner
 Plan who has the kids every school holiday, and spot the gaps at a glance.
 ```
 
-## Full description (4000 max — this is about 1,400)
+## Full description (4000 max — this is about 2,141)
 
 ```
-Every school holiday, cover gets pieced together from grandparents, holiday clubs, playdates and annual leave. KidRota puts it all on one screen, so you can see at a glance who has the kids each day — and where the gaps are.
+Who's got the kids this half term? KidRota is a simple school holiday planner for working parents. Every break, childcare gets pieced together from grandparents, holiday clubs, childminders, playdates and annual leave. KidRota puts the whole family rota on one screen, so you can see at a glance who has the children each day, and where the gaps are, long before the holidays start.
+
+Built for UK school holidays: half term, Easter, the summer holidays and Christmas.
 
 PLAN THE WHOLE BREAK
 • Add a holiday and see every day laid out, weekdays only or the whole week
-• Tap a day, pick who's covering it and when — Morning, Afternoon, All day or your own times
+• Tap a day, pick who's covering it and when: Morning, Afternoon, All day or your own times
 • Hand-overs are easy: Dad 8–10, Gran 10–3, Mum 3–6
-• Book a carer for several children and days in one go, or copy a whole day across the week
-• Save the times you use most, like your school club's hours
+• Book a carer for several children and several days in one go
+• Copy a whole day across the week, or to the days you pick
+• Save the times you use most, like your holiday club's hours
+• One carer per child at a time, so nothing gets double-booked
 
 SEE THE GAPS
-• Anything not covered shows in red
+• Any time not covered shows in red, so gaps are impossible to miss
 • Home tells you how many days are still incomplete and how long until the next break
+• Week and list views, with every session's times
 • Optional reminders a few days before a holiday starts
 
-SHARE IT
-• Send a picture of each week to WhatsApp or any chat — family can see the plan without the app
+SHARE THE PLAN
+• Send a picture of each week to WhatsApp, Messages, email or any app
+• Grandparents and your partner can see the plan without installing anything
+
+USEFUL FOR
+• Working parents juggling annual leave and childcare cover
+• Separated parents sharing the school holidays
+• Families relying on grandparents, holiday clubs, sports camps and childminders
+• Anyone tired of planning the summer holidays on a spreadsheet or the back of an envelope
 
 PRIVATE BY DESIGN
 • No account, no sign-up, no ads
-• Your plans stay on your phone — nothing is sent to us
+• Your plans stay on your phone. Nothing is sent to us
 • Export a backup file whenever you like
 
 KIDROTA PRO
@@ -50,7 +62,7 @@ The free version plans one holiday for all your children. KidRota Pro is an opti
 |---|---|---|
 | App icon | 512 × 512 PNG | `design/icon/play-store-icon-512.png` |
 | Feature graphic | 1024 × 500 PNG | `design/store/feature-graphic-1024x500.png` |
-| Phone screenshots | 2–8, e.g. 1080 × 2340 | take on the phone: Home, week grid, a day, list view, Settings |
+| Phone screenshots | 5 × 1080 × 1920, captioned | `design/store/screenshots/1-week.png` … `5-carers.png`, in that order. Made from a demo family (Ava and Leo, February half term) |
 
 ## Contact details
 
