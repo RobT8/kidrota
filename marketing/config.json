@@ -1,0 +1,19 @@
+{
+  "app_live": false,
+  "play_store_url": "",
+  "landing_url": "https://robt8.github.io/kidrota/",
+  "support_email": "support@kidrota.app",
+  "region": "England",
+  "posts_per_week": 4,
+  "channels": {
+    "instagram": { "enabled": true, "formats": ["carousel", "reel", "story"] },
+    "tiktok": { "enabled": true, "formats": ["short video"] },
+    "facebook_page": { "enabled": true, "formats": ["post"] },
+    "facebook_groups": { "enabled": true, "formats": ["value-first comment"], "note": "Only where group rules allow; never more than one mention of KidRota per group per month" },
+    "reddit": { "enabled": false, "note": "r/UKParenting bans self-promotion; enable only for a mod-approved launch post" },
+    "email_to_schools": { "enabled": true, "formats": ["PTA newsletter blurb"] },
+    "press": { "enabled": true, "formats": ["pitch email"] }
+  },
+  "monthly_ad_budget_gbp": 0,
+  "approval": "pull_request"
+}

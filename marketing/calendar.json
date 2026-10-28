@@ -1,0 +1,16 @@
+{
+  "note": "Typical England state-school dates for 2026-27. Councils and academies differ by a few days, so copy says 'this half-term', never a specific date. Scotland, Wales and NI run different calendars.",
+  "breaks": [
+    { "name": "Christmas holidays", "start": "2026-12-19", "end": "2027-01-03" },
+    { "name": "February half-term", "start": "2027-02-13", "end": "2027-02-21" },
+    { "name": "Easter holidays",    "start": "2027-03-27", "end": "2027-04-11" },
+    { "name": "May half-term",      "start": "2027-05-29", "end": "2027-06-06" },
+    { "name": "Summer holidays",    "start": "2027-07-23", "end": "2027-09-01" }
+  ],
+  "phases": [
+    { "name": "Spark",    "weeks_before_break": [6, 4], "goal": "Name the problem: the patchwork of grandparents, clubs, swaps and leave" },
+    { "name": "Plan",     "weeks_before_break": [3, 1], "goal": "Show the app solving it: gaps glowing red, copy-a-day, share with the other parent" },
+    { "name": "Survive",  "weeks_before_break": [0, 0], "goal": "During the break: empathy, humour, quick tips, no hard sell" },
+    { "name": "Reflect",  "weeks_after_break": [1, 1],  "goal": "Ask what worked; invite reviews; tease the next break" }
+  ]
+}
