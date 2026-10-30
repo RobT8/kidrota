@@ -173,9 +173,10 @@ Keep the closed test running until the decision arrives.
   connected to that repo) serves `t80.dev`; owner confirmed
   `t80.dev/kidrota/privacy.html` shows 4 Oct 2026. The old hand-uploaded
   Pages project **`t80-dev`** has no domain now; kept as a backup, delete
-  later. Still to do: check terms/licences/home load; confirm a push to
-  `t80-site` redeploys by itself; optionally switch off the
-  `t80-site.<account>.workers.dev` address (it shows the account name).
+  later. Checked 30 Oct: all pages load, and a push to `t80-site`
+  redeploys by itself (test: `robots.txt` appeared). Optional later: switch
+  off the `t80-site.<account>.workers.dev` address (it shows the account
+  name; owner not bothered for now).
 - ⏳ Trader status (public address on the listing): still to decide.
 - ⏳ GitHub Actions release workflow (`.github/workflows/release.yml`) is
   written but unused: needs merging to `main`, four secrets and a Play
