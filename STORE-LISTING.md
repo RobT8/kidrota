@@ -63,6 +63,7 @@ The free version plans one holiday for all your children. KidRota Pro is an opti
 | App icon | 512 × 512 PNG | `design/icon/play-store-icon-512.png` |
 | Feature graphic | 1024 × 500 PNG | `design/store/feature-graphic-1024x500.png` |
 | Phone screenshots | 5 × 1080 × 1920, captioned | `design/store/screenshots/1-week.png` … `5-carers.png`, in that order. Made from a demo family (Ava and Leo, February half term) |
+| Video | YouTube, unlisted | https://www.youtube.com/watch?v=-ZDlxb4gnOI (from `design/store/video/kidrota-demo.mp4`, 47.5 s) |
 
 ## Contact details
 

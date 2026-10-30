@@ -165,7 +165,9 @@ Keep the closed test running until the decision arrives.
 - ✅ Closed test 14 days **finished** (owner confirmed, 30 Oct 2026).
 - ✅ **Applied for production** 30 Oct 2026. ⏳ Awaiting Google's decision.
 - ✅ Demo video **draft 7** (47.5 s): `design/store/video/kidrota-demo.mp4`.
-  See "Demo video" below. Not yet on YouTube or the listing.
+  See "Demo video" below. On YouTube (unlisted, owner's t80.dev channel)
+  since 30 Oct 2026: https://youtu.be/-ZDlxb4gnOI — being added to the
+  main store listing.
 - ⏳ Licence testing (Settings → License testing → list "Me") is set, but a
   test purchase on 23 Oct still showed a real charge. Check the phone's
   Play account is in the "Me" list, then test purchase / restore / cancel
@@ -242,7 +244,8 @@ YouTube and add the link to the store listing.
       management) and refund it if so.
 - [ ] Trader-address decision.
 - [ ] Email forwarding for `kidrota@t80.dev`.
-- [ ] Demo video: approve, upload to YouTube, add link to the listing.
+- [x] Demo video on YouTube (https://youtu.be/-ZDlxb4gnOI); add the link
+      to Main store listing → Video, then confirm it shows.
 
 ## Open decisions
 
