@@ -80,7 +80,7 @@ and checked in the browser at phone size; none of it seen on the phone yet:**
   `kidrota_pro_yearly` — unlimited holidays, custom carer colours. No lifetime option.
 - The day runs 08:00–18:00; a day is complete only when every child has no gap.
 - Legal pages: `https://t80.dev/kidrota/privacy.html` and `terms.html`
-  (source in the `RobT8/t80-site` repo, folder `public/kidrota/`; terms dated 4 Oct 2026). Contact `kidrota@t80.dev`.
+  (source in the `RobT8/t80-site` repo, folder `public/kidrota/`; privacy 4 Oct, terms 3 Oct, licences 27 Sep 2026). Contact `kidrota@t80.dev`.
 - Icon "AB1" (calendar + grown-up + child); source `design/icon/`.
 - 291 tests pass; `npm run lint` and `npm run build` clean (as of this file).
 - **Pre-release review done 27 Sep 2026 — `PRE-RELEASE-REVIEW.md`.** The
@@ -226,7 +226,7 @@ YouTube and add the link to the store listing.
 - [x] **Apply for production**: submitted 30 Oct 2026. Watch email and
       the Dashboard for the decision (up to about 7 days).
 - [x] `t80.dev` moved to the `t80-site` Worker; privacy shows 4 Oct 2026.
-- [ ] Check terms, licences and the KidRota home page load on t80.dev.
+- [x] Terms, licences and the KidRota home page load on t80.dev (30 Oct).
 - [ ] Fix licence testing, then test purchase / restore / cancel.
 - [ ] Trader-address decision.
 - [ ] Email forwarding for `kidrota@t80.dev`.
