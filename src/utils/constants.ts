@@ -93,7 +93,7 @@ export const FREE_TIER_MAX_HOLIDAYS = 1;
  * change them.
  *
  * The legal pages live on t80.dev; their source is the separate
- * RobT8/t80-site repository (folder kidrota/). Google Play requires the
+ * RobT8/t80-site repository (folder public/kidrota/). Google Play requires the
  * privacy policy URL to be publicly reachable before the app can be
  * published.
  */

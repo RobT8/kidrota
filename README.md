@@ -188,12 +188,12 @@ privacy policy's "Sending feedback" section says what happens to the email.
 
 The legal pages (privacy policy, terms, the website's home page and the
 open-source licences page, which Settings → About links to) live in a
-**separate repository, `RobT8/t80-site`**, folder `kidrota/`. Cloudflare
-Pages publishes that repository to `https://t80.dev/` on every push to its
-`main` branch, so `t80-site/kidrota/privacy.html` is served at
+**separate repository, `RobT8/t80-site`**, folder `public/kidrota/`. Cloudflare
+(Workers Builds) publishes that repository's `public/` folder to `https://t80.dev/` on every push to its
+`main` branch, so `t80-site/public/kidrota/privacy.html` is served at
 `https://t80.dev/kidrota/privacy.html`. Google Play needs the privacy policy
 as a web page, not a PDF. When a dependency is added, add its notice to
-`kidrota/licenses.html` in that repository.
+`public/kidrota/licenses.html` in that repository.
 
 ## Reminders
 
