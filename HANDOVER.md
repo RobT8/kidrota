@@ -5,7 +5,7 @@ Where the project stands, for anyone (person or AI session) picking it up.
 the *state of play*: what is done, what is unproven, what is still open.
 Keep it current — update it at the end of every working session.
 
-**Last updated:** 30 October 2026 (closed test finished; demo video draft 7)
+**Last updated:** 30 October 2026 (production application submitted; demo video draft 7)
 **Working branch:** `claude/eloquent-brahmagupta-f1d5v1` — *all* current
 work is here; `main` is well behind. Check this branch out before doing
 anything.
@@ -139,7 +139,9 @@ secrets in git, contrast elsewhere in both themes, 200 % font layout.
 ## Play Store progress (30 October 2026)
 
 **Where things stand:** the 14-day closed test (12+ testers) is **complete**.
-The next job is **Apply for production** in Play Console.
+**Production application submitted 30 Oct 2026** (answers as sent in
+`PRODUCTION-APPLICATION.md`); waiting for Google, up to about 7 days.
+Keep the closed test running until the decision arrives.
 
 - ✅ Play Console personal account, identity verified. App "KidRota School
   Holiday Planner", package `com.kidrota.app`, Free.
@@ -158,6 +160,7 @@ The next job is **Apply for production** in Play Console.
   it, in 1.0.2: a short "How it works" page and a privacy line on the
   welcome page.
 - ✅ Closed test 14 days **finished** (owner confirmed, 30 Oct 2026).
+- ✅ **Applied for production** 30 Oct 2026. ⏳ Awaiting Google's decision.
 - ✅ Demo video **draft 7** (47.5 s): `design/store/video/kidrota-demo.mp4`.
   See "Demo video" below. Not yet on YouTube or the listing.
 - ⏳ Licence testing (Settings → License testing → list "Me") is set, but a
@@ -213,8 +216,8 @@ YouTube and add the link to the store listing.
 
 ## Waiting on the owner (outside the code)
 
-- [ ] **Apply for production** (Play Console → Dashboard). Draft answers in `PRODUCTION-APPLICATION.md`. Google asks
-      about the closed test; approval can take up to about 7 days.
+- [x] **Apply for production**: submitted 30 Oct 2026. Watch email and
+      the Dashboard for the decision (up to about 7 days).
 - [ ] Re-upload `privacy.html` (and check `terms.html`, `licenses.html`,
       `index.html`) to `t80.dev/kidrota/`; confirm they load.
 - [ ] Fix licence testing, then test purchase / restore / cancel.
@@ -237,9 +240,7 @@ reminders default **Off**; holidays capped at **70 days**.
 
 ## Next steps, in order
 
-1. **Apply for production** in Play Console and answer the questions about
-   the closed test (who tested, what feedback, what changed: the 18 owner
-   notes → 1.0.1, and the testing service's report → new listing).
+1. ~~Apply for production~~: submitted 30 Oct 2026; waiting on Google.
 2. While waiting for approval: re-upload `privacy.html`, fix licence
    testing and run the purchase tests, decide trader status.
 3. Build **1.0.2**: "How it works" page and a privacy line on the welcome
