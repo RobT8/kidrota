@@ -230,9 +230,13 @@ YouTube and add the link to the store listing.
 - [x] Terms, licences and the KidRota home page load on t80.dev (30 Oct).
 - [ ] Delete the old Cloudflare Pages project `t80-dev` (no domain now;
       reminder set for 6 Nov 2026).
-- [ ] Fix licence testing, then test purchase / restore / cancel. Play
-      Console account is the developer account; the licence-tester list must
-      hold the Google account the *phone's Play Store* uses.
+- [ ] Licence testing: **probably fixed 30 Oct 2026**. The "Me" list
+      already held the phone's Play Store account, but it was not ticked on
+      Manage account → License testing; now ticked, response
+      RESPOND_NORMALLY. Next: confirm the purchase sheet shows "Test card,
+      always approves", then test purchase / restore / cancel (review
+      P6-P10). Check whether the 23 Oct purchase was a real charge (Order
+      management) and refund it if so.
 - [ ] Trader-address decision.
 - [ ] Email forwarding for `kidrota@t80.dev`.
 - [ ] Demo video: approve, upload to YouTube, add link to the listing.
