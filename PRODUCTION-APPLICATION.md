@@ -46,9 +46,9 @@ testing service.
 
 ### 5. Describe how your app provides value to users.
 
-> KidRota shows each holiday week as a grid of who looks after each child and when, with gaps in the 8am–6pm day in red. Copy sessions across days and children, and share the week as a picture so family don't need the app. No account or ads; data stays on your phone. Pro (£1.99/yr): unlimited holidays.
+> KidRota shows holiday weeks as a grid of who looks after each child and when, with gaps in the 8am–6pm day in red. Copy sessions across days and children, and share the week as a picture so family don't need the app. No account or ads; data stays on the phone. Pro (£1.99/yr): unlimited holidays.
 
-*(301 characters)*
+*(296 characters)*
 
 ### 6. How many installs do you expect in your first year?
 
