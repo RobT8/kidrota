@@ -5,7 +5,7 @@ Where the project stands, for anyone (person or AI session) picking it up.
 the *state of play*: what is done, what is unproven, what is still open.
 Keep it current — update it at the end of every working session.
 
-**Last updated:** 4 October 2026 (1.0.1 changes)
+**Last updated:** 30 October 2026 (closed test finished; demo video draft 7)
 **Working branch:** `claude/eloquent-brahmagupta-f1d5v1` — *all* current
 work is here; `main` is well behind. Check this branch out before doing
 anything.
@@ -136,72 +136,91 @@ Verified good: Billing Library 9.0.0, acknowledgement, lapse/refund
 handling, 16 KB-aligned native libs, release WebView debugging off, no
 secrets in git, contrast elsewhere in both themes, 200 % font layout.
 
-## Play Store progress (4 October 2026)
+## Play Store progress (30 October 2026)
 
-- ✅ Play Console personal account created; **identity verified**.
-- ✅ App created in Play Console: "KidRota School Holiday Planner", package
-  `com.kidrota.app`, Free.
-- ✅ Upload key created (`C:\Users\robta\KidRota-keys\kidrota-upload.jks`,
-  alias `upload`) and a signed `app-release.aab` (1.0.0, versionCode 10000)
-  built from commit `f19ce6f`.
-- ✅ Uploaded to **internal testing** with a tester list "Me". "Item not
-  found" on the opt-in link cleared once the release showed "Available to
-  internal testers"; installed and tested on the phone.
-- ✅ Owner's test notes turned into **1.0.1** (see "What the app is today").
-- ✅ 1.0.1 (versionCode 10001) built, signed and uploaded to internal
-  testing (4 Oct 2026).
-- ✅ App content forms done (PEGI 3, 18+ only, no data collected, no
-  sign-in), store listing (feature graphic `design/store/`), store
-  settings. **Closed testing – Alpha** set up (177 countries, testers from
-  a paid testing service + "Me") with 1.0.1, and all 14 changes submitted
-  for Google review (11–14 Oct 2026). Once "Available to testers": give the
-  opt-in link to the testing service; the 14 days start when 12+ opt in.
-- ✅ Payments profile (individual, UK) with a verified bank account;
-  subscription `kidrota_pro_yearly` ("KidRota Pro") created with base plan
-  `yearly`, auto-renewing, £1.99 (other countries converted), active.
-- ✅ Testing service report (25 Oct 2026): no crashes or bugs. Acted on:
-  keyword-rich description, new coral-style captioned screenshots and
-  feature graphic (`design/store/`), all uploaded to the listing (28 Oct).
-  Still to do from it, in 1.0.2: a short "How it works" page and a privacy
-  line on the welcome page. The rest (rate button, feedback, sharing)
-  already exists.
+**Where things stand:** the 14-day closed test (12+ testers) is **complete**.
+The next job is **Apply for production** in Play Console.
+
+- ✅ Play Console personal account, identity verified. App "KidRota School
+  Holiday Planner", package `com.kidrota.app`, Free.
+- ✅ Upload key `C:\Users\robta\KidRota-keys\kidrota-upload.jks` (alias
+  `upload`). 1.0.1 (versionCode 10001) is on internal testing and
+  **Closed testing – Alpha** (177 countries; testers from a paid testing
+  service plus the "Me" list).
+- ✅ App content forms (PEGI 3, 18+, no data collected, no sign-in), store
+  settings, store listing (`STORE-LISTING.md`: keyword description, coral
+  captioned screenshots and feature graphic in `design/store/`).
+- ✅ Payments profile (individual, UK, bank verified). Subscription
+  `kidrota_pro_yearly` ("KidRota Pro"), base plan `yearly`, £1.99,
+  auto-renewing, active. Payments are **Google Play Billing only** (no
+  Stripe: Play requires its own billing for digital features).
+- ✅ Testing service report (25 Oct): no crashes or bugs. Still to do from
+  it, in 1.0.2: a short "How it works" page and a privacy line on the
+  welcome page.
+- ✅ Closed test 14 days **finished** (owner confirmed, 30 Oct 2026).
+- ✅ Demo video **draft 7** (47.5 s): `design/store/video/kidrota-demo.mp4`.
+  See "Demo video" below. Not yet on YouTube or the listing.
+- ⏳ Licence testing (Settings → License testing → list "Me") is set, but a
+  test purchase on 23 Oct still showed a real charge. Check the phone's
+  Play account is in the "Me" list, then test purchase / restore / cancel
+  (review P6-P10).
+- ⏳ `privacy.html` (dated 4 Oct 2026) still to re-upload to
+  `t80.dev/kidrota/`.
+- ⏳ Trader status (public address on the listing): still to decide.
 - ⏳ GitHub Actions release workflow (`.github/workflows/release.yml`) is
-  written but not yet usable: it must be merged to `main`, and needs four
-  secrets plus a Play service account.
-- ⏳ Licence testing (Settings → License testing → email list "Me") is set,
-  but a test purchase still showed a real charge on 23 Oct — check the
-  phone's Play account matches the list. Then a test purchase / restore / cancel on the phone
-  (review P6-P10). Trader status (public address) still to decide.
-- ⏳ **Next:** update the phone from Play and re-test (the update installs
-  over 1.0.0, so the v3 migration runs on real data — AM/PM plans should
-  show as 8–12 / 12–18); re-upload `privacy.html`; set up **closed
-  testing** and recruit 12+ testers for the 14 days.
-- Not yet: website deploy to Cloudflare (zip: `docs/` files inside a
-  `kidrota/` folder — rebuild it from `docs/`), payments profile,
-  `kidrota_pro_yearly` subscription, App content forms (answers in
-  `PRE-RELEASE-REVIEW.md` → "Play Console answers"), store listing
-  (`STORE-LISTING.md`), screenshots, feature graphic, closed test (15+
-  testers, 14 days), production.
-- Decided: free version = unlimited children, 1 holiday ever; theme is
-  Light/Dark only; Home ⭐ rating card (5th open, "Not now" = 10 opens, 3
-  strikes); keep `allowBackup` on. Marketing video prompts were written
-  for Kling (Higgsfield); not in the repo.
+  written but unused: needs merging to `main`, four secrets and a Play
+  service account. The owner deferred this.
+
+## Demo video
+
+Source and rebuild steps live in `design/store/video/source/`:
+
+- `record2.cjs`: Playwright recording of the app (needs the dev server on
+  port 5173) → `video2/demo.webm`. Already recorded; no need to redo.
+- `v2layers.cjs`: renders the background, phone frame, title and end cards
+  and the eight headlines → `v2/*.png`.
+- `v2build.py`: cuts and times the scenes, moves the "camera" (a crop of
+  half the phone, which follows each tap), adds headlines, voice and music →
+  `../kidrota-demo.mp4`. Run `python3 v2build.py` (needs ffmpeg).
+- Voice: ElevenLabs v4 turbo on Higgsfield, voice "Raina" (preset
+  `1c3a4775-9afb-52c1-a2bf-b6543231a9a1`). `vo2/vo2.mp3` is the full take;
+  lines 3 and 6 were re-recorded on their own (`vo2/line3.mp3`,
+  `vo2/line6.mp3`). Music: "Taking Flight" (Blue Deer Studio),
+  `vo2/music-taking-flight.mp3`. The cloud container can't download from
+  Higgsfield's CDN, so the owner downloads new takes and attaches them.
+
+Current script (what's on screen in brackets):
+
+1. (Title card, then home) "Every school holiday, I never know who is
+   looking after which kid and when! So I plan it all in KidRota."
+2. (Week grid) "Here's half term. Anything in red is a gap."
+3. (Booking, slowed so words land on taps) "I tap Ava, then Monday, pick
+   the holiday club, eight till three, tick Leo too, and copy it to
+   Tuesday and Wednesday."
+4. (Cut straight to picking Mum, Rest of day) "Then I take over for the
+   rest of the day."
+5. (Cut straight to the filled week) "Now I can see Friday afternoon still
+   needs sorting."
+6. (Share panel) "Once it's updated, I can share the plan as a picture,
+   straight to the family WhatsApp, so that Dad, grandparents and anyone
+   else all know the plan."
+7. (Home) "No account, no ads, and everything stays on my phone."
+8. (End card) "KidRota. School holiday care, sorted."
+
+Open question for the owner: the share panel sits still for about 8 s.
+Option offered: show the actual week picture instead. Then upload to
+YouTube and add the link to the store listing.
 
 ## Waiting on the owner (outside the code)
 
-- [ ] Google Play Console developer account (personal) and ID check.
-- [ ] Upload `privacy.html`, `terms.html`, `licenses.html` and `index.html`
-      (all updated 27 Sep 2026) to `t80.dev/kidrota/` and confirm they load
-      (not reachable from the review environment, so still unverified).
-- [ ] Play **payments profile** (needed to sell the subscription) and the
-      trader-address decision.
+- [ ] **Apply for production** (Play Console → Dashboard). Google asks
+      about the closed test; approval can take up to about 7 days.
+- [ ] Re-upload `privacy.html` (and check `terms.html`, `licenses.html`,
+      `index.html`) to `t80.dev/kidrota/`; confirm they load.
+- [ ] Fix licence testing, then test purchase / restore / cancel.
+- [ ] Trader-address decision.
 - [ ] Email forwarding for `kidrota@t80.dev`.
-- [ ] Create the **upload key** (`C:\Users\robta\KidRota-keys\kidrota-upload.jks`,
-      alias `upload`) and the first signed `app-release.aab`; back up the
-      key and passwords. Steps: "Next steps" 2 below, and "Signing" in README.
-- [ ] Recruit **12+ testers** (Android + Gmail) for the mandatory 14-day
-      closed test; add them as licence testers so Pro is free for them.
-- [ ] Optional: a 30–60 s screen recording for a YouTube promo video.
+- [ ] Demo video: approve, upload to YouTube, add link to the listing.
 
 ## Open decisions
 
@@ -218,24 +237,17 @@ reminders default **Off**; holidays capped at **70 days**.
 
 ## Next steps, in order
 
-1. ~~Pre-release review~~ and ~~fixes B1-B2, S1-S12~~ — done. **Next: the
-   owner re-tests on the phone** (report Part B, steps 3-15), especially
-   reminders (P3), backup restore (P4) and the merged manifest (P1), and
-   uploads `privacy.html`, `terms.html` **and the new `licenses.html`**.
-2. Upload key + signed `.aab` (Android Studio → Build → Generate Signed App
-   Bundle → Android App Bundle → Create new key store → release).
-3. Play Console: create the app ("KidRota School Holiday Planner", English
-   UK, App, Free), complete the app-content forms (privacy URL, data
-   safety, target audience 18+, content rating, ads: none, app access).
-4. Internal testing release (accept Play App Signing, release name 1.0.0);
-   install from Play on the phone (uninstall the Android Studio build first
-   — different signature).
-5. Set up the Play **payments profile**, then create the
-   `kidrota_pro_yearly` subscription (yearly base plan, £1.99), add licence
-   testers, test purchase / restore / cancel (review P6-P10).
-6. Store listing: short and full description, screenshots, feature graphic
-   (1024×500), icon `design/icon/play-store-icon-512.png`.
-7. Closed test with 12+ testers for 14 days, then apply for production.
+1. **Apply for production** in Play Console and answer the questions about
+   the closed test (who tested, what feedback, what changed: the 18 owner
+   notes → 1.0.1, and the testing service's report → new listing).
+2. While waiting for approval: re-upload `privacy.html`, fix licence
+   testing and run the purchase tests, decide trader status.
+3. Build **1.0.2**: "How it works" page and a privacy line on the welcome
+   page (from the testing report). Bump versionCode to 10002.
+4. Once production is approved: create a production release (1.0.1 or
+   1.0.2), staged rollout if offered.
+5. Demo video: finish it, upload to YouTube, add the link to the listing.
+6. Later: set up the GitHub Actions release workflow.
 
 ## Pre-release review prompt
 
