@@ -186,11 +186,14 @@ user's own email app with a message to `kidrota@t80.dev` filled in, including
 the app version (`utils/feedback.ts`). The app sends nothing itself; the
 privacy policy's "Sending feedback" section says what happens to the email.
 
-The legal pages' source is `docs/` (privacy policy, terms, and the
-open-source licences page, which Settings → About links to); they are served
-from `https://t80.dev/kidrota/`. Google Play needs the privacy policy as a web
-page, not a PDF. When a dependency is added, add its notice to
-`docs/licenses.html`.
+The legal pages (privacy policy, terms, the website's home page and the
+open-source licences page, which Settings → About links to) live in a
+**separate repository, `RobT8/t80-site`**, folder `kidrota/`. Cloudflare
+Pages publishes that repository to `https://t80.dev/` on every push to its
+`main` branch, so `t80-site/kidrota/privacy.html` is served at
+`https://t80.dev/kidrota/privacy.html`. Google Play needs the privacy policy
+as a web page, not a PDF. When a dependency is added, add its notice to
+`kidrota/licenses.html` in that repository.
 
 ## Reminders
 

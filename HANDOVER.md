@@ -70,8 +70,8 @@ and checked in the browser at phone size; none of it seen on the phone yet:**
   "Add a plan someone sent you" are removed (owner's decision: keep it
   simple, family don't need the app or Pro). Share offers this week or the
   whole holiday (one picture per week); every day of the week is always in
-  the picture. Privacy policy wording updated (`docs/privacy.html`, dated
-  4 Oct 2026) — **re-upload it to t80.dev**. Store listing and website
+  the picture. Privacy policy wording updated (`privacy.html` in the
+  `RobT8/t80-site` repo, dated 4 Oct 2026) — **not yet live on t80.dev**. Store listing and website
   bullets updated to match.
 
 - **Free:** unlimited children, 1 holiday *ever* (deleting it does not free
@@ -80,7 +80,7 @@ and checked in the browser at phone size; none of it seen on the phone yet:**
   `kidrota_pro_yearly` — unlimited holidays, custom carer colours. No lifetime option.
 - The day runs 08:00–18:00; a day is complete only when every child has no gap.
 - Legal pages: `https://t80.dev/kidrota/privacy.html` and `terms.html`
-  (source in `docs/`, dated 26 September 2026). Contact `kidrota@t80.dev`.
+  (source in the `RobT8/t80-site` repo, folder `kidrota/`; terms dated 4 Oct 2026). Contact `kidrota@t80.dev`.
 - Icon "AB1" (calendar + grown-up + child); source `design/icon/`.
 - 291 tests pass; `npm run lint` and `npm run build` clean (as of this file).
 - **Pre-release review done 27 Sep 2026 — `PRE-RELEASE-REVIEW.md`.** The
@@ -167,8 +167,11 @@ Keep the closed test running until the decision arrives.
   test purchase on 23 Oct still showed a real charge. Check the phone's
   Play account is in the "Me" list, then test purchase / restore / cancel
   (review P6-P10).
-- ⏳ `privacy.html` (dated 4 Oct 2026) still to re-upload to
-  `t80.dev/kidrota/`.
+- ⏳ Website moving to GitHub (30 Oct 2026): the legal pages now live in
+  the **`RobT8/t80-site`** repo (folder `kidrota/`, one folder per app;
+  `docs/` here is removed). Next: connect that repo to a new Cloudflare
+  Pages project and move the `t80.dev` domain onto it. Until then the live
+  `privacy.html` is still the 27 Sep version.
 - ⏳ Trader status (public address on the listing): still to decide.
 - ⏳ GitHub Actions release workflow (`.github/workflows/release.yml`) is
   written but unused: needs merging to `main`, four secrets and a Play
@@ -218,8 +221,8 @@ YouTube and add the link to the store listing.
 
 - [x] **Apply for production**: submitted 30 Oct 2026. Watch email and
       the Dashboard for the decision (up to about 7 days).
-- [ ] Re-upload `privacy.html` (and check `terms.html`, `licenses.html`,
-      `index.html`) to `t80.dev/kidrota/`; confirm they load.
+- [ ] Connect `RobT8/t80-site` to Cloudflare Pages, move `t80.dev` onto
+      it, then confirm privacy/terms/licences load and show 4 Oct 2026.
 - [ ] Fix licence testing, then test purchase / restore / cancel.
 - [ ] Trader-address decision.
 - [ ] Email forwarding for `kidrota@t80.dev`.
@@ -241,7 +244,7 @@ reminders default **Off**; holidays capped at **70 days**.
 ## Next steps, in order
 
 1. ~~Apply for production~~: submitted 30 Oct 2026; waiting on Google.
-2. While waiting for approval: re-upload `privacy.html`, fix licence
+2. While waiting for approval: get `t80-site` live on Cloudflare Pages, fix licence
    testing and run the purchase tests, decide trader status.
 3. Build **1.0.2**: "How it works" page and a privacy line on the welcome
    page (from the testing report). Bump versionCode to 10002.

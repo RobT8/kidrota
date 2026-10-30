@@ -92,9 +92,10 @@ export const FREE_TIER_MAX_HOLIDAYS = 1;
  * Outward-facing links and addresses, kept together so there is one place to
  * change them.
  *
- * The legal pages live on t80.dev; docs/ in this repository holds their
- * source. Google Play requires the privacy policy URL to be publicly
- * reachable before the app can be published.
+ * The legal pages live on t80.dev; their source is the separate
+ * RobT8/t80-site repository (folder kidrota/). Google Play requires the
+ * privacy policy URL to be publicly reachable before the app can be
+ * published.
  */
 export const SUPPORT_EMAIL = 'kidrota@t80.dev';
 export const PRIVACY_URL = 'https://t80.dev/kidrota/privacy.html';
