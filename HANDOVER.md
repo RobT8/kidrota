@@ -213,7 +213,7 @@ YouTube and add the link to the store listing.
 
 ## Waiting on the owner (outside the code)
 
-- [ ] **Apply for production** (Play Console → Dashboard). Google asks
+- [ ] **Apply for production** (Play Console → Dashboard). Draft answers in `PRODUCTION-APPLICATION.md`. Google asks
       about the closed test; approval can take up to about 7 days.
 - [ ] Re-upload `privacy.html` (and check `terms.html`, `licenses.html`,
       `index.html`) to `t80.dev/kidrota/`; confirm they load.
