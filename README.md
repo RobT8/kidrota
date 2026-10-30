@@ -244,13 +244,13 @@ shows the price Play reports in the buyer's own currency.
 
 | Product | Play Console type | ID | Price |
 |---|---|---|---|
-| Pro | Subscription, one yearly auto-renewing base plan | `kidrota_pro_yearly` | £1.99 a year |
+| Pro | Subscription, one yearly auto-renewing base plan | `kidrota_pro_yearly` | £2.49 a year (UK, incl. VAT) |
 
 `utils/billing.ts` wraps `capacitor-plugin-cdv-purchase`, the Capacitor edition
 of `cordova-plugin-purchase`. There is no receipt server, so an approved
 purchase is finished (acknowledged to Play) on the phone straight away — an
 unacknowledged purchase is refunded by Play after three days. The trade-off
-is that a patched APK could fake Pro; for £1.99 a year that is accepted.
+is that a patched APK could fake Pro; for £2.49 a year that is accepted.
 
 Whether Pro is unlocked is decided by `resolvePro` in `utils/freeTier.ts`:
 until Play has loaded the account's purchases the last known answer stands, so

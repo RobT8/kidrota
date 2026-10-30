@@ -76,7 +76,7 @@ and checked in the browser at phone size; none of it seen on the phone yet:**
 
 - **Free:** unlimited children, 1 holiday *ever* (deleting it does not free
   the slot; a finished holiday's dates lock). The one-child cap was dropped
-  on 3 Oct 2026. **Pro:** £1.99/year auto-renewing subscription
+  on 3 Oct 2026. **Pro:** £2.49/year (UK, incl. VAT) auto-renewing subscription
   `kidrota_pro_yearly` — unlimited holidays, custom carer colours. No lifetime option.
 - The day runs 08:00–18:00; a day is complete only when every child has no gap.
 - Legal pages: `https://t80.dev/kidrota/privacy.html` and `terms.html`
@@ -153,7 +153,10 @@ Keep the closed test running until the decision arrives.
   settings, store listing (`STORE-LISTING.md`: keyword description, coral
   captioned screenshots and feature graphic in `design/store/`).
 - ✅ Payments profile (individual, UK, bank verified). Subscription
-  `kidrota_pro_yearly` ("KidRota Pro"), base plan `yearly`, £1.99,
+  `kidrota_pro_yearly` ("KidRota Pro"), base plan `yearly`, UK price
+  £2.08 before VAT = **£2.49 to buyers** (set 30 Oct 2026; was £1.99 before
+  VAT = £2.39). Google is the seller for VAT, so the owner (not VAT
+  registered) charges and pays none; Play adds 20% UK VAT and rounds down.
   auto-renewing, active. Payments are **Google Play Billing only** (no
   Stripe: Play requires its own billing for digital features).
 - ✅ Testing service report (25 Oct): no crashes or bugs. Still to do from

@@ -7,7 +7,7 @@ import { resolvePro } from './freeTier';
  * Purchases are checked on the phone against what Play reports, with no
  * receipt server: KidRota has no backend, and adding one only for this would
  * break the promise that nothing leaves the device. The trade-off is that a
- * determined user could patch the check out of the APK; for a £1.99 a year
+ * determined user could patch the check out of the APK; for a £2.49 a year
  * planner that is an acceptable cost.
  *
  * Pro is one product: a yearly subscription that Google Play renews
@@ -21,7 +21,7 @@ export interface BillingState {
   pro: boolean;
   /** Play is connected and can take a purchase. */
   available: boolean;
-  /** Localised yearly price from Play, e.g. "£1.99". Null until loaded. */
+  /** Localised yearly price from Play, e.g. "£2.49". Null until loaded. */
   price: string | null;
   /**
    * A purchase is waiting on payment — a cash payment at a shop, say. Play

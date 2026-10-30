@@ -1,4 +1,6 @@
-# KidRota — Apply for production (draft answers)
+# KidRota — Apply for production (answers as submitted 30 Oct 2026)
+
+Note: answer 5 says £1.99/yr; the UK price is now £2.49 including VAT.
 
 Draft answers for Play Console → **Dashboard → Apply for production**,
 written 30 October 2026 after the 14-day closed test (Closed testing –
