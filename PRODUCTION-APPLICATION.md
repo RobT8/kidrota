@@ -26,9 +26,9 @@ testing service.
 
 ### 2. Describe the engagement you received from testers during your closed test.
 
-> 14-day test with [number] testers from a testing service plus friends and family. Testers installed from Play, added children and carers, planned a holiday week, copied sessions to other days and shared the week as a picture. The testing service sent a written report on 25 October.
+> 14-day test with 12 testers from a testing service plus friends and family. Testers installed from Play, added children and carers, planned a holiday week, copied sessions to other days and shared the week as a picture. The testing service sent a written report on 25 October.
 
-*(282 characters)*
+*(278 characters)*
 
 ### 3. Provide a summary of the feedback you received from testers. Include how you collected it.
 
