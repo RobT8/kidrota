@@ -228,7 +228,11 @@ YouTube and add the link to the store listing.
       the Dashboard for the decision (up to about 7 days).
 - [x] `t80.dev` moved to the `t80-site` Worker; privacy shows 4 Oct 2026.
 - [x] Terms, licences and the KidRota home page load on t80.dev (30 Oct).
-- [ ] Fix licence testing, then test purchase / restore / cancel.
+- [ ] Delete the old Cloudflare Pages project `t80-dev` (no domain now;
+      reminder set for 6 Nov 2026).
+- [ ] Fix licence testing, then test purchase / restore / cancel. Play
+      Console account is the developer account; the licence-tester list must
+      hold the Google account the *phone's Play Store* uses.
 - [ ] Trader-address decision.
 - [ ] Email forwarding for `kidrota@t80.dev`.
 - [ ] Demo video: approve, upload to YouTube, add link to the listing.
