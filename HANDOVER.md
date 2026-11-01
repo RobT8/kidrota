@@ -235,7 +235,10 @@ YouTube and add the link to the store listing.
       card, always approves"). Test purchase went through but **Pro only
       unlocked after restarting the app**; fixed in **1.0.2** (`buyPro` in
       `utils/billing.ts` re-reads Play's purchases after `order()`). 1.0.2
-      needs uploading to internal testing and the purchase retesting. (Test email to kidrota@t80.dev arrived,
+      needs uploading to internal testing and the purchase retesting.
+      1 Nov: 1.0.2 signed AAB built (Android Studio remembers the key path
+      and passwords). Note: `dir /s` for *.jks did not list the upload key,
+      though the build found it — owner to confirm the file and back it up. (Test email to kidrota@t80.dev arrived,
       1 Nov 2026 ✓)
 - [x] `t80.dev` moved to the `t80-site` Worker; privacy shows 4 Oct 2026.
 - [x] Terms, licences and the KidRota home page load on t80.dev (30 Oct).
