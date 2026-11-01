@@ -32,6 +32,41 @@ const FACES = [
 const TITLES = `h1, h2, h3, .welcome__title, .step__title, .modal__title, .planner-header__titles h1,
   .empty-state__title, .carer-group__title, .settings-group__title, .holiday-card__name, .holiday-card__title`;
 
+
+// Ivory & Ink with edging: every card, button, pill, tab and week cell gets
+// an outline. Built from the same tokens as B plus EDGE() below.
+const IVORY = {
+      bg: '#F6F1E6', card: '#FFFDF8', border: '#DED3BF', text: '#14110F', text2: '#4B433B', text3: '#7A7064',
+      accent: '#14110F', 'accent-bg': '#ECE3D2', 'accent-text': '#FFFDF8',
+      'red-text': '#9E2A1E', 'danger-bg': '#9E2A1E', 'danger-on': '#FFFFFF',
+      green: '#6E9A5B', amber: '#C99A3E', red: '#C9604F',
+      'carer-family-bg': '#DDEBE2', 'carer-family-text': '#123D2C',
+      'carer-club-bg': '#E3E0F3', 'carer-club-text': '#2A245E',
+      'carer-parent-bg': '#F2E3C6', 'carer-parent-text': '#4A2D06',
+      'carer-playdate-bg': '#F3DDE3', 'carer-playdate-text': '#5C1A31',
+      'carer-other-bg': '#E9E4D9', 'carer-other-text': '#38342C',
+      'carer-gap-bg': '#F8E0DA', 'carer-gap-text': '#7A1C12',
+    };
+function EDGE({ w, line, cellLine, bg, shadow, pillFill }) {
+  return `
+  :root, :root[data-theme] { --bg: ${bg} !important; --border: ${line} !important; }
+  .card, .holiday-card, .stat, .empty-state { border: ${w} solid ${line} !important; ${shadow ? `box-shadow: ${shadow};` : ''} }
+  .button { border: ${w} solid var(--text) !important; }
+  .button--secondary, .share-button, .holiday-card__cta {
+    border: ${w} solid var(--text) !important;
+    background: ${pillFill ? 'var(--text)' : 'var(--card)'} !important;
+    color: ${pillFill ? 'var(--card)' : 'var(--text)'} !important; }
+  .fab { border: ${w} solid var(--text) !important; }
+  .segmented { border: ${w} solid ${line} !important; background: var(--card) !important; }
+  .segmented__option--active { background: var(--text) !important; color: var(--card) !important; }
+  .chip { border: ${w} solid ${line} !important; }
+  .slot:not(.slot--gap) { box-shadow: inset 0 0 0 1px ${cellLine} !important; }
+  .slot--gap { border-width: 1.5px !important; }
+  .bottom-nav { border-top: ${w} solid ${line} !important; }
+  .bottom-nav__item--active .bottom-nav__label { font-weight: 700; }
+  `;
+}
+
 const THEMES = [
   {
     id: 'a-midnight-gold', name: 'A · Midnight & Gold', note: 'Dark navy, gold accents, Playfair titles',
@@ -64,6 +99,21 @@ const THEMES = [
       'carer-other-bg': '#E9E4D9', 'carer-other-text': '#38342C',
       'carer-gap-bg': '#F8E0DA', 'carer-gap-text': '#7A1C12',
     },
+  },
+  {
+    id: 'b1-ivory-fine', name: 'B1 · Ivory & Ink, fine edging', note: '1px taupe outlines, black active tab, outlined pills',
+    title: "'Cormorant', serif", titleWeight: 700, titleScale: 1.18, t: IVORY,
+    extra: EDGE({ w: '1px', line: '#A89A84', cellLine: 'rgba(20,17,15,0.18)', bg: '#F3ECDD' }),
+  },
+  {
+    id: 'b2-ivory-bold', name: 'B2 · Ivory & Ink, bold edging', note: '1.5px black outlines on everything, deeper ivory',
+    title: "'Cormorant', serif", titleWeight: 700, titleScale: 1.18, t: IVORY,
+    extra: EDGE({ w: '1.5px', line: '#14110F', cellLine: 'rgba(20,17,15,0.30)', bg: '#EFE6D4' }),
+  },
+  {
+    id: 'b3-ivory-solid', name: 'B3 · Ivory & Ink, black pills', note: 'Black outlines, filled black buttons, lifted cards',
+    title: "'Cormorant', serif", titleWeight: 700, titleScale: 1.18, t: IVORY,
+    extra: EDGE({ w: '1.5px', line: '#14110F', cellLine: 'rgba(20,17,15,0.30)', bg: '#ECE2CE', pillFill: true, shadow: '0 6px 18px rgba(20,17,15,0.10)' }),
   },
   {
     id: 'c-emerald-champagne', name: 'C · Emerald & Champagne', note: 'Deep green, champagne gold, DM Serif titles',
@@ -105,7 +155,8 @@ function themeCss(th) {
   :root, :root[data-theme] { ${vars} color-scheme: ${th.t.bg < '#8' ? 'dark' : 'light'}; }
   body { font-family: Inter, -apple-system, Roboto, sans-serif !important; }
   ${TITLES} { font-family: ${th.title} !important; font-weight: ${th.titleWeight} !important;
-    letter-spacing: ${th.titleWeight >= 800 ? '-0.02em' : '0'}; ${th.titleScale ? `font-size: ${th.titleScale}em;` : ''} }`;
+    letter-spacing: ${th.titleWeight >= 800 ? '-0.02em' : '0'}; ${th.titleScale ? `font-size: ${th.titleScale}em;` : ''} }
+  ${th.extra || ''}`;
 }
 
 async function setUpFamily(browser) {
@@ -202,9 +253,12 @@ async function sheet(browser, th) {
 (async () => {
   const browser = await chromium.launch();
   const state = await setUpFamily(browser);
-  await shoot(browser, state, 'current', null);
-  await sheet(browser, { id: 'current', name: 'Today', note: 'The current light theme, for comparison' });
-  for (const th of THEMES) {
+  if (!process.env.ONLY) {
+    await shoot(browser, state, 'current', null);
+    await sheet(browser, { id: 'current', name: 'Today', note: 'The current light theme, for comparison' });
+  }
+  const only = process.env.ONLY ? process.env.ONLY.split(',') : null;
+  for (const th of THEMES.filter((x) => !only || only.includes(x.id))) {
     await shoot(browser, state, th.id, themeCss(th));
     await sheet(browser, th);
     console.log('wrote', th.id);
