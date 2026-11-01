@@ -163,7 +163,7 @@ Keep the closed test running until the decision arrives.
   it, in 1.0.2: a short "How it works" page and a privacy line on the
   welcome page.
 - ✅ Closed test 14 days **finished** (owner confirmed, 30 Oct 2026).
-- ✅ **Applied for production** 30 Oct 2026. ⏳ Awaiting Google's decision.
+- ✅ **Applied for production** 30 Oct 2026. ✅ **Production access granted** (owner, 1 Nov 2026). No production release created yet.
 - ✅ Demo video **draft 7** (47.5 s): `design/store/video/kidrota-demo.mp4`.
   See "Demo video" below. On YouTube (unlisted, owner's t80.dev channel)
   since 30 Oct 2026: https://youtu.be/-ZDlxb4gnOI — added to the main
@@ -229,8 +229,9 @@ YouTube and add the link to the store listing.
 
 ## Waiting on the owner (outside the code)
 
-- [x] **Apply for production**: submitted 30 Oct 2026. Watch email and
-      the Dashboard for the decision (up to about 7 days).
+- [x] **Apply for production**: submitted 30 Oct, **granted 1 Nov 2026**.
+- [ ] Before the first production release: purchase/restore/cancel test,
+      test email to kidrota@t80.dev, trader-status declaration.
 - [x] `t80.dev` moved to the `t80-site` Worker; privacy shows 4 Oct 2026.
 - [x] Terms, licences and the KidRota home page load on t80.dev (30 Oct).
 - [ ] Delete the old Cloudflare Pages project `t80-dev` (no domain now;
@@ -262,7 +263,7 @@ reminders default **Off**; holidays capped at **70 days**.
 
 ## Next steps, in order
 
-1. ~~Apply for production~~: submitted 30 Oct 2026; waiting on Google.
+1. ~~Apply for production~~: granted 1 Nov 2026.
 2. While waiting for approval: fix licence
    testing and run the purchase tests, decide trader status.
 3. Build **1.0.2**: "How it works" page and a privacy line on the welcome
