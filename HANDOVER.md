@@ -238,7 +238,8 @@ YouTube and add the link to the store listing.
       needs uploading to internal testing and the purchase retesting.
       1 Nov: 1.0.2 signed AAB built (Android Studio remembers the key path
       and passwords). Note: `dir /s` for *.jks did not list the upload key,
-      though the build found it — owner to confirm the file and back it up. (Test email to kidrota@t80.dev arrived,
+      though the build found it — owner to confirm the file and back it up.
+      1.0.2 rolled out to internal testing (1 Nov 2026). (Test email to kidrota@t80.dev arrived,
       1 Nov 2026 ✓)
 - [x] `t80.dev` moved to the `t80-site` Worker; privacy shows 4 Oct 2026.
 - [x] Terms, licences and the KidRota home page load on t80.dev (30 Oct).
