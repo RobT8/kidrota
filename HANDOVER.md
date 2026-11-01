@@ -231,7 +231,11 @@ YouTube and add the link to the store listing.
 
 - [x] **Apply for production**: submitted 30 Oct, **granted 1 Nov 2026**.
 - [ ] Before the first production release: purchase/restore/cancel test,
-      trader-status declaration. (Test email to kidrota@t80.dev arrived,
+      trader-status declaration. **Licence testing works** (1 Nov: "Test
+      card, always approves"). Test purchase went through but **Pro only
+      unlocked after restarting the app**; fixed in **1.0.2** (`buyPro` in
+      `utils/billing.ts` re-reads Play's purchases after `order()`). 1.0.2
+      needs uploading to internal testing and the purchase retesting. (Test email to kidrota@t80.dev arrived,
       1 Nov 2026 ✓)
 - [x] `t80.dev` moved to the `t80-site` Worker; privacy shows 4 Oct 2026.
 - [x] Terms, licences and the KidRota home page load on t80.dev (30 Oct).
@@ -267,8 +271,11 @@ reminders default **Off**; holidays capped at **70 days**.
 1. ~~Apply for production~~: granted 1 Nov 2026.
 2. While waiting for approval: fix licence
    testing and run the purchase tests, decide trader status.
-3. Build **1.0.2**: "How it works" page and a privacy line on the welcome
-   page (from the testing report). Bump versionCode to 10002.
+3. **1.0.2** (versionCode 10002, version already bumped): the purchase
+   unlock fix. Upload to internal testing, retest purchase, then make it the
+   first production release.
+3b. **1.0.3**: "How it works" page and a privacy line on the welcome page
+   (from the testing report).
 4. Once production is approved: create a production release (1.0.1 or
    1.0.2), staged rollout if offered.
 5. Demo video: finish it, upload to YouTube, add the link to the listing.

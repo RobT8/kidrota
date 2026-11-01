@@ -194,7 +194,16 @@ export async function buyPro(): Promise<PurchaseOutcome> {
     return { kind: 'failed', message: 'Google Play has not loaded this option yet. Check your connection and try again.' };
   }
   const error = await offer.order();
-  if (!error) return { kind: 'done' };
+  if (!error) {
+    // order() resolves once Play has the purchase, but on the phone the
+    // purchase event did not always reach the store listeners: Pro only
+    // appeared after a restart (1 Nov 2026). Reading Play's purchases again
+    // takes the same path as launch, which does unlock it.
+    await store.restorePurchases().catch(() => undefined);
+    purchasesLoaded = true;
+    refresh();
+    return { kind: 'done' };
+  }
   if (error.code === ErrorCode.PAYMENT_CANCELLED) return { kind: 'cancelled' };
   return { kind: 'failed', message: error.message };
 }
