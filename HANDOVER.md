@@ -231,7 +231,8 @@ YouTube and add the link to the store listing.
 
 - [x] **Apply for production**: submitted 30 Oct, **granted 1 Nov 2026**.
 - [ ] Before the first production release: purchase/restore/cancel test,
-      test email to kidrota@t80.dev, trader-status declaration.
+      trader-status declaration. (Test email to kidrota@t80.dev arrived,
+      1 Nov 2026 ✓)
 - [x] `t80.dev` moved to the `t80-site` Worker; privacy shows 4 Oct 2026.
 - [x] Terms, licences and the KidRota home page load on t80.dev (30 Oct).
 - [ ] Delete the old Cloudflare Pages project `t80-dev` (no domain now;
@@ -244,7 +245,7 @@ YouTube and add the link to the store listing.
       P6-P10). Check whether the 23 Oct purchase was a real charge (Order
       management) and refund it if so.
 - [ ] Trader-address decision.
-- [ ] Email forwarding for `kidrota@t80.dev`.
+- [x] Email forwarding for `kidrota@t80.dev` works (tested 1 Nov 2026).
 - [x] Demo video on YouTube and in the store listing (sent for review
       30 Oct 2026).
 
