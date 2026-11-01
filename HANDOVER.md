@@ -239,7 +239,12 @@ YouTube and add the link to the store listing.
       1 Nov: 1.0.2 signed AAB built (Android Studio remembers the key path
       and passwords). Note: `dir /s` for *.jks did not list the upload key,
       though the build found it — owner to confirm the file and back it up.
-      1.0.2 rolled out to internal testing (1 Nov 2026). (Test email to kidrota@t80.dev arrived,
+      1.0.2 rolled out to internal testing (1 Nov 2026). **Retest failed:**
+      still locked until restart. Real cause: the plugin's `store.owned()`
+      checks only the OLDEST transaction for a product (LocalReceipts.find),
+      which was a lapsed test subscription. **1.0.3** replaces it with
+      `ownsPro()` (any live transaction counts), with tests. 1.0.3 needs
+      building, internal testing and the purchase retesting. (Test email to kidrota@t80.dev arrived,
       1 Nov 2026 ✓)
 - [x] `t80.dev` moved to the `t80-site` Worker; privacy shows 4 Oct 2026.
 - [x] Terms, licences and the KidRota home page load on t80.dev (30 Oct).
@@ -275,11 +280,11 @@ reminders default **Off**; holidays capped at **70 days**.
 1. ~~Apply for production~~: granted 1 Nov 2026.
 2. While waiting for approval: fix licence
    testing and run the purchase tests, decide trader status.
-3. **1.0.2** (versionCode 10002, version already bumped): the purchase
-   unlock fix. Upload to internal testing, retest purchase, then make it the
-   first production release.
-3b. **1.0.3**: "How it works" page and a privacy line on the welcome page
-   (from the testing report).
+3. **1.0.3** (versionCode 10003, version already bumped): the purchase
+   unlock fix (1.0.2's fix was not enough). Internal testing, retest the
+   purchase, then make it the first production release.
+3b. **1.0.4**: "How it works" page, privacy line on the welcome page, and
+   the chosen Ivory & Ink theme (`design/ui-concepts/`, B1-B3).
 4. Once production is approved: create a production release (1.0.1 or
    1.0.2), staged rollout if offered.
 5. Demo video: finish it, upload to YouTube, add the link to the listing.

@@ -141,7 +141,7 @@ async function connect(): Promise<void> {
 function refresh(): void {
   if (!cdv) return;
   const { store, Platform } = cdv;
-  const subscribed = store.owned({ id: PRO_YEARLY_ID, platform: Platform.GOOGLE_PLAY });
+  const subscribed = ownsPro(store.localTransactions);
   const pro = resolvePro(state.pro, purchasesLoaded, subscribed);
   if (purchasesLoaded) writeCache(pro);
 
@@ -150,6 +150,35 @@ function refresh(): void {
     pending: !pro && isPendingPro(store.localTransactions),
     price: store.get(PRO_YEARLY_ID, Platform.GOOGLE_PLAY)?.pricing?.price ?? null,
   });
+}
+
+/**
+ * Does any of these transactions give Pro right now?
+ *
+ * Used instead of the plugin's store.owned(), which looks only at the OLDEST
+ * transaction for a product (LocalReceipts.find in v13.18 keeps the earliest
+ * purchaseDate). On the phone that was a lapsed test subscription still held
+ * from earlier in the session, so a fresh purchase stayed locked until a
+ * restart dropped the old one (1 Nov 2026). Here any live transaction counts.
+ */
+export function ownsPro(
+  transactions: {
+    isPending?: boolean;
+    isConsumed?: boolean;
+    state?: string;
+    expirationDate?: Date;
+    products: { id: string }[];
+  }[],
+  now: Date = new Date(),
+): boolean {
+  return transactions.some(
+    (transaction) =>
+      transaction.products.some((product) => product.id === PRO_YEARLY_ID) &&
+      transaction.isPending !== true &&
+      transaction.isConsumed !== true &&
+      transaction.state !== 'cancelled' &&
+      (!transaction.expirationDate || transaction.expirationDate.getTime() > now.getTime()),
+  );
 }
 
 /** Is a Pro purchase waiting on payment among these transactions? */
