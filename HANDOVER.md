@@ -243,13 +243,14 @@ YouTube and add the link to the store listing.
       still locked until restart. Real cause: the plugin's `store.owned()`
       checks only the OLDEST transaction for a product (LocalReceipts.find),
       which was a lapsed test subscription. **1.0.3** replaces it with
-      `ownsPro()` (any live transaction counts), with tests. 1.0.3 needs
-      building, internal testing and the purchase retesting. (Test email to kidrota@t80.dev arrived,
+      `ownsPro()` (any live transaction counts), with tests. **1.0.3 on
+      internal testing since 1 Nov; owner confirmed the test purchase now
+      unlocks Pro straight away (6 Nov 2026).** Left before production:
+      trader status. (Test email to kidrota@t80.dev arrived,
       1 Nov 2026 ✓)
 - [x] `t80.dev` moved to the `t80-site` Worker; privacy shows 4 Oct 2026.
 - [x] Terms, licences and the KidRota home page load on t80.dev (30 Oct).
-- [ ] Delete the old Cloudflare Pages project `t80-dev` (no domain now;
-      reminder set for 6 Nov 2026).
+- [x] Old Cloudflare Pages project `t80-dev` deleted (6 Nov 2026).
 - [ ] Licence testing: **probably fixed 30 Oct 2026**. The "Me" list
       already held the phone's Play Store account, but it was not ticked on
       Manage account → License testing; now ticked, response
@@ -280,9 +281,9 @@ reminders default **Off**; holidays capped at **70 days**.
 1. ~~Apply for production~~: granted 1 Nov 2026.
 2. While waiting for approval: fix licence
    testing and run the purchase tests, decide trader status.
-3. **1.0.3** (versionCode 10003, version already bumped): the purchase
-   unlock fix (1.0.2's fix was not enough). Internal testing, retest the
-   purchase, then make it the first production release.
+3. **1.0.3** (versionCode 10003): the purchase unlock fix, tested OK on
+   internal testing (6 Nov). Make it the first production release once
+   trader status is done.
 3b. **1.0.4**: "How it works" page, privacy line on the welcome page, and
    the chosen Ivory & Ink theme (`design/ui-concepts/`, B1-B3).
 4. Once production is approved: create a production release (1.0.1 or
