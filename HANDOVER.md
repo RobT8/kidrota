@@ -281,11 +281,18 @@ reminders default **Off**; holidays capped at **70 days**.
 1. ~~Apply for production~~: granted 1 Nov 2026.
 2. While waiting for approval: fix licence
    testing and run the purchase tests, decide trader status.
-3. **1.0.3** (versionCode 10003): the purchase unlock fix, tested OK on
-   internal testing (6 Nov). Make it the first production release once
-   trader status is done.
-3b. **1.0.4**: "How it works" page, privacy line on the welcome page, and
-   the chosen Ivory & Ink theme (`design/ui-concepts/`, B1-B3).
+3. **1.0.4** (versionCode 10004, version bumped 6 Nov): the new
+   **"White & Gold"** look (concept `design/ui-concepts/w2-*`, chosen by the
+   owner 6 Nov over B1-B3 and W1/W3/W4). Built into `styles/index.css`:
+   white page, black frames (`--edge`), solid black buttons, gold details
+   (`--gold`, `--gold-text`), Playfair Display titles (bundled via
+   `@fontsource/playfair-display`, OFL notice added to t80-site
+   licences.html), and a matching dark mode (near-black, ivory frames and
+   buttons). Checked every main screen in both themes; contrast lowest
+   5.0:1. Owner wants to launch with this: build 1.0.4, internal test,
+   then the first production release, **UK only** (trader status
+   deferred; EU later).
+3b. Later: "How it works" page and a privacy line on the welcome page.
 4. Once production is approved: create a production release (1.0.1 or
    1.0.2), staged rollout if offered.
 5. Demo video: finish it, upload to YouTube, add the link to the listing.

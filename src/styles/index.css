@@ -1,49 +1,63 @@
 /* KidRota global styles — design tokens and base layout.
-   Colours come from the project brief; every colour is a custom property so
-   light/dark/system theming is a single data-theme swap on <html>. */
+   Look: "White & Gold" (chosen 6 Nov 2026, design/ui-concepts/w2-*): a crisp
+   white page, every card, button and cell framed in a fine black line, solid
+   black buttons, gold details and Playfair Display titles. Every colour is a
+   custom property so light/dark/system theming is a single data-theme swap
+   on <html>. */
 
 :root {
-  --bg: #F5F3EE;
+  --bg: #FFFFFF;
   --card: #FFFFFF;
-  --border: #E5E3DE;
-  --text: #1A1A1A;
-  --text2: #6B6A66;
+  /* Doubles as the frame colour round cards, buttons and fields. */
+  --border: #1A1A1A;
+  --text: #0A0A0A;
+  --text2: #454545;
   /* Decoration only — punctuation, "+" glyphs inside labelled controls, the
      repeated app-name eyebrow. Below 4.5:1 on small text by design, so
      anything a user actually needs to read uses --text2. */
-  --text3: #8A8880;
-  --accent: #185FA5;
-  --accent-bg: #E6F1FB;
+  --text3: #7A7A7A;
+  --accent: #0A0A0A;
+  --accent-bg: #F2F2F2;
   /* Text sitting ON the accent colour. The accent inverts between themes, so
      a hard-coded white would drop to ~2:1 on dark mode's light blue. */
   --accent-text: #FFFFFF;
-  --green: #97C459;
-  --amber: #EFB959;
-  --red: #F09595;
+  --green: #4F9A5E;
+  --amber: #B8914A;
+  --red: #C9604F;
   /* Red used as FOREGROUND text; it must invert for dark mode. */
-  --red-text: #A32D2D;
+  --red-text: #A12A1C;
   /* Destructive button, which needs its own pair: the foreground red above
      would be unreadable as a button background in dark mode. */
-  --danger-bg: #A32D2D;
+  --danger-bg: #A12A1C;
   --danger-on: #FFFFFF;
+
+  /* Gold details: a line colour, and a darker gold that passes 4.5:1 as
+     text (5.0:1 on white). */
+  --gold: #B8914A;
+  --gold-text: #8C6A2F;
+  /* Width of the frame round cards and controls. */
+  --edge: 1px;
+  /* Thin outline round the coloured week cells. */
+  --cell-line: rgba(10, 10, 10, 0.22);
+  --title-font: 'Playfair Display', Georgia, serif;
 
   --radius: 8px;
   --radius-lg: 12px;
   --radius-xl: 24px;
 
   /* Carer type swatches — background / text pairs used by the weekly grid */
-  --carer-family-bg: #E1F5EE;
-  --carer-family-text: #085041;
-  --carer-club-bg: #EEEDFE;
-  --carer-club-text: #3C3489;
-  --carer-parent-bg: #FAEEDA;
-  --carer-parent-text: #633806;
-  --carer-playdate-bg: #FBEAF0;
-  --carer-playdate-text: #72243E;
-  --carer-other-bg: #F1EFE8;
-  --carer-other-text: #444441;
-  --carer-gap-bg: #FCEBEB;
-  --carer-gap-text: #791F1F;
+  --carer-family-bg: #E3F2EA;
+  --carer-family-text: #0E3B29;
+  --carer-club-bg: #E8E6F8;
+  --carer-club-text: #25205A;
+  --carer-parent-bg: #F7EBD3;
+  --carer-parent-text: #452A05;
+  --carer-playdate-bg: #F8E3EA;
+  --carer-playdate-text: #57182E;
+  --carer-other-bg: #EEEEEC;
+  --carer-other-text: #333331;
+  --carer-gap-bg: #FBE6E1;
+  --carer-gap-text: #7A1C12;
 }
 
 /* Dark palette. `data-theme` on <html> is always a RESOLVED theme — utils/theme.ts
@@ -52,18 +66,26 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --bg: #1A1A1A;
-  --card: #242422;
-  --border: #3A3A38;
-  --text: #E8E6DE;
-  --text2: #9C9A92;
-  --text3: #8E8C84;
-  --accent: #85B7EB;
-  --accent-bg: #0C447C;
-  --accent-text: #1A1A1A;
-  --red-text: #F7C1C1;
-  --danger-bg: #7A2020;
-  --danger-on: #F7C1C1;
+  /* The same look in negative: near-black page, ivory frames and solid
+     ivory buttons, the gold kept. */
+  --bg: #0B0B0B;
+  --card: #151515;
+  --border: #E8E2D6;
+  --text: #F5F1E8;
+  --text2: #BDB6A8;
+  --text3: #8F897D;
+  --accent: #F5F1E8;
+  --accent-bg: #26231E;
+  --accent-text: #0B0B0B;
+  --green: #7FB77E;
+  --amber: #D4AF6A;
+  --red: #E07A6F;
+  --red-text: #FFB4A8;
+  --danger-bg: #8E2B22;
+  --danger-on: #FFFFFF;
+  --gold: #D4AF6A;
+  --gold-text: #D4AF6A;
+  --cell-line: rgba(245, 241, 232, 0.28);
 
   --carer-family-bg: #085041;
   --carer-family-text: #9FE1CB;
@@ -2086,4 +2108,98 @@ button {
   width: max(100%, 48px);
   height: max(100%, 48px);
   transform: translate(-50%, -50%);
+}
+
+/* ============================================================
+   White & Gold: frames, solid buttons, gold details, serif titles
+   ============================================================ */
+
+/* Placed last so these win over the base rules above at equal specificity. */
+
+.card,
+.holiday-card {
+  border: var(--edge) solid var(--border);
+}
+
+.button {
+  border-width: var(--edge);
+}
+
+.button--primary {
+  border-color: var(--accent);
+}
+
+/* Secondary actions are outlined, so they stay distinct from the solid
+   primary button they often sit next to. */
+.button--secondary {
+  background: var(--card);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+/* Small pill actions (Share, Fill the gaps) are solid, like the primary. */
+.share-button,
+.holiday-card__cta {
+  background: var(--accent);
+  color: var(--accent-text);
+  border: var(--edge) solid var(--accent);
+}
+
+.fab {
+  box-shadow:
+    0 0 0 3px var(--bg),
+    0 0 0 4px var(--gold);
+}
+
+.segmented {
+  background: var(--card);
+  border: var(--edge) solid var(--border);
+}
+
+.segmented__option--active {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.chip {
+  border-width: var(--edge);
+}
+
+.slot:not(.slot--gap) {
+  box-shadow: inset 0 0 0 1px var(--cell-line);
+}
+
+.slot--gap {
+  border-width: 1.5px;
+}
+
+.bottom-nav {
+  border-top: var(--edge) solid var(--border);
+}
+
+.bottom-nav__item--active {
+  color: var(--gold-text);
+}
+
+.bottom-nav__item--active .bottom-nav__label {
+  font-weight: 700;
+}
+
+.page-eyebrow {
+  color: var(--gold-text);
+  letter-spacing: 0.22em;
+}
+
+.page-title,
+.planner-header__name,
+.holiday-card__name,
+.welcome__title,
+.step__title,
+.modal__title {
+  font-family: var(--title-font);
+  font-weight: 700;
+}
+
+.holiday-card__name {
+  font-size: 16px;
 }
