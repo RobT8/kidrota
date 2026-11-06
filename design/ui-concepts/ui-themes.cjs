@@ -47,25 +47,44 @@ const IVORY = {
       'carer-other-bg': '#E9E4D9', 'carer-other-text': '#38342C',
       'carer-gap-bg': '#F8E0DA', 'carer-gap-text': '#7A1C12',
     };
-function EDGE({ w, line, cellLine, bg, shadow, pillFill }) {
+function EDGE({ w, line, cellLine, bg, shadow, pillFill, ink = 'var(--text)', inkOn = 'var(--card)', radius, extra = '' }) {
   return `
   :root, :root[data-theme] { --bg: ${bg} !important; --border: ${line} !important; }
   .card, .holiday-card, .stat, .empty-state { border: ${w} solid ${line} !important; ${shadow ? `box-shadow: ${shadow};` : ''} }
-  .button { border: ${w} solid var(--text) !important; }
+  .button { border: ${w} solid ${ink} !important; }
   .button--secondary, .share-button, .holiday-card__cta {
-    border: ${w} solid var(--text) !important;
-    background: ${pillFill ? 'var(--text)' : 'var(--card)'} !important;
-    color: ${pillFill ? 'var(--card)' : 'var(--text)'} !important; }
-  .fab { border: ${w} solid var(--text) !important; }
+    border: ${w} solid ${ink} !important;
+    background: ${pillFill ? ink : 'var(--card)'} !important;
+    color: ${pillFill ? inkOn : ink} !important; }
+  .fab { border: ${w} solid ${ink} !important; }
   .segmented { border: ${w} solid ${line} !important; background: var(--card) !important; }
-  .segmented__option--active { background: var(--text) !important; color: var(--card) !important; }
+  .segmented__option--active { background: ${ink} !important; color: ${inkOn} !important; }
   .chip { border: ${w} solid ${line} !important; }
   .slot:not(.slot--gap) { box-shadow: inset 0 0 0 1px ${cellLine} !important; }
   .slot--gap { border-width: 1.5px !important; }
   .bottom-nav { border-top: ${w} solid ${line} !important; }
   .bottom-nav__item--active .bottom-nav__label { font-weight: 700; }
+  ${radius ? `:root, :root[data-theme] { --radius: ${radius[0]} !important; --radius-lg: ${radius[1]} !important; }` : ''}
+  ${extra}
   `;
 }
+
+// Crisp white versions of B2: white page, edged cards and buttons.
+const WHITE_CELLS = {
+  'carer-family-bg': '#E3F2EA', 'carer-family-text': '#0E3B29',
+  'carer-club-bg': '#E8E6F8', 'carer-club-text': '#25205A',
+  'carer-parent-bg': '#F7EBD3', 'carer-parent-text': '#452A05',
+  'carer-playdate-bg': '#F8E3EA', 'carer-playdate-text': '#57182E',
+  'carer-other-bg': '#EEEEEC', 'carer-other-text': '#333331',
+  'carer-gap-bg': '#FBE6E1', 'carer-gap-text': '#7A1C12',
+  'red-text': '#A12A1C', 'danger-bg': '#A12A1C', 'danger-on': '#FFFFFF',
+  green: '#4F9A5E', red: '#C9604F',
+};
+const white = (over) => ({
+  bg: '#FFFFFF', card: '#FFFFFF', border: '#0A0A0A', text: '#0A0A0A', text2: '#454545', text3: '#7A7A7A',
+  accent: '#0A0A0A', 'accent-bg': '#F2F2F2', 'accent-text': '#FFFFFF', amber: '#D9A441',
+  ...WHITE_CELLS, ...over,
+});
 
 const THEMES = [
   {
@@ -114,6 +133,31 @@ const THEMES = [
     id: 'b3-ivory-solid', name: 'B3 · Ivory & Ink, black pills', note: 'Black outlines, filled black buttons, lifted cards',
     title: "'Cormorant', serif", titleWeight: 700, titleScale: 1.18, t: IVORY,
     extra: EDGE({ w: '1.5px', line: '#14110F', cellLine: 'rgba(20,17,15,0.30)', bg: '#ECE2CE', pillFill: true, shadow: '0 6px 18px rgba(20,17,15,0.10)' }),
+  },
+  {
+    id: 'w1-gallery-white', name: 'W1 · Gallery White', note: 'Pure white, 1.5px black frames, bold modern sans',
+    title: "'Inter Display', Inter, sans-serif", titleWeight: 800, t: white({}),
+    extra: EDGE({ w: '1.5px', line: '#0A0A0A', cellLine: 'rgba(10,10,10,0.28)', bg: '#FFFFFF' }),
+  },
+  {
+    id: 'w2-white-gold', name: 'W2 · White & Gold', note: 'White, fine black lines, black pills, gold details, Playfair titles',
+    title: "'Playfair', serif", titleWeight: 700, t: white({ amber: '#B8914A' }),
+    extra: EDGE({ w: '1px', line: '#1A1A1A', cellLine: 'rgba(10,10,10,0.22)', bg: '#FFFFFF', pillFill: true,
+      extra: `.page-eyebrow { color: #8C6A2F !important; letter-spacing: .22em !important; }
+        .bottom-nav__item--active { color: #8C6A2F !important; }
+        .fab { background: #0A0A0A !important; box-shadow: 0 0 0 3px #FFFFFF, 0 0 0 4px #B8914A !important; }` }),
+  },
+  {
+    id: 'w3-white-navy', name: 'W3 · White & Midnight Navy', note: 'White, navy frames and filled navy buttons, private-bank feel',
+    title: "'Inter Display', Inter, sans-serif", titleWeight: 700,
+    t: white({ text: '#0B1F3A', text2: '#3E4C63', text3: '#77839A', border: '#0B1F3A', accent: '#0B1F3A', 'accent-bg': '#EEF2F8' }),
+    extra: EDGE({ w: '1.5px', line: '#0B1F3A', cellLine: 'rgba(11,31,58,0.28)', bg: '#FFFFFF', pillFill: true, ink: '#0B1F3A', inkOn: '#FFFFFF' }),
+  },
+  {
+    id: 'w4-white-elevated', name: 'W4 · White Elevated', note: 'White, hairline black edges, soft lift, rounder corners',
+    title: "'Inter Display', Inter, sans-serif", titleWeight: 700, t: white({}),
+    extra: EDGE({ w: '1px', line: '#0A0A0A', cellLine: 'rgba(10,10,10,0.20)', bg: '#FFFFFF', pillFill: true,
+      shadow: '0 10px 28px rgba(10,10,10,0.08), 0 2px 6px rgba(10,10,10,0.05)', radius: ['12px', '18px'] }),
   },
   {
     id: 'c-emerald-champagne', name: 'C · Emerald & Champagne', note: 'Deep green, champagne gold, DM Serif titles',
