@@ -5,7 +5,7 @@ Where the project stands, for anyone (person or AI session) picking it up.
 the *state of play*: what is done, what is unproven, what is still open.
 Keep it current — update it at the end of every working session.
 
-**Last updated:** 30 October 2026 (production application submitted; demo video draft 7)
+**Last updated:** November 2026 (KidRota 1.0.4 live on Google Play, UK + US)
 **Working branch:** `claude/eloquent-brahmagupta-f1d5v1` — *all* current
 work is here; `main` is well behind. Check this branch out before doing
 anything.
@@ -163,7 +163,7 @@ Keep the closed test running until the decision arrives.
   it, in 1.0.2: a short "How it works" page and a privacy line on the
   welcome page.
 - ✅ Closed test 14 days **finished** (owner confirmed, 30 Oct 2026).
-- ✅ **Applied for production** 30 Oct 2026. ✅ **Production access granted** (owner, 1 Nov 2026). **1.0.4 submitted to production 7 Nov 2026 (UK + US), in review.**
+- ✅ **Applied for production** 30 Oct 2026. ✅ **Production access granted** (owner, 1 Nov 2026). **🎉 KidRota 1.0.4 is LIVE on Google Play (UK + US)**: the public listing link works (owner confirmed); Play search was not finding it yet, which is normal for a new app.
 - ✅ Demo video **draft 7** (47.5 s): `design/store/video/kidrota-demo.mp4`.
   See "Demo video" below. On YouTube (unlisted, owner's t80.dev channel)
   since 30 Oct 2026: https://youtu.be/-ZDlxb4gnOI — added to the main
