@@ -163,7 +163,7 @@ Keep the closed test running until the decision arrives.
   it, in 1.0.2: a short "How it works" page and a privacy line on the
   welcome page.
 - ✅ Closed test 14 days **finished** (owner confirmed, 30 Oct 2026).
-- ✅ **Applied for production** 30 Oct 2026. ✅ **Production access granted** (owner, 1 Nov 2026). No production release created yet.
+- ✅ **Applied for production** 30 Oct 2026. ✅ **Production access granted** (owner, 1 Nov 2026). **1.0.4 submitted to production 7 Nov 2026 (UK + US), in review.**
 - ✅ Demo video **draft 7** (47.5 s): `design/store/video/kidrota-demo.mp4`.
   See "Demo video" below. On YouTube (unlisted, owner's t80.dev channel)
   since 30 Oct 2026: https://youtu.be/-ZDlxb4gnOI — added to the main
@@ -293,8 +293,15 @@ reminders default **Off**; holidays capped at **70 days**.
    then the first production release, **UK only** (trader status
    deferred; EU later).
    **7 Nov: 1.0.4 on internal testing and on the owner's phone; new design
-   showing.** Next: quick phone check (dark mode, purchase), then the
-   production release (UK only).
+   showing; owner's phone check "all good".**
+   **7 Nov 2026: 1.0.4 submitted to PRODUCTION**, full rollout, countries
+   **United Kingdom + United States** (EU left out until trader status is
+   declared). Managed publishing off, so it goes live by itself once Google
+   approves. Warnings only (no deobfuscation file, no native debug
+   symbols), both harmless.
+4. After launch: refresh store screenshots/feature graphic/video to the
+   White & Gold look; trader address, then add EU countries; check the US
+   price of `kidrota_pro_yearly`.
 3b. Later: "How it works" page and a privacy line on the welcome page.
 4. Once production is approved: create a production release (1.0.1 or
    1.0.2), staged rollout if offered.
