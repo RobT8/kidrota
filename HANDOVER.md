@@ -292,6 +292,9 @@ reminders default **Off**; holidays capped at **70 days**.
    5.0:1. Owner wants to launch with this: build 1.0.4, internal test,
    then the first production release, **UK only** (trader status
    deferred; EU later).
+   **7 Nov: 1.0.4 on internal testing and on the owner's phone; new design
+   showing.** Next: quick phone check (dark mode, purchase), then the
+   production release (UK only).
 3b. Later: "How it works" page and a privacy line on the welcome page.
 4. Once production is approved: create a production release (1.0.1 or
    1.0.2), staged rollout if offered.
