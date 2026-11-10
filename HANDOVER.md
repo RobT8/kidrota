@@ -163,7 +163,7 @@ Keep the closed test running until the decision arrives.
   it, in 1.0.2: a short "How it works" page and a privacy line on the
   welcome page.
 - ✅ Closed test 14 days **finished** (owner confirmed, 30 Oct 2026).
-- ✅ **Applied for production** 30 Oct 2026. ✅ **Production access granted** (owner, 1 Nov 2026). **🎉 KidRota 1.0.4 is LIVE on Google Play (UK + US)**: the public listing link works (owner confirmed); Play search was not finding it yet, which is normal for a new app.
+- ✅ **Applied for production** 30 Oct 2026. ✅ **Production access granted** (owner, 1 Nov 2026). **🎉 KidRota 1.0.4 is LIVE on Google Play (UK + US)**: the public listing link works (owner confirmed); Play Console shows Production 10004 at 100% ✓ (7 Nov); appears in Play search since about 10 Nov.
 - ✅ Demo video **draft 7** (47.5 s): `design/store/video/kidrota-demo.mp4`.
   See "Demo video" below. On YouTube (unlisted, owner's t80.dev channel)
   since 30 Oct 2026: https://youtu.be/-ZDlxb4gnOI — added to the main
